@@ -724,68 +724,8 @@
 </template>
 
 <!-- NEW TEMPLATE: Urban Company Case Study -->
-   <template id="tpl-urban-company">
-<header class="relative pt-20 pb-12 overflow-hidden">
-<div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
-<div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
-
-<div class="max-w-7xl mx-auto px-6 relative z-10">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-6">
-<i class="fas fa-briefcase"></i> Targeted Role: Associate Product Manager / PM
-</div>
-<h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4 leading-tight">
-Turning Around <br/><span class="gradient-text">Urban Company InstaHelp</span>
-</h1>
-<p class="text-xl text-slate-400 mb-8 max-w-2xl">
-A strategic teardown balancing unit economics with user psychology to fix a structurally unsustainable fulfillment model.
-</p>
-<div class="flex items-center gap-4 text-sm text-slate-300 bg-slate-800/50 p-4 rounded-xl border border-slate-700 inline-flex">
-<div class="flex items-center gap-2"><i class="fas fa-user-circle text-blue-400 text-lg"></i> <strong>Author:</strong> Maaz Ali Mattehalli</div>
-</div>
-</div>
-</header>
-<main class="max-w-7xl mx-auto px-6 py-8 space-y-16 relative z-10">
-<html lang="en" class="scroll-smooth">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Urban Company InstaHelp Strategy Portfolio</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<script>
-tailwind.config = {
-theme: {
-extend: {
-fontFamily: {
-sans: ['Inter', 'sans-serif'],
-},
-colors: {
-uc: {
-dark: '#0f172a',
-card: '#1e293b',
-accent: '#3b82f6',
-success: '#10b981',
-danger: '#ef4444',
-warning: '#f59e0b'
-}
-}
-}
-}
-}
-}
-</script>
+<template id="tpl-urban-company">
 <style>
-body {
-background-color: #0f172a;
-color: #f8fafc;
-font-family: 'Inter', sans-serif;
-}
 .glass-card {
 background: rgba(30, 41, 59, 0.7);
 backdrop-filter: blur(10px);
@@ -815,8 +755,8 @@ border-radius: 4px;
 box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
 }
 </style>
-</head>
-<body class="antialiased custom-scrollbar">
+
+<div class="bg-[#0f172a] text-[#f8fafc] min-h-screen antialiased pb-12">
 <header class="relative pt-20 pb-12 overflow-hidden">
 <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
 <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/20 rounded-full blur-[120px] pointer-events-none"></div>
@@ -836,13 +776,14 @@ A strategic teardown balancing unit economics with user psychology to fix a stru
 </div>
 </div>
 </header>
+
 <main class="max-w-7xl mx-auto px-6 py-8 space-y-16 relative z-10">
 
 <section id="executive-summary" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 <div class="glass-card p-8 glow">
 <h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-bolt text-yellow-400"></i> Executive Summary</h2>
 <p class="text-slate-300 mb-4 leading-relaxed">
-Urban Company’s FY26 performance reveals a critical paradox. Operating revenue increased significantly (~35.9% YoY), but profitability collapsed, shifting from a solid net profit to a substantial net loss.
+Urban Company’s FY26 performance reveals a critical paradox. Operating revenue increased significantly (~35.9% YoY), but profitability collapsed, shifting from a solid net profit to a substantial net loss. 
 </p>
 <div class="bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r mt-6">
 <p class="text-sm text-red-200"><strong>Key Conclusion:</strong> InstaHelp is not failing due to a lack of demand.
@@ -857,6 +798,7 @@ The cost of fulfilling demand under a constrained Service Level Agreement (SLA) 
 </div>
 </div>
 </section>
+
 <section class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 <div class="lg:col-span-1 space-y-6">
 <div class="glass-card p-6 border-l-4 border-blue-500 h-full">
@@ -892,6 +834,7 @@ The cost of fulfilling demand under a constrained Service Level Agreement (SLA) 
 </div>
 </div>
 </section>
+
 <section>
 <h2 class="text-3xl font-bold mb-8">Root Cause & Market Dynamics</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -916,6 +859,7 @@ The cost of fulfilling demand under a constrained Service Level Agreement (SLA) 
 <p class="text-sm text-slate-400">Aggressive pricing risks demand collapse. Efficiency improvements are a prerequisite to pricing power.</p>
 </div>
 </div>
+
 <div class="glass-card p-8">
 <h3 class="text-xl font-bold mb-6">Competitive Landscape: The Supply War</h3>
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
@@ -934,6 +878,7 @@ Competitors (Snabbit, Pronto) are solving supply constraints via venture capital
 </div>
 </div>
 </section>
+
 <section>
 <h2 class="text-3xl font-bold mb-8">The PM Crucible: Discarded Ideas</h2>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -952,6 +897,7 @@ Synchronous impulsive demand is a product fantasy.</p>
 </div>
 </div>
 </section>
+
 <section class="relative">
 <div class="absolute inset-0 bg-blue-600/5 blur-[100px] pointer-events-none"></div>
 <h2 class="text-3xl font-bold mb-8 text-center text-blue-400">The Final Turnaround Strategy</h2>
@@ -982,6 +928,7 @@ Remove city-wide idle subsidies.</p>
 </div>
 </div>
 </section>
+
 <section class="glass-card p-8">
 <h2 class="text-2xl font-bold mb-2">Feature Spec: "Anchor Routing" Engine</h2>
 <p class="text-slate-400 mb-8">Batches flexible demand into zero-transit itineraries inside one residential complex.</p>
@@ -1066,6 +1013,7 @@ Partner executes base 15-item DSU. Centralized QA reviews photos post-job. Partn
 </div>
 </div>
 </section>
+
 <section>
 <div class="flex flex-col md:flex-row justify-between items-end mb-8">
 <div>
@@ -1120,6 +1068,7 @@ Partner executes base 15-item DSU. Centralized QA reviews photos post-job. Partn
 </div>
 </div>
 </section>
+
 <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 <div class="lg:col-span-1 glass-card p-6 bg-gradient-to-br from-slate-800 to-slate-900">
 <h3 class="text-lg font-bold mb-4 uppercase tracking-wider text-slate-400 text-sm">Decision-Driving Metrics</h3>
@@ -1152,12 +1101,12 @@ Improved LTV & Positive Margins
 </div>
 </div>
 </section>
+
 <footer class="text-center text-slate-500 text-sm py-8 border-t border-slate-800 mt-12">
-Urban Company Case Study Dashboard by Maaz Ali Mattehalli.
+Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 </footer>
 </main>
-</body>
-</html>
+</div>
 </template>
 
 <!-- EXISTING TEMPLATE: Statiq Strategy -->
