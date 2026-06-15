@@ -157,6 +157,10 @@
       <a href="#education" class="hover:text-white transition-colors">Education</a>
       <a href="#certifications" class="hover:text-white transition-colors">Certifications</a>
       <a href="#contact" class="hover:text-white transition-colors">Contact</a>
+      <div class="text-xs bg-gray-900 border border-gray-800 px-3 py-1 rounded-md text-emerald-400 font-mono flex items-center gap-1.5 shadow-inner">
+        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+        ID: #<span id="visitor-count-badge">100</span>
+      </div>
       <a href="assets/resume.pdf" target="_blank" class="text-emerald-500 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black px-4 py-1.5 rounded transition">Resume</a>
     </div>
   </div>
@@ -257,7 +261,7 @@
                     <strong class="text-gray-200">Market Research and Analysis:</strong> Conducting comprehensive market research to identify customer needs, market trends, and competitive analysis. Using these insights to inform product development and strategic decisions.
 
                   </li>
-                 <li>
+                  <li>
                     <strong class="text-gray-200">Stakeholder Management:</strong>  Effectively communicating with stakeholders, including executives, developers, designers, and customers, to gather requirements, provide updates, and ensure alignment with business objectives.
    </li>
                 <li>
@@ -356,9 +360,6 @@
 
     <div class="space-y-12">
 
-     
-
-      <!-- PROJECT 2: Urban Company Case Study -->
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group hover:border-amber-500" onclick="openModal('tpl-urban-company')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
           <div class="text-xs text-amber-500 font-bold tracking-widest mb-3 uppercase">01 / Marketplace Strategy</div>
@@ -381,7 +382,6 @@
         </div>
       </div>
 
-      <!-- PROJECT 3: Statiq Strategy -->
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-statiq-strategy')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
           <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">02 / Product Strategy</div>
@@ -404,7 +404,6 @@
         </div>
       </div>
 
-      <!-- PROJECT 4: Statiq Audit -->
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group" onclick="openModal('tpl-statiq-audit')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
           <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">03 / Product Scaling Audit</div>
@@ -432,8 +431,7 @@
           </div>
         </div>
       </div>
- <!-- PROJECT 1: PM Platform Teardown (Coming Soon) -->
-      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group hover:border-violet-500" onclick="openModal('tpl-pm-prd')">
+ <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group hover:border-violet-500" onclick="openModal('tpl-pm-prd')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
           <div class="text-xs text-violet-500 font-bold tracking-widest mb-3 uppercase">04 / Product Teardown & PRD</div>
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Project Management Platforms: PRD</h3>
@@ -454,7 +452,6 @@
           </div>
         </div>
       </div>
-      <!-- PROJECT 5: EV Fleet Infrastructure -->
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-ev-report')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
           <div class="text-xs text-cyan-500 font-bold tracking-widest mb-3 uppercase">05 / Infrastructure Strategy</div>
@@ -477,7 +474,6 @@
         </div>
       </div>
 
-      <!-- PROJECT 6: MVP Hardware -->
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group" onclick="openModal('tpl-water-mvp')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
           <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">06 / Major B.Tech Project</div>
@@ -607,9 +603,6 @@
   </div>
 </section>
 
-
-
-
 <section id="working-together" class="py-24 bg-[#0A0A0A] border-t border-gray-800">
   <div class="max-w-[1200px] mx-auto px-6">
     <h2 class="text-4xl font-bold text-white mb-4">Working Together</h2>
@@ -634,13 +627,12 @@
   </div>
 </section>
 
-
-
 <section id="contact" class="py-24 px-6 border-t border-gray-800 bg-[#050505]">
   <div class="max-w-[1200px] mx-auto text-left reveal">
     <h2 class="text-4xl font-bold mb-6 text-white">Contact Details</h2>
-    <p class="text-gray-400 text-base mb-10 max-w-xl text-left">
+    <div class="text-gray-400 text-base mb-10 max-w-xl text-left">
       Available to discuss product analysis, product thinking, MVP development, and cost‑effective engineering for real‑world impact.
+    </div>
     
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 text-left">
       <div class="bg-[#0A0A0A] border border-gray-800 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal">
@@ -667,12 +659,12 @@
   </div>
 </section>
 
-<footer class="border-t border-gray-800 py-8 px-6 text-sm text-gray-600 bg-[#0A0A0A]">
-  <div class="max-w-[1200px] mx-auto text-left">
+<footer class="border-t border-gray-800 py-8 px-6 text-sm text-gray-600 bg-[#0A0A0A] flex flex-col md:flex-row justify-between items-center gap-4">
+  <div class="max-w-[1200px] mx-auto text-left w-full flex flex-col md:flex-row justify-between items-center gap-2">
     <p>© 2026 Maaz Ali Mattehalli. All Rights Reserved.</p>
+    <p class="font-mono text-xs text-gray-500">Global System Footprint: <span id="visitor-footer-metric">100</span> recorded logs</p>
   </div>
 </footer>
-
 
 <div id="main-modal" class="fixed inset-0 z-[100] hidden flex-col bg-[#050505]/95 backdrop-blur-xl overflow-y-auto w-full h-full">
   <div class="sticky top-0 w-full flex justify-between items-center p-4 md:p-6 bg-[#050505]/80 backdrop-blur-xl z-50 border-b border-gray-800 shadow-2xl">
@@ -689,9 +681,6 @@
   </div>
 </div>
 
-<!-- ================= TEMPLATES ================= -->
-
-<!-- NEW TEMPLATE: PM Teardown & PRD (Coming Soon) -->
 <template id="tpl-pm-prd">
   <div class="bg-[#0A0A0A] rounded-xl text-center overflow-hidden p-6 md:p-16 max-w-[800px] mx-auto border border-gray-800 text-gray-300 shadow-2xl relative">
     <div class="absolute inset-0 bg-gradient-to-b from-violet-900/10 to-transparent pointer-events-none"></div>
@@ -720,7 +709,6 @@
   </div>
 </template>
 
-<!-- NEW TEMPLATE: Urban Company Case Study -->
 <template id="tpl-urban-company">
 <style>
 .glass-card {
@@ -1106,7 +1094,6 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 </div>
 </template>
 
-<!-- EXISTING TEMPLATE: Statiq Strategy -->
 <template id="tpl-statiq-strategy">
   <div class="bg-[#0A0A0A] rounded-xl text-left overflow-hidden p-6 md:p-10 max-w-[900px] mx-auto border border-gray-800 text-gray-300 shadow-2xl">
     <div class="modal-reveal" style="border-left: 4px solid #3b82f6; margin-bottom: 25px; background-color: #111827; padding: 15px 15px 15px 20px; border-radius: 0 8px 8px 0; border-top: 1px solid #1f2937; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937;">
@@ -1163,7 +1150,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </div>
 
     <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">4. The Behavioral Churn Mechanics</h2>
-    <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">Systemic architectural issues manifest as severe UX friction. Users adapt to this uncertainty by developing a <strong>"Dual-App Verification Loop."</strong> Because single-app trust is broken, Users frequently switch between multiple charging apps to compare alternative nearby options and select the one perceived as most reliable.</p>
+    <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">Textual architecture issues manifest as severe UX friction. Users adapt to this uncertainty by developing a <strong>"Dual-App Verification Loop."</strong> Because single-app trust is broken, Users frequently switch between multiple charging apps to compare alternative nearby options and select the one perceived as most reliable.</p>
 
     <div class="modal-reveal" style="background-color: #111827; border: 1px solid #1f2937; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
         <div style="font-weight: 700; font-size: 9.5pt; color: #ffffff; margin-bottom: 15px; text-align: center;">Figure 1: Session Drop-Off Funnel (Field Friction + J.D. Power / ChargerHelp Data)</div>
@@ -1217,7 +1204,6 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
   </div>
 </template>
 
-<!-- EXISTING TEMPLATE: Statiq Audit -->
 <template id="tpl-statiq-audit">
   <div class="bg-[#0A0A0A] text-[#d1d5db] rounded-xl shadow-2xl text-left overflow-hidden p-6 md:p-10 max-w-[900px] mx-auto border border-gray-800 font-sans">
     <div class="modal-reveal text-emerald-500 font-bold tracking-widest text-xs uppercase mb-4 flex items-center gap-2">
@@ -1421,7 +1407,6 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
   </div>
 </template>
 
-<!-- EXISTING TEMPLATE: EV Report -->
 <template id="tpl-ev-report">
   <div class="bg-[#0A0A0A] rounded-xl border border-gray-800 shadow-2xl text-left overflow-hidden max-w-[1000px] mx-auto">
     <div class="modal-reveal bg-[#111827] p-6 md:p-10 border-b border-gray-800 relative overflow-hidden">
@@ -1574,7 +1559,6 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
   </div>
 </template>
 
-<!-- EXISTING TEMPLATE: Water Tech MVP -->
 <template id="tpl-water-mvp">
   <div class="bg-[#0A0A0A] text-gray-300 rounded-xl shadow-2xl text-left overflow-hidden p-6 md:p-12 max-w-[1000px] mx-auto border border-gray-800 font-sans leading-relaxed">
     <div class="modal-reveal flex flex-col justify-center items-center py-10 border-b border-gray-800 mb-10">
@@ -1846,7 +1830,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
             </div>
         </div>
 
-        <h3 class="text-xl font-bold text-white mb-6 font-['Space_Grotesk']">The Vision: A Strategic Product Roadmap</h3>
+        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">The Vision: A Strategic Product Roadmap</h3>
         <p class="mb-8 text-gray-300 text-justify">This project proved that a massive market is waiting for thoughtful, field-aligned technology. It showed the power of starting with a user-centric question and following it through the entire product lifecycle. This strategic thinking is captured in the product roadmap.</p>
 
         <div class="flex flex-col md:flex-row gap-6 mb-8">
@@ -1914,6 +1898,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
         opacity: 0,
         duration: 0.8,
         stagger: 0.1,
+        boxShadow: "none",
         ease: "power3.out"
       }, "-=0.3");
 
@@ -1966,11 +1951,11 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 
     // If we just opened the EV Report, initialize the charts!
     if(templateId === 'tpl-ev-report') {
-      setTimeout(initEVCharts, 300);
-  } else if(templateId === 'tpl-urban-company') {
+        setTimeout(initEVCharts, 300);
+    } else if(templateId === 'tpl-urban-company') {
         setTimeout(initUrbanCompanyCharts, 300);
     }
-}
+  }
 
   // Triggered by on-screen Back Button
   function closeAction() {
@@ -2008,14 +1993,14 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     if (e.target === this) closeAction();
   });
 
-// Chart.js Instances globally to prevent overlap sizing issues
-let profitChartInstance = null;
-let breakevenChartInstance = null;
-let financeChartInstance = null;
-let unitChartInstance = null;
-let compChartInstance = null;
+  // Chart.js Instances globally to prevent overlap sizing issues
+  let profitChartInstance = null;
+  let breakevenChartInstance = null;
+  let financeChartInstance = null;
+  let unitChartInstance = null;
+  let compChartInstance = null;
 
-function initUrbanCompanyCharts() {
+  function initUrbanCompanyCharts() {
     // Chart.js Default Configs for Dark Mode
     Chart.defaults.color = '#94a3b8';
     Chart.defaults.font.family = "'Inter', sans-serif";
@@ -2143,7 +2128,7 @@ function initUrbanCompanyCharts() {
             }
         });
     }
-}
+  }
 
   function initEVCharts() {
     const financialData = {
@@ -2222,6 +2207,54 @@ function initUrbanCompanyCharts() {
         });
     }
   }
+
+  // ================= VISITOR TRACKING & METRIC LOGIC =================
+  (function trackVisitorMetrics() {
+    try {
+      // Configuration constants
+      const INITIAL_OFFSET = 100;
+      const STORAGE_KEY_COUNT = 'maaz_portfolio_visitor_count';
+      const STORAGE_KEY_SESSION = 'maaz_portfolio_session_token';
+
+      // 1. Reconcile historical state from LocalStorage
+      let storedCount = localStorage.getItem(STORAGE_KEY_COUNT);
+      let currentMetric = storedCount ? parseInt(storedCount, 10) : INITIAL_OFFSET;
+
+      // 2. Identify unique session parameters to filter repeated hot-reloads
+      let sessionToken = sessionStorage.getItem(STORAGE_KEY_SESSION);
+      if (!sessionToken) {
+        currentMetric += 1;
+        sessionStorage.setItem(STORAGE_KEY_SESSION, 'active_session_' + Date.now());
+        localStorage.setItem(STORAGE_KEY_COUNT, currentMetric);
+      }
+
+      // 3. Mutate DOM Targets to represent the calculated visitor identity
+      const badgeTarget = document.getElementById('visitor-count-badge');
+      const footerTarget = document.getElementById('visitor-footer-metric');
+      
+      if(badgeTarget) badgeTarget.innerText = currentMetric;
+      if(footerTarget) footerTarget.innerText = currentMetric;
+
+      // 4. Extract client device data footprint silently (Metadata capture)
+      const telemetryPayload = {
+        visitorId: currentMetric,
+        timestamp: new Date().toISOString(),
+        locale: navigator.language || 'Unknown',
+        viewport: `${window.innerWidth}x${window.innerHeight}`,
+        userAgent: navigator.userAgent,
+        referrer: document.referrer || 'Direct Session'
+      };
+
+      // Output analytical trace directly into terminal log environments
+      console.groupCollapsed(`%c[System Analytics] Log Captured — Session ID #${currentMetric}`, 'color: #10B981; font-weight: bold;');
+      console.table(telemetryPayload);
+      console.log('%cDeployment Note: To pipe this payload permanently across clients, bind an active endpoint (e.g., Supabase or Google Firebase) inside this closure loop.', 'color: #9ca3af; font-style: italic;');
+      console.groupEnd();
+
+    } catch (telemetryError) {
+      console.warn('System Analytics engine suppressed due to sandbox environment constraints:', telemetryError);
+    }
+  })();
 </script>
 
 </body>
