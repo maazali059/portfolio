@@ -1,0 +1,1668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enernomics — Decision Intelligence for Energy Infrastructure</title>
+<meta name="description" content="A decision-support framework for evaluating EV charging and renewable energy procurement investments.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0E1116; --panel:#161B22; --panel-2:#1B2129; --border:#262D37;
+  --text:#E6E9EE; --muted:#8B94A0; --muted-2:#5C6572;
+  --accent:#5A9BAE; --accent-dim:#3A6A78;
+  --amber:#C79448; --good:#5C9B79; --bad:#C15D53;
+  --radius:3px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:15px;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+a{color:inherit;}
+button{font-family:inherit; cursor:pointer;}
+::-webkit-scrollbar{width:10px; height:10px;}
+::-webkit-scrollbar-thumb{background:#2A313B; border-radius:6px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+
+/* ===== LANDING ===== */
+#view-landing{display:block;}
+.landing-hero{
+  padding:90px 32px 70px; text-align:center; max-width:900px; margin:0 auto;
+  border-bottom:1px solid var(--border);
+}
+.landing-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase;}
+.landing-hero h1{font-size:clamp(2.2rem,5vw,3.4rem); font-weight:700; margin:18px 0 4px; letter-spacing:-0.01em;}
+.landing-hero h2{font-size:clamp(1.1rem,2.4vw,1.5rem); font-weight:500; color:var(--muted); margin:0 0 26px;}
+.landing-hero p.desc{color:var(--muted); max-width:620px; margin:0 auto 34px; line-height:1.7; font-size:15.5px;}
+.landing-actions{display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
+
+.built-using{margin-top:38px; display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:8px;}
+.built-using-label{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.08em; margin-right:6px;}
+.chip{font-family:'IBM Plex Mono',monospace; font-size:11.5px; padding:6px 12px; border:1px solid var(--border); border-radius:20px; color:var(--muted); background:var(--panel-2);}
+
+.audience-strip{max-width:1040px; margin:0 auto; padding:36px 32px; border-bottom:1px solid var(--border); text-align:center;}
+.audience-label{font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:16px;}
+.audience-row{display:flex; justify-content:center; flex-wrap:wrap; gap:12px;}
+.audience-item{font-size:13.5px; color:var(--text); padding:10px 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--panel);}
+
+.btn{
+  padding:13px 26px; border-radius:var(--radius); font-size:14px; font-weight:600;
+  border:1px solid var(--border); background:var(--panel-2); color:var(--text);
+  transition:border-color .15s ease, background .15s ease;
+}
+.btn:hover{border-color:var(--accent);}
+.btn.primary{background:var(--accent-dim); border-color:var(--accent); color:#fff;}
+.btn.primary:hover{background:var(--accent);}
+
+.landing-cards{
+  max-width:1040px; margin:0 auto; padding:56px 32px;
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1px;
+  background:var(--border); border:1px solid var(--border);
+}
+.landing-card{background:var(--bg); padding:26px 22px;}
+.landing-card .card-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.08em;}
+.landing-card h3{font-size:17px; margin:10px 0 8px;}
+.landing-card p{color:var(--muted); font-size:13.5px; line-height:1.6; margin:0;}
+
+.workflow{max-width:1040px; margin:0 auto; padding:0 32px 80px;}
+.workflow h3{text-align:center; font-size:13px; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted-2); margin-bottom:26px; font-family:'IBM Plex Mono',monospace;}
+.workflow-row{display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:0;}
+.workflow-step{
+  padding:12px 20px; border:1px solid var(--border); border-radius:var(--radius); font-size:13.5px;
+  background:var(--panel); white-space:nowrap;
+}
+.workflow-arrow{color:var(--muted-2); padding:0 12px; font-size:14px;}
+
+/* ===== PLATFORM SHELL ===== */
+#view-platform{display:none; height:100vh;}
+.platform-shell{display:flex; height:100vh;}
+.sidebar{
+  width:230px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; padding:20px 0;
+}
+.sidebar-brand{padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:14px;}
+.sidebar-brand .name{font-weight:700; font-size:16px;}
+.sidebar-brand .tag{font-size:11px; color:var(--muted-2); font-family:'IBM Plex Mono',monospace; margin-top:3px;}
+.nav-item{
+  padding:11px 20px; font-size:13.5px; color:var(--muted); cursor:pointer;
+  border-left:2px solid transparent; display:flex; align-items:center; gap:10px;
+}
+.nav-item:hover{color:var(--text); background:var(--panel-2);}
+.nav-item.active{color:var(--text); border-left-color:var(--accent); background:var(--panel-2); font-weight:600;}
+.nav-dot{width:5px; height:5px; border-radius:50%; background:currentColor; opacity:0.5;}
+.sidebar-foot{margin-top:auto; padding:16px 20px; font-size:11px; color:var(--muted-2); border-top:1px solid var(--border);}
+
+.main{flex:1; overflow-y:auto; padding:32px 40px 80px;}
+.page{display:none;}
+.page.active{display:block;}
+.page-head{margin-bottom:28px;}
+.page-head h1{font-size:22px; margin:0 0 6px;}
+.page-head p{color:var(--muted); font-size:14px; margin:0; max-width:680px; line-height:1.6;}
+
+/* ===== DASHBOARD KPI CARDS ===== */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:28px;}
+.kpi-card{background:var(--panel); padding:18px 18px;}
+.kpi-label{font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.08em; font-family:'IBM Plex Mono',monospace;}
+.kpi-value{font-size:22px; font-weight:700; margin-top:6px; font-family:'IBM Plex Mono',monospace;}
+.kpi-value.good{color:var(--good);} .kpi-value.bad{color:var(--bad);} .kpi-value.warn{color:var(--amber);}
+
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; margin-bottom:22px;}
+.panel h3{font-size:14px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin:0 0 16px; font-family:'IBM Plex Mono',monospace;}
+.chart-wrap{position:relative; height:260px;}
+.two-col{display:grid; grid-template-columns:1.1fr 1fr; gap:22px;}
+@media (max-width:980px){ .two-col{grid-template-columns:1fr;} .platform-shell{flex-direction:column;} .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:10px;} .sidebar-brand,.sidebar-foot{display:none;} .nav-item{border-left:none; border-bottom:2px solid transparent; white-space:nowrap;} .nav-item.active{border-bottom-color:var(--accent);} }
+
+/* ===== FORMS ===== */
+.form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;}
+.field label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px;}
+.field input, .field select{
+  width:100%; padding:9px 10px; background:var(--panel-2); border:1px solid var(--border);
+  color:var(--text); border-radius:var(--radius); font-family:'IBM Plex Mono',monospace; font-size:13.5px;
+}
+.field input:focus, .field select:focus{outline:none; border-color:var(--accent);}
+.field .hint{font-size:11px; color:var(--muted-2); margin-top:4px;}
+
+/* ===== RECOMMENDATION BOX ===== */
+.reco-box{border:1px solid var(--border); border-radius:var(--radius); padding:26px; margin-bottom:22px; background:var(--panel);}
+.reco-top{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:18px;}
+.reco-verdict{font-size:22px; font-weight:700; padding:8px 18px; border-radius:var(--radius);}
+.reco-verdict.proceed{background:rgba(92,155,121,0.15); color:var(--good); border:1px solid var(--good);}
+.reco-verdict.conditions{background:rgba(199,148,72,0.15); color:var(--amber); border:1px solid var(--amber);}
+.reco-verdict.study{background:rgba(199,148,72,0.1); color:var(--amber); border:1px solid var(--border);}
+.reco-verdict.no{background:rgba(193,93,83,0.15); color:var(--bad); border:1px solid var(--bad);}
+.confidence-badge{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--muted);}
+.reco-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
+.reco-list{list-style:none; margin:0; padding:0; font-size:13.5px;}
+.reco-list li{padding:6px 0; color:var(--muted);}
+.reco-list li.pos::before{content:"✓ "; color:var(--good);}
+.reco-list li.neg::before{content:"! "; color:var(--bad);}
+.reco-sub{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted-2); font-family:'IBM Plex Mono',monospace; margin-bottom:10px;}
+
+/* ===== RISK SLIDERS ===== */
+.risk-row{display:grid; grid-template-columns:140px 1fr 40px; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid var(--border);}
+.risk-row:last-child{border-bottom:none;}
+.risk-row label{font-size:13.5px;}
+.risk-row input[type=range]{width:100%; accent-color:var(--accent);}
+.risk-row .val{font-family:'IBM Plex Mono',monospace; text-align:right; font-size:13.5px;}
+
+/* ===== SCENARIO BUTTONS ===== */
+.scenario-buttons{display:flex; gap:12px; margin-bottom:22px;}
+.scenario-btn{
+  flex:1; padding:16px; border-radius:var(--radius); border:1px solid var(--border); background:var(--panel-2);
+  text-align:center; font-weight:600; font-size:14px;
+}
+.scenario-btn.active{border-color:var(--accent); background:rgba(90,155,174,0.12); color:var(--accent);}
+.scenario-btn .sub{display:block; font-weight:400; font-size:11.5px; color:var(--muted-2); margin-top:4px;}
+
+/* ===== TABLES ===== */
+table.data-table{width:100%; border-collapse:collapse; font-size:13.5px;}
+table.data-table th{text-align:left; padding:10px 12px; background:var(--panel-2); color:var(--muted); font-size:11px; text-transform:uppercase; letter-spacing:0.06em; font-family:'IBM Plex Mono',monospace;}
+table.data-table td{padding:10px 12px; border-bottom:1px solid var(--border); font-family:'IBM Plex Mono',monospace;}
+table.data-table td.label-cell{font-family:'Inter',sans-serif;}
+
+/* ===== DOCUMENTATION ===== */
+.doc-section{margin-bottom:8px; border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;}
+.doc-header{padding:14px 18px; background:var(--panel-2); cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:600; font-size:14px;}
+.doc-body{padding:0 18px; max-height:0; overflow:hidden; transition:max-height .25s ease, padding .25s ease;}
+.doc-body.open{padding:16px 18px 20px; max-height:2000px;}
+.doc-body p, .doc-body li{color:var(--muted); font-size:13.5px; line-height:1.7;}
+.formula{background:var(--panel-2); border:1px solid var(--border); padding:12px 16px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; border-radius:var(--radius); margin:10px 0; color:var(--accent);}
+
+/* ===== CASE STUDIES ===== */
+.case-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:16px;}
+.narrative-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:18px;}
+.narrative-block{background:var(--panel); padding:18px 20px;}
+.narrative-block .n-label{font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--accent); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:8px;}
+.narrative-block ul{margin:0; padding-left:18px; color:var(--muted); font-size:13.5px; line-height:1.7;}
+.narrative-block p{margin:0; color:var(--muted); font-size:13.5px; line-height:1.7;}
+.narrative-outcome{display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border);}
+.narrative-outcome .n-stat{background:var(--panel); padding:16px; text-align:center;}
+.narrative-outcome .n-stat .v{font-family:'IBM Plex Mono',monospace; font-size:20px; font-weight:700;}
+.narrative-outcome .n-stat .l{font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.06em; margin-top:4px;}
+.case-card{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:20px; display:flex; flex-direction:column; gap:10px;}
+.case-card h4{margin:0; font-size:15px;}
+.case-card .meta{font-size:12px; color:var(--muted-2); font-family:'IBM Plex Mono',monospace;}
+.case-card p{font-size:13px; color:var(--muted); margin:0; line-height:1.6;}
+.case-tag{display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; margin-top:4px; width:fit-content;}
+.case-tag.proceed{background:rgba(92,155,121,0.15); color:var(--good);}
+.case-tag.conditions{background:rgba(199,148,72,0.15); color:var(--amber);}
+
+.about-disclaimer{border:1px solid var(--border); border-left:3px solid var(--accent); padding:16px 20px; background:var(--panel); font-size:13.5px; color:var(--muted); line-height:1.7;}
+</style>
+</head>
+<body>
+
+<!-- ============ LANDING ============ -->
+<div id="view-landing">
+  <div class="landing-hero">
+    <div class="landing-eyebrow">Decision Intelligence for Energy Infrastructure</div>
+    <h1>Enernomics</h1>
+    <h2>Technical Analysis · Financial Modeling · Risk Assessment · Investment Decisions</h2>
+    <p class="desc">A decision-support framework for evaluating EV charging and renewable energy procurement investments — combining technical assumptions, financial modeling, risk assessment, and scenario analysis into a single, explainable recommendation.</p>
+    <div class="landing-actions">
+      <button class="btn primary" onclick="showView('platform')">Launch Platform →</button>
+      <button class="btn" onclick="switchPage('documentation'); showView('platform');">Read Methodology</button>
+    </div>
+
+    <div class="built-using">
+      <span class="built-using-label">Built using</span>
+      <span class="chip">Discounted Cash Flow</span>
+      <span class="chip">IRR &amp; NPV</span>
+      <span class="chip">Risk Scoring</span>
+      <span class="chip">Sensitivity Analysis</span>
+      <span class="chip">Tornado Analysis</span>
+      <span class="chip">Scenario Planning</span>
+      <span class="chip">Green Energy Open Access Regulations</span>
+    </div>
+  </div>
+
+  <div class="audience-strip">
+    <div class="audience-label">Designed for</div>
+    <div class="audience-row">
+      <div class="audience-item">Energy &amp; Infrastructure Consultants</div>
+      <div class="audience-item">C&amp;I Consumers Evaluating Renewable Procurement</div>
+      <div class="audience-item">EV Charge Point Operators</div>
+      <div class="audience-item">Infrastructure Investors</div>
+    </div>
+  </div>
+
+  <div class="landing-cards">
+    <div class="landing-card">
+      <div class="card-eyebrow">01 — Technical</div>
+      <h3>Technical Analysis</h3>
+      <p>Charger count, energy delivered, and utilization assumptions drive every downstream number — nothing is a black box.</p>
+    </div>
+    <div class="landing-card">
+      <div class="card-eyebrow">02 — Financial</div>
+      <h3>Financial Modeling</h3>
+      <p>Full cash flow build-up, NPV, IRR, and payback — computed live from editable assumptions, not hardcoded outputs.</p>
+    </div>
+    <div class="landing-card">
+      <div class="card-eyebrow">03 — Risk</div>
+      <h3>Risk Assessment</h3>
+      <p>Six weighted risk categories combine into a single score that directly feeds the recommendation logic.</p>
+    </div>
+    <div class="landing-card">
+      <div class="card-eyebrow">04 — Scenario</div>
+      <h3>Scenario Planning</h3>
+      <p>Base, Optimistic, and Pessimistic presets re-run the entire model instantly against different assumption sets.</p>
+    </div>
+  </div>
+
+  <div class="workflow">
+    <h3>Decision Workflow</h3>
+    <div class="workflow-row">
+      <div class="workflow-step">Project Inputs</div><div class="workflow-arrow">→</div>
+      <div class="workflow-step">Technical Feasibility</div><div class="workflow-arrow">→</div>
+      <div class="workflow-step">Financial Model</div><div class="workflow-arrow">→</div>
+      <div class="workflow-step">Risk Scoring</div><div class="workflow-arrow">→</div>
+      <div class="workflow-step">Recommendation</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PLATFORM ============ -->
+<div id="view-platform">
+  <div class="platform-shell">
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <div class="name">Enernomics</div>
+        <div class="tag">v1.2 — EV + Open Access</div>
+      </div>
+      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')"><span class="nav-dot"></span>Dashboard</div>
+      <div class="nav-item" data-page="screening" onclick="switchPage('screening')"><span class="nav-dot"></span>Project Screening</div>
+      <div class="nav-item" data-page="investment" onclick="switchPage('investment')"><span class="nav-dot"></span>EV Charging Analysis</div>
+      <div class="nav-item" data-page="openaccess" onclick="switchPage('openaccess')"><span class="nav-dot"></span>Open Access Analysis</div>
+      <div class="nav-item" data-page="options" onclick="switchPage('options')"><span class="nav-dot"></span>Option Comparison</div>
+      <div class="nav-item" data-page="risk" onclick="switchPage('risk')"><span class="nav-dot"></span>Risk Assessment</div>
+      <div class="nav-item" data-page="scenario" onclick="switchPage('scenario')"><span class="nav-dot"></span>Scenario Analysis</div>
+      <div class="nav-item" data-page="cases" onclick="switchPage('cases')"><span class="nav-dot"></span>Case Studies</div>
+      <div class="nav-item" data-page="documentation" onclick="switchPage('documentation')"><span class="nav-dot"></span>Documentation</div>
+      <div class="nav-item" data-page="about" onclick="switchPage('about')"><span class="nav-dot"></span>About</div>
+      <div class="sidebar-foot">Maaz Ali Mattehalli<br>NIT Goa</div>
+    </div>
+
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div class="page" id="page-dashboard">
+        <div class="page-head">
+          <h1>Executive Dashboard</h1>
+          <p>Live summary of the current project under evaluation. Change inputs on the Investment Analysis page — this view updates automatically.</p>
+        </div>
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="two-col">
+          <div class="panel">
+            <h3>Cash Flow Projection</h3>
+            <div class="chart-wrap"><canvas id="chart-cashflow"></canvas></div>
+          </div>
+          <div class="panel">
+            <h3>Risk Distribution</h3>
+            <div class="chart-wrap"><canvas id="chart-risk-mini"></canvas></div>
+          </div>
+        </div>
+        <div id="dashboard-reco"></div>
+      </div>
+
+      <!-- PROJECT SCREENING -->
+      <div class="page" id="page-screening">
+        <div class="page-head">
+          <h1>Project Screening</h1>
+          <p>A qualitative go/no-go checklist consultants typically run before building a financial model — grid readiness, land, permits, and utilization confidence. This doesn't replace the financial model; it flags whether the project is even ready for one, and can push suggested risk scores into the Risk Assessment page.</p>
+        </div>
+        <div class="panel">
+          <h3>Screening Questions</h3>
+          <div id="screening-form"></div>
+        </div>
+        <div class="panel">
+          <h3>Readiness Summary</h3>
+          <div id="screening-summary"></div>
+          <button class="btn primary" style="margin-top:16px;" onclick="applyScreeningToRisk()">Apply to Risk Assessment →</button>
+        </div>
+      </div>
+
+      <!-- INVESTMENT ANALYSIS -->
+      <div class="page" id="page-investment">
+        <div class="page-head">
+          <h1>Investment Analysis — EV Charging Infrastructure</h1>
+          <p>Enter project assumptions below. All outputs recompute live. Defaults represent a 25-charger DC fast-charging hub under typical Indian tariff and utilization conditions.</p>
+        </div>
+        <div class="panel">
+          <h3>Technical &amp; Commercial Assumptions</h3>
+          <div class="form-grid" id="input-form"></div>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <h3>Cash Flow (₹, 15-Year Projection)</h3>
+            <div class="chart-wrap"><canvas id="chart-cashflow-2"></canvas></div>
+          </div>
+          <div class="panel">
+            <h3>Sensitivity — IRR vs. Utilization</h3>
+            <div class="chart-wrap"><canvas id="chart-sensitivity"></canvas></div>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>Tornado Chart — What Moves IRR Most</h3>
+          <p style="color:var(--muted); font-size:13px; margin-top:-6px;">Each bar shows the IRR range when that single assumption is moved ±20% (±2 percentage points for escalation), holding everything else at its current value. Longer bars = higher-impact assumptions.</p>
+          <div class="chart-wrap" style="height:280px;"><canvas id="chart-tornado-ev"></canvas></div>
+        </div>
+        <div id="investment-reco"></div>
+        <div class="panel">
+          <h3>Export</h3>
+          <button class="btn primary" onclick="generateExecutiveReport('ev')">📄 Generate Executive Report (PDF)</button>
+        </div>
+      </div>
+
+      <!-- OPEN ACCESS / RENEWABLE PROCUREMENT ANALYSIS -->
+      <div class="page" id="page-openaccess">
+        <div class="page-head">
+          <h1>Open Access Analysis — Renewable Energy Procurement</h1>
+          <p>Evaluates a C&amp;I renewable power decision across the three procurement models permitted under India's Green Energy Open Access (GOA) Rules, 2022 — Captive, Group Captive, and Third-Party Open Access — and recommends the best fit for the inputs below.</p>
+        </div>
+        <div class="panel">
+          <h3>Technical &amp; Commercial Assumptions</h3>
+          <div class="form-grid" id="oa-input-form"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Model Comparison</h3>
+          <table class="data-table" id="oa-comparison-table"></table>
+        </div>
+
+        <div class="two-col">
+          <div class="panel">
+            <h3>Landed Cost by Procurement Model (₹/kWh)</h3>
+            <div class="chart-wrap"><canvas id="chart-oa-cost"></canvas></div>
+          </div>
+          <div class="panel">
+            <h3>Sensitivity — Savings vs. CSS Rate (Third-Party)</h3>
+            <div class="chart-wrap"><canvas id="chart-oa-sensitivity"></canvas></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Tornado Chart — What Moves Annual Savings Most</h3>
+          <p style="color:var(--muted); font-size:13px; margin-top:-6px;">Each bar shows the range in annual savings for the recommended model when that assumption moves ±20% (±2 percentage points for banking charge), holding everything else fixed.</p>
+          <div class="chart-wrap" style="height:280px;"><canvas id="chart-tornado-oa"></canvas></div>
+        </div>
+
+        <div id="oa-reco"></div>
+        <div class="panel">
+          <h3>Export</h3>
+          <button class="btn primary" onclick="generateExecutiveReport('oa')">📄 Generate Executive Report (PDF)</button>
+        </div>
+      </div>
+
+      <!-- OPTION COMPARISON -->
+      <div class="page" id="page-options">
+        <div class="page-head">
+          <h1>Option Comparison — EV Charging Configurations</h1>
+          <p>Rather than analysing a single configuration, compare up to three charger-count options against the same underlying assumptions from EV Charging Analysis. Useful for answering "how many chargers should we actually build?" rather than just "is this one config viable?"</p>
+        </div>
+        <div class="panel">
+          <h3>Configurations to Compare</h3>
+          <div class="form-grid" id="options-form"></div>
+        </div>
+        <div class="panel">
+          <h3>Comparison</h3>
+          <table class="data-table" id="options-table"></table>
+        </div>
+        <div class="panel">
+          <h3>IRR by Configuration</h3>
+          <div class="chart-wrap"><canvas id="chart-options"></canvas></div>
+        </div>
+      </div>
+
+      <!-- RISK ASSESSMENT -->
+      <div class="page" id="page-risk">
+        <div class="page-head">
+          <h1>Risk Assessment</h1>
+          <p>Score each risk category from 1 (Low) to 5 (High). The overall risk score is a simple average, feeding directly into the recommendation logic — see Documentation for the exact formula.</p>
+        </div>
+        <div class="two-col">
+          <div class="panel">
+            <h3>Risk Categories</h3>
+            <div id="risk-sliders"></div>
+          </div>
+          <div class="panel">
+            <h3>Risk Profile</h3>
+            <div class="chart-wrap"><canvas id="chart-risk-radar"></canvas></div>
+            <div style="margin-top:14px; text-align:center;">
+              <span class="kpi-label">Overall Risk Score</span>
+              <div class="kpi-value mono" id="risk-overall-score" style="font-size:28px;">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCENARIO -->
+      <div class="page" id="page-scenario">
+        <div class="page-head">
+          <h1>Scenario Analysis</h1>
+          <p>Each scenario applies a different assumption set on top of your current project inputs. Utilization, escalation, and CAPEX overrun shift together — see Documentation for exact multipliers.</p>
+        </div>
+        <div class="scenario-buttons" id="scenario-buttons"></div>
+        <div class="panel">
+          <h3>Scenario Comparison — IRR &amp; NPV</h3>
+          <div class="chart-wrap"><canvas id="chart-scenario"></canvas></div>
+        </div>
+        <div class="panel">
+          <table class="data-table" id="scenario-table"></table>
+        </div>
+      </div>
+
+      <!-- CASE STUDIES -->
+      <div class="page" id="page-cases">
+        <div class="page-head">
+          <h1>Case Studies</h1>
+          <p>Generic, illustrative scenarios — not tied to any real company. Click one to load its assumptions into the relevant analysis page and see the resulting recommendation.</p>
+        </div>
+
+        <div class="panel">
+          <h3>Featured Case Study</h3>
+          <p style="color:var(--muted); font-size:12.5px; margin-top:-8px; margin-bottom:16px;">Every figure below is computed live by the same engine used on the EV Charging Analysis page — nothing here is typed in by hand. Click through to verify.</p>
+          <div id="featured-case"></div>
+        </div>
+
+        <div class="case-grid" id="case-grid"></div>
+      </div>
+
+      <!-- DOCUMENTATION -->
+      <div class="page" id="page-documentation">
+        <div class="page-head">
+          <h1>Documentation</h1>
+          <p>The methodology behind every number in this platform — formulas, assumptions, validation approach, and known limitations.</p>
+        </div>
+        <div id="doc-sections"></div>
+      </div>
+
+      <!-- ABOUT -->
+      <div class="page" id="page-about">
+        <div class="page-head">
+          <h1>About Enernomics</h1>
+          <p>Purpose, scope, and roadmap.</p>
+        </div>
+        <div class="panel">
+          <h3>Purpose</h3>
+          <p style="color:var(--muted); font-size:14px; line-height:1.7;">Enernomics is a decision-support framework that replicates the workflow an energy and infrastructure consultant follows — from project screening and technical assumptions, through financial modeling and risk assessment, to an investment recommendation with stated reasoning and confidence, not just a number.</p>
+        </div>
+        <div class="panel">
+          <h3>Version 1.2 Scope</h3>
+          <p style="color:var(--muted); font-size:14px; line-height:1.7;">Two domains are built deep rather than broad: EV charging infrastructure investment, and renewable energy procurement under India's Green Energy Open Access framework (Captive / Group Captive / Third-Party comparison). Around both, this version adds a project screening questionnaire (feeding directly into risk scores), an option comparison view for the EV domain, one-at-a-time tornado sensitivity analysis, per-input source citations, and PDF executive report export. The architecture was designed specifically so a second domain and these cross-cutting features could be added without restructuring the platform.</p>
+        </div>
+        <div class="panel">
+          <h3>Deliberately Not Built — and Why</h3>
+          <p style="color:var(--muted); font-size:14px; line-height:1.7;">These were considered and explicitly left out, not overlooked:</p>
+          <ul style="color:var(--muted); font-size:14px; line-height:1.9;">
+            <li><strong>Monte Carlo / probabilistic simulation.</strong> Doing this honestly requires choosing and defending probability distributions and correlation structure between risk factors — a materially different (and much deeper) analytical claim than the deterministic scenario analysis this platform actually does. Rather than add a shallow, hard-to-defend version, V1.2 keeps Base/Optimistic/Pessimistic scenarios and the tornado chart as the tools for reasoning about uncertainty.</li>
+            <li><strong>GIS / location suitability scoring.</strong> Doing this honestly requires real spatial data and defensible siting criteria and weights — neither of which this platform has. Site selection stays a qualitative input (via Project Screening) rather than a manufactured spatial score.</li>
+          </ul>
+        </div>
+        <div class="panel">
+          <h3>Roadmap (Not Built Yet)</h3>
+          <ul style="color:var(--muted); font-size:14px; line-height:1.9;">
+            <li>Additional domains: rooftop/utility solar sizing, battery storage sizing</li>
+            <li>Downloadable Excel assumptions workbook</li>
+            <li>Editable risk category weights (currently equal-weighted)</li>
+            <li>Full state-by-state CSS and banking-rule database (currently 4 states + generic fallback)</li>
+          </ul>
+        </div>
+        <div class="about-disclaimer">
+          This platform was developed as an independent analytical framework to demonstrate structured decision-support methodologies commonly used in energy and infrastructure consulting. It is intended for educational and portfolio purposes and does not represent any commercial consulting product or real company.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+/* =========================================================
+   ENERNOMICS — CORE FINANCE & DECISION ENGINE
+   ========================================================= */
+
+const state = {
+  inputs: {
+    numChargers: 25,
+    capexPerCharger: 500000,
+    gridUpgradeCost: 3500000,
+    opexPctOfCapex: 6,
+    tariffBuy: 8,
+    serviceCharge: 13,
+    utilizationPct: 35,
+    avgSessionKwh: 25,
+    sessionsPerDayPerCharger: 6,
+    projectLifeYears: 15,
+    escalationPct: 4,
+    capexOverrunPct: 0,
+    discountRatePct: 12,
+    hurdleRatePct: 15,
+  },
+  risk: { technical: 2, financial: 2, market: 3, operational: 3, regulatory: 4, environmental: 1 },
+  scenario: 'base',
+  charts: {},
+  oaInputs: {
+    connectedLoadKW: 500,
+    annualConsumptionKwh: 3000000,
+    gridTariff: 9.5,
+    ppaTariff: 3.4,
+    wheelingCharge: 1.1,
+    bankingChargePct: 8,
+    projectCapitalCost: 45000000,
+    contractTermYears: 15,
+    state: 'maharashtra',
+  },
+  screening: { grid: 'partial', land: 'negotiating', transformer: 'upgrade', permits: 'in_progress', utilization: 'medium' },
+  options: { configs: [15, 25, 40] },
+};
+
+/* ---- Regulatory reference data (Green Energy Open Access Rules, 2022) ----
+   CSS = Cross-Subsidy Surcharge, applies only to Third-Party Open Access.
+   Captive and Group Captive are exempt from CSS in these states, per the
+   comparison table in Documentation. Figures are FY25-26 illustrative
+   reference points, not live regulatory data — verify against the current
+   state tariff order before using in a real decision. */
+const STATE_CSS = {
+  maharashtra: { label: 'Maharashtra', cssThirdParty: 2.11 },
+  karnataka:   { label: 'Karnataka',   cssThirdParty: 1.89 },
+  tamilnadu:   { label: 'Tamil Nadu',  cssThirdParty: 1.65 },
+  gujarat:     { label: 'Gujarat',     cssThirdParty: 1.40 },
+  other:       { label: 'Other / Generic', cssThirdParty: 1.75 },
+};
+const MIN_LOAD_TPOA_KW = 100; // Minimum connected load for green energy open access, GOA Rules 2022
+const CAPTIVE_EQUITY_PCT = 26; // Minimum equity stake required under captive / group captive rules
+const CAPTIVE_CONSUMPTION_PCT = 51; // Minimum self-consumption requirement
+
+const FIELD_META = [
+  { key: 'numChargers', label: 'Number of Chargers', unit: 'count', min:1, max:200, step:1, source:'Project-specific — editable' },
+  { key: 'capexPerCharger', label: 'CAPEX per Charger', unit: '₹', min:50000, max:3000000, step:10000, source:'Illustrative — based on typical DC fast-charger + installation cost ranges' },
+  { key: 'gridUpgradeCost', label: 'Grid / Transformer Upgrade', unit: '₹', min:0, max:20000000, step:100000, source:'Illustrative — verify with local DISCOM feasibility study' },
+  { key: 'opexPctOfCapex', label: 'Annual OPEX (% of CAPEX)', unit: '%', min:1, max:20, step:0.5, source:'Illustrative — common industry rule-of-thumb range' },
+  { key: 'tariffBuy', label: 'Grid Purchase Tariff', unit: '₹/kWh', min:2, max:15, step:0.1, source:'State DISCOM commercial/industrial tariff order — verify current rate' },
+  { key: 'serviceCharge', label: 'CPO Service Charge', unit: '₹/kWh', min:5, max:20, step:0.1, source:'Ministry of Power CPO service-charge ceiling notification' },
+  { key: 'utilizationPct', label: 'Charger Utilization', unit: '%', min:5, max:90, step:1, source:'Project-specific — editable; benchmark against comparable sites' },
+  { key: 'avgSessionKwh', label: 'Avg. Energy per Session', unit: 'kWh', min:5, max:80, step:1, source:'Illustrative — typical passenger EV session size' },
+  { key: 'sessionsPerDayPerCharger', label: 'Sessions / Charger / Day', unit: 'count', min:1, max:20, step:1, source:'Project-specific — editable' },
+  { key: 'projectLifeYears', label: 'Project Life', unit: 'years', min:5, max:25, step:1, source:'Standard charging-hardware useful life assumption' },
+  { key: 'escalationPct', label: 'Annual Tariff Escalation', unit: '%', min:0, max:10, step:0.5, source:'Illustrative — approximate historical industrial tariff escalation' },
+  { key: 'capexOverrunPct', label: 'CAPEX Overrun Contingency', unit: '%', min:0, max:30, step:1, source:'User contingency assumption' },
+  { key: 'discountRatePct', label: 'Discount Rate', unit: '%', min:5, max:20, step:0.5, source:'Project WACC or investor hurdle assumption' },
+  { key: 'hurdleRatePct', label: 'Hurdle Rate (IRR target)', unit: '%', min:5, max:25, step:0.5, source:'Investor/organization-specific target' },
+];
+
+const SCENARIOS = {
+  base:        { label: 'Base',        sub: 'Current assumptions',           utilMult: 1.00, escDelta: 0,  capexMult: 1.00 },
+  optimistic:  { label: 'Optimistic',  sub: '+30% utilization, lower CAPEX', utilMult: 1.30, escDelta: 1,  capexMult: 0.90 },
+  pessimistic: { label: 'Pessimistic', sub: '-30% utilization, CAPEX overrun', utilMult: 0.70, escDelta: -1, capexMult: 1.15 },
+};
+
+function buildCashFlows(inputs) {
+  const totalCapex = inputs.numChargers * inputs.capexPerCharger * (1 + inputs.capexOverrunPct / 100) + inputs.gridUpgradeCost;
+  const annualOpexBase = totalCapex * (inputs.opexPctOfCapex / 100);
+  const dailyKwhPerCharger = inputs.avgSessionKwh * inputs.sessionsPerDayPerCharger * (inputs.utilizationPct / 100);
+  const annualKwhYear1 = dailyKwhPerCharger * inputs.numChargers * 365;
+
+  const cashFlows = [-totalCapex];
+  const rows = [];
+  for (let y = 1; y <= inputs.projectLifeYears; y++) {
+    const escalation = Math.pow(1 + inputs.escalationPct / 100, y - 1);
+    const annualKwh = annualKwhYear1 * escalation;
+    const revenue = annualKwh * (inputs.serviceCharge * escalation);
+    const energyCost = annualKwh * (inputs.tariffBuy * escalation);
+    const opex = annualOpexBase * escalation;
+    const net = revenue - energyCost - opex;
+    cashFlows.push(net);
+    rows.push({ year: y, revenue, energyCost, opex, net });
+  }
+  return { cashFlows, totalCapex, annualKwhYear1, rows };
+}
+
+function npv(rate, cashFlows) {
+  return cashFlows.reduce((sum, cf, t) => sum + cf / Math.pow(1 + rate, t), 0);
+}
+
+function irr(cashFlows, lo = -0.9, hi = 3.0, tol = 1e-6, maxIter = 300) {
+  let low = lo, high = hi;
+  let fLow = npv(low, cashFlows), fHigh = npv(high, cashFlows);
+  if (fLow * fHigh > 0) return null;
+  for (let i = 0; i < maxIter; i++) {
+    const mid = (low + high) / 2;
+    const fMid = npv(mid, cashFlows);
+    if (Math.abs(fMid) < tol) return mid;
+    if (fLow * fMid < 0) { high = mid; fHigh = fMid; } else { low = mid; fLow = fMid; }
+  }
+  return (low + high) / 2;
+}
+
+function simplePayback(cashFlows) {
+  let cum = cashFlows[0];
+  for (let y = 1; y < cashFlows.length; y++) {
+    const prev = cum; cum += cashFlows[y];
+    if (cum >= 0) return y - 1 + (-prev / cashFlows[y]);
+  }
+  return null;
+}
+
+function effectiveInputs(scenarioKey) {
+  const s = SCENARIOS[scenarioKey];
+  const base = state.inputs;
+  return {
+    ...base,
+    utilizationPct: Math.min(95, base.utilizationPct * s.utilMult),
+    escalationPct: Math.max(0, base.escalationPct + s.escDelta),
+    capexOverrunPct: base.capexOverrunPct + (s.capexMult - 1) * 100,
+  };
+}
+
+/* =========================================================
+   OPEN ACCESS / RENEWABLE PROCUREMENT ENGINE
+   ========================================================= */
+const OA_FIELD_META = [
+  { key: 'connectedLoadKW', label: 'Connected Load', unit: 'kW', min: 10, max: 20000, step: 10, source:'Project sanctioned load — from electricity connection agreement' },
+  { key: 'annualConsumptionKwh', label: 'Annual Consumption', unit: 'kWh/yr', min: 10000, max: 200000000, step: 10000, source:'From past 12 months of electricity bills' },
+  { key: 'gridTariff', label: 'Current Grid Tariff', unit: '₹/kWh', min: 4, max: 18, step: 0.1, source:'State DISCOM commercial/industrial tariff order' },
+  { key: 'ppaTariff', label: 'Renewable PPA Tariff', unit: '₹/kWh', min: 1.5, max: 8, step: 0.1, source:'Illustrative — based on recent solar/wind PPA tariff ranges; verify with developer quote' },
+  { key: 'wheelingCharge', label: 'Wheeling & Transmission Charge', unit: '₹/kWh', min: 0, max: 4, step: 0.05, source:'State open access regulations — varies by state' },
+  { key: 'bankingChargePct', label: 'Banking Charge (in-kind)', unit: '%', min: 0, max: 20, step: 0.5, source:'State Green Energy Open Access regulations' },
+  { key: 'projectCapitalCost', label: 'Est. Project Capital Cost', unit: '₹', min: 1000000, max: 500000000, step: 500000, source:'Illustrative — verify with EPC/developer quote' },
+  { key: 'contractTermYears', label: 'Contract Term', unit: 'years', min: 3, max: 25, step: 1, source:'Typical PPA term range under GOA Rules, 2022' },
+];
+
+function renderOAStateOptions(selected) {
+  return Object.keys(STATE_CSS).map(k => `<option value="${k}" ${k===selected?'selected':''}>${STATE_CSS[k].label}</option>`).join('');
+}
+
+function computeOpenAccess(inputs) {
+  const cssRate = STATE_CSS[inputs.state].cssThirdParty;
+  const bankingCostPerKwh = inputs.gridTariff * (inputs.bankingChargePct / 100); // in-kind charge valued at grid tariff
+
+  const models = {
+    captive: {
+      label: 'Captive',
+      landedCost: inputs.ppaTariff + inputs.wheelingCharge + bankingCostPerKwh,
+      capitalRequired: inputs.projectCapitalCost * (CAPTIVE_EQUITY_PCT / 100),
+      eligible: true, // no minimum load threshold
+      eligibilityNote: 'No minimum load threshold applies.',
+    },
+    groupCaptive: {
+      label: 'Group Captive',
+      landedCost: inputs.ppaTariff + inputs.wheelingCharge + bankingCostPerKwh,
+      capitalRequired: inputs.projectCapitalCost * (CAPTIVE_EQUITY_PCT / 100), // shared across consortium, shown as total stake
+      eligible: true,
+      eligibilityNote: 'No minimum load threshold; capital stake shown is the total consortium requirement, shared proportionally.',
+    },
+    thirdParty: {
+      label: 'Third-Party Open Access',
+      landedCost: inputs.ppaTariff + inputs.wheelingCharge + cssRate + bankingCostPerKwh,
+      capitalRequired: 0,
+      eligible: inputs.connectedLoadKW >= MIN_LOAD_TPOA_KW,
+      eligibilityNote: inputs.connectedLoadKW >= MIN_LOAD_TPOA_KW
+        ? `Meets the ${MIN_LOAD_TPOA_KW} kW minimum load threshold.`
+        : `Below the ${MIN_LOAD_TPOA_KW} kW minimum load threshold for green energy open access — not eligible as configured.`,
+    },
+  };
+
+  Object.keys(models).forEach(k => {
+    const m = models[k];
+    m.annualSavingsPerUnit = inputs.gridTariff - m.landedCost;
+    m.annualSavings = m.annualSavingsPerUnit * inputs.annualConsumptionKwh;
+    m.simplePaybackYears = m.capitalRequired > 0 && m.annualSavings > 0 ? m.capitalRequired / m.annualSavings : (m.capitalRequired === 0 ? 0 : null);
+  });
+
+  const eligibleModels = Object.entries(models).filter(([, m]) => m.eligible);
+  let recommendedKey = null;
+  if (eligibleModels.length > 0) {
+    recommendedKey = eligibleModels.reduce((best, cur) => cur[1].annualSavings > best[1].annualSavings ? cur : best)[0];
+  }
+
+  return { models, cssRate, bankingCostPerKwh, recommendedKey };
+}
+
+/* =========================================================
+   PROJECT SCREENING ENGINE
+   ========================================================= */
+const SCREENING_QUESTIONS = [
+  { key: 'grid', label: 'Grid connection availability', mapsToRisk: null, options: [
+      { value: 'available', label: 'Available at required capacity', score: 100 },
+      { value: 'partial', label: 'Available, but needs upgrade', score: 50 },
+      { value: 'unavailable', label: 'Not currently available', score: 0 },
+  ]},
+  { key: 'land', label: 'Land / site control', mapsToRisk: null, options: [
+      { value: 'secured', label: 'Owned or long-term lease secured', score: 100 },
+      { value: 'negotiating', label: 'In negotiation', score: 50 },
+      { value: 'not_secured', label: 'Not secured', score: 0 },
+  ]},
+  { key: 'transformer', label: 'Transformer / grid infrastructure capacity', mapsToRisk: 'technical', options: [
+      { value: 'sufficient', label: 'Sufficient for planned load', score: 100 },
+      { value: 'upgrade', label: 'Upgrade needed, but feasible', score: 60 },
+      { value: 'insufficient', label: 'Insufficient or not yet assessed', score: 20 },
+  ]},
+  { key: 'permits', label: 'Permits & regulatory approvals', mapsToRisk: 'regulatory', options: [
+      { value: 'obtained', label: 'Obtained', score: 100 },
+      { value: 'in_progress', label: 'In progress', score: 50 },
+      { value: 'not_started', label: 'Not started', score: 10 },
+  ]},
+  { key: 'utilization', label: 'Utilization estimate confidence', mapsToRisk: 'operational', options: [
+      { value: 'high', label: 'High — based on comparable site data', score: 100 },
+      { value: 'medium', label: 'Medium — estimated from assumptions', score: 60 },
+      { value: 'low', label: 'Low — speculative', score: 20 },
+  ]},
+];
+
+function computeScreening() {
+  let total = 0;
+  const breakdown = [];
+  const riskSuggestions = {};
+  SCREENING_QUESTIONS.forEach(q => {
+    const selected = q.options.find(o => o.value === state.screening[q.key]);
+    total += selected.score;
+    breakdown.push({ label: q.label, selectedLabel: selected.label, score: selected.score });
+    if (q.mapsToRisk) {
+      riskSuggestions[q.mapsToRisk] = selected.score >= 80 ? 1 : (selected.score >= 50 ? 3 : 5);
+    }
+  });
+  const avg = total / SCREENING_QUESTIONS.length;
+  const band = avg >= 80 ? 'Ready' : (avg >= 50 ? 'Conditional' : 'Not Ready');
+  return { avg, band, breakdown, riskSuggestions };
+}
+
+/* =========================================================
+   OPTION COMPARISON ENGINE (EV domain)
+   ========================================================= */
+function computeOptionsComparison() {
+  return state.options.configs.map(numChargers => {
+    const inputs = { ...state.inputs, numChargers };
+    const { cashFlows, totalCapex } = buildCashFlows(inputs);
+    const npvVal = npv(inputs.discountRatePct / 100, cashFlows);
+    const irrVal = irr(cashFlows);
+    const payback = simplePayback(cashFlows);
+    const reco = computeRecommendation(npvVal, irrVal, overallRiskScore(), inputs.hurdleRatePct);
+    return { numChargers, totalCapex, npvVal, irrVal, payback, reco };
+  });
+}
+
+/* =========================================================
+   TORNADO SENSITIVITY ENGINE
+   ========================================================= */
+function computeTornadoEV() {
+  const base = state.inputs;
+  const vars = [
+    { key: 'utilizationPct', label: 'Utilization', type: 'pct20' },
+    { key: 'capexPerCharger', label: 'CAPEX per Charger', type: 'pct20' },
+    { key: 'tariffBuy', label: 'Grid Purchase Tariff', type: 'pct20' },
+    { key: 'serviceCharge', label: 'CPO Service Charge', type: 'pct20' },
+    { key: 'gridUpgradeCost', label: 'Grid Upgrade Cost', type: 'pct20' },
+    { key: 'escalationPct', label: 'Tariff Escalation (±2pt)', type: 'abs2' },
+  ];
+  const irrAt = (val, key) => {
+    const inputs = { ...base, [key]: val };
+    const { cashFlows } = buildCashFlows(inputs);
+    const r = irr(cashFlows);
+    return r === null ? null : r * 100;
+  };
+  const results = vars.map(v => {
+    const lowVal = v.type === 'pct20' ? base[v.key] * 0.8 : Math.max(0, base[v.key] - 2);
+    const highVal = v.type === 'pct20' ? base[v.key] * 1.2 : base[v.key] + 2;
+    const a = irrAt(lowVal, v.key), b = irrAt(highVal, v.key);
+    const validA = a === null ? 0 : a, validB = b === null ? 0 : b;
+    return { label: v.label, lo: Math.min(validA, validB), hi: Math.max(validA, validB), range: Math.abs(validB - validA) };
+  }).sort((a, b) => b.range - a.range);
+  return { results };
+}
+
+function computeTornadoOA() {
+  const base = state.oaInputs;
+  const baseResult = computeOpenAccess(base);
+  const recKey = baseResult.recommendedKey || 'captive';
+  const vars = [
+    { key: 'ppaTariff', label: 'PPA Tariff', type: 'pct20' },
+    { key: 'wheelingCharge', label: 'Wheeling Charge', type: 'pct20' },
+    { key: 'bankingChargePct', label: 'Banking Charge (±2pt)', type: 'abs2' },
+    { key: 'gridTariff', label: 'Grid Tariff', type: 'pct20' },
+  ];
+  const savingsAt = (val, key) => {
+    const inputs = { ...base, [key]: val };
+    const r = computeOpenAccess(inputs);
+    return r.models[recKey].annualSavings / 1e5; // ₹ Lakh
+  };
+  const results = vars.map(v => {
+    const lowVal = v.type === 'pct20' ? base[v.key] * 0.8 : Math.max(0, base[v.key] - 2);
+    const highVal = v.type === 'pct20' ? base[v.key] * 1.2 : base[v.key] + 2;
+    const a = savingsAt(lowVal, v.key), b = savingsAt(highVal, v.key);
+    return { label: v.label, lo: Math.min(a, b), hi: Math.max(a, b), range: Math.abs(b - a) };
+  }).sort((a, b) => b.range - a.range);
+  return { results, recLabel: baseResult.models[recKey].label };
+}
+
+/* =========================================================
+   EXECUTIVE PDF REPORT
+   ========================================================= */
+function generateExecutiveReport(domain) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  let y = 20;
+  doc.setFontSize(16); doc.text('Enernomics — Executive Report', 14, y); y += 8;
+  doc.setFontSize(9); doc.setTextColor(120);
+  doc.text('Generated: ' + new Date().toLocaleDateString('en-IN'), 14, y); y += 10;
+  doc.setTextColor(0);
+
+  if (domain === 'ev') {
+    const result = currentResult(state.scenario);
+    doc.setFontSize(13); doc.text('EV Charging Infrastructure — ' + SCENARIOS[state.scenario].label + ' Scenario', 14, y); y += 9;
+    doc.setFontSize(10);
+    const rows = [
+      ['Total Investment', '₹' + fmtINR(result.totalCapex)],
+      ['IRR', fmtPct(result.irrVal)],
+      ['NPV', '₹' + fmtINR(result.npvVal)],
+      ['Payback', result.payback ? result.payback.toFixed(1) + ' years' : 'Never'],
+      ['Risk Score', result.riskScore.toFixed(1) + ' / 5'],
+      ['Recommendation', result.reco.verdict],
+      ['Confidence', result.reco.confidence + '%'],
+    ];
+    rows.forEach(r => { doc.text(r[0] + ':', 14, y); doc.text(String(r[1]), 90, y); y += 7; });
+    y += 3;
+    doc.setFontSize(11); doc.text('Why this recommendation:', 14, y); y += 7;
+    doc.setFontSize(9);
+    result.reco.reasons.forEach(r => { doc.text((r.pos ? '+ ' : '! ') + r.text, 16, y); y += 6; });
+    y += 6;
+    if (state.charts['chart-cashflow-2']) {
+      doc.setFontSize(10); doc.text('Cash Flow Projection:', 14, y); y += 4;
+      doc.addImage(state.charts['chart-cashflow-2'].toBase64Image(), 'PNG', 14, y, 180, 75);
+      y += 82;
+    }
+  } else {
+    const result = computeOpenAccess(state.oaInputs);
+    doc.setFontSize(13); doc.text('Open Access / Renewable Procurement Analysis', 14, y); y += 9;
+    doc.setFontSize(9);
+    const order = ['captive', 'groupCaptive', 'thirdParty'];
+    order.forEach(k => {
+      const m = result.models[k];
+      const line = `${m.label}: Rs.${m.landedCost.toFixed(2)}/kWh | Savings Rs.${fmtINR(m.annualSavings)}/yr | Capital Rs.${fmtINR(m.capitalRequired)} | ${m.eligible ? 'Eligible' : 'Not Eligible'}`;
+      doc.text(line, 14, y); y += 7;
+    });
+    y += 3;
+    doc.setFontSize(11);
+    doc.text('Recommended: ' + (result.recommendedKey ? result.models[result.recommendedKey].label : 'None eligible'), 14, y); y += 9;
+    if (state.charts['chart-oa-cost']) {
+      doc.setFontSize(10); doc.text('Landed Cost Comparison:', 14, y); y += 4;
+      doc.addImage(state.charts['chart-oa-cost'].toBase64Image(), 'PNG', 14, y, 180, 75);
+      y += 82;
+    }
+  }
+
+  y += 6;
+  doc.setFontSize(8); doc.setTextColor(130);
+  const disclaimer = 'This report was generated by Enernomics, an independent analytical framework built for portfolio and educational purposes. Assumptions shown are editable defaults, not verified figures for any specific real project, and this report is not a substitute for professional financial, engineering, or legal advice.';
+  doc.text(doc.splitTextToSize(disclaimer, 180), 14, y);
+
+  doc.save('enernomics-' + domain + '-report.pdf');
+}
+
+function overallRiskScore() {
+  const r = state.risk;
+  const vals = Object.values(r);
+  return vals.reduce((a, b) => a + b, 0) / vals.length;
+}
+
+function computeRecommendation(npvVal, irrVal, riskScore, hurdleRatePct) {
+  const hurdle = hurdleRatePct / 100;
+  const reasons = [];
+  let verdict, verdictClass;
+
+  const npvPositive = npvVal > 0;
+  const irrMeetsHurdle = irrVal !== null && irrVal >= hurdle;
+  const irrNearHurdle = irrVal !== null && irrVal >= hurdle * 0.85;
+  const riskLow = riskScore <= 2.5;
+  const riskMed = riskScore <= 3.5;
+
+  if (npvPositive) reasons.push({ text: 'Positive NPV', pos: true }); else reasons.push({ text: 'Negative NPV', pos: false });
+  if (irrVal === null) reasons.push({ text: 'No real IRR found in evaluation range', pos: false });
+  else if (irrMeetsHurdle) reasons.push({ text: `IRR (${(irrVal*100).toFixed(1)}%) meets or exceeds hurdle rate`, pos: true });
+  else if (irrNearHurdle) reasons.push({ text: `IRR (${(irrVal*100).toFixed(1)}%) is close to, but below, hurdle rate`, pos: false });
+  else reasons.push({ text: `IRR (${(irrVal*100).toFixed(1)}%) is well below hurdle rate`, pos: false });
+
+  if (riskLow) reasons.push({ text: 'Overall risk score is low', pos: true });
+  else if (riskMed) reasons.push({ text: 'Overall risk score is moderate', pos: false });
+  else reasons.push({ text: 'Overall risk score is high', pos: false });
+
+  if (npvPositive && irrMeetsHurdle && riskLow) { verdict = 'Proceed'; verdictClass = 'proceed'; }
+  else if (npvPositive && irrNearHurdle && riskMed) { verdict = 'Proceed with Conditions'; verdictClass = 'conditions'; }
+  else if (npvPositive) { verdict = 'Further Study Required'; verdictClass = 'study'; }
+  else { verdict = 'Do Not Proceed'; verdictClass = 'no'; }
+
+  let confidence = 50 + ((irrVal ?? -hurdle) - hurdle) * 100 * 1.4 - (riskScore - 3) * 9;
+  confidence = Math.max(5, Math.min(96, Math.round(confidence)));
+
+  return { verdict, verdictClass, reasons, confidence };
+}
+
+/* =========================================================
+   RENDERING
+   ========================================================= */
+
+function fmtINR(n) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e7) return (n / 1e7).toFixed(2) + ' Cr';
+  if (abs >= 1e5) return (n / 1e5).toFixed(2) + ' L';
+  return Math.round(n).toLocaleString('en-IN');
+}
+function fmtPct(v) { return v === null ? 'n/a' : (v * 100).toFixed(1) + '%'; }
+
+function currentResult(scenarioKey) {
+  const inputs = effectiveInputs(scenarioKey || state.scenario);
+  const { cashFlows, totalCapex, rows } = buildCashFlows(inputs);
+  const npvVal = npv(inputs.discountRatePct / 100, cashFlows);
+  const irrVal = irr(cashFlows);
+  const payback = simplePayback(cashFlows);
+  const riskScore = overallRiskScore();
+  const reco = computeRecommendation(npvVal, irrVal, riskScore, inputs.hurdleRatePct);
+  return { inputs, cashFlows, totalCapex, rows, npvVal, irrVal, payback, riskScore, reco };
+}
+
+function switchPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + pageId).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === pageId));
+  renderAll();
+}
+function showView(view) {
+  document.getElementById('view-landing').style.display = view === 'landing' ? 'block' : 'none';
+  document.getElementById('view-platform').style.display = view === 'platform' ? 'block' : 'none';
+  if (view === 'platform') renderAll();
+}
+
+function investmentGrade(confidence) {
+  // Directly derived from the confidence score already computed in computeRecommendation —
+  // not a separate model. Thresholds documented in Documentation → Recommendation Logic.
+  if (confidence >= 75) return { grade: 'A', cls: 'good' };
+  if (confidence >= 55) return { grade: 'B', cls: 'good' };
+  if (confidence >= 35) return { grade: 'C', cls: 'warn' };
+  return { grade: 'D', cls: 'bad' };
+}
+
+function renderKPIs(result) {
+  const grid = document.getElementById('kpi-grid');
+  const g = investmentGrade(result.reco.confidence);
+  const cards = [
+    { label: 'Total Investment', value: '₹' + fmtINR(result.totalCapex), cls: '' },
+    { label: 'IRR', value: fmtPct(result.irrVal), cls: result.irrVal !== null && result.irrVal >= result.inputs.hurdleRatePct/100 ? 'good' : 'warn' },
+    { label: 'NPV', value: '₹' + fmtINR(result.npvVal), cls: result.npvVal > 0 ? 'good' : 'bad' },
+    { label: 'Payback', value: result.payback ? result.payback.toFixed(1) + ' yrs' : 'Never', cls: result.payback ? '' : 'bad' },
+    { label: 'Risk Score', value: result.riskScore.toFixed(1) + '/5', cls: result.riskScore <= 2.5 ? 'good' : (result.riskScore <= 3.5 ? 'warn' : 'bad') },
+    { label: 'Investment Grade', value: g.grade, cls: g.cls },
+    { label: 'Recommendation', value: result.reco.verdict, cls: result.reco.verdictClass === 'proceed' ? 'good' : (result.reco.verdictClass === 'no' ? 'bad' : 'warn') },
+  ];
+  grid.innerHTML = cards.map(c => `<div class="kpi-card"><div class="kpi-label">${c.label}</div><div class="kpi-value mono ${c.cls}">${c.value}</div></div>`).join('');
+}
+
+function renderRecoBox(containerId, result) {
+  const el = document.getElementById(containerId);
+  const posReasons = result.reco.reasons.filter(r => r.pos).map(r => `<li class="pos">${r.text}</li>`).join('');
+  const negReasons = result.reco.reasons.filter(r => !r.pos).map(r => `<li class="neg">${r.text}</li>`).join('');
+  el.innerHTML = `
+    <div class="reco-box">
+      <div class="reco-top">
+        <div class="reco-verdict ${result.reco.verdictClass}">${result.reco.verdict}</div>
+        <div class="confidence-badge">Confidence: <strong class="mono">${result.reco.confidence}%</strong></div>
+      </div>
+      <div class="reco-grid">
+        <div>
+          <div class="reco-sub">Why this recommendation</div>
+          <ul class="reco-list">${posReasons}</ul>
+        </div>
+        <div>
+          <div class="reco-sub">Watch items</div>
+          <ul class="reco-list">${negReasons || '<li style="color:var(--muted-2)">None flagged</li>'}</ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderInputForm() {
+  const form = document.getElementById('input-form');
+  form.innerHTML = FIELD_META.map(f => `
+    <div class="field">
+      <label>${f.label} (${f.unit})</label>
+      <input type="number" id="input-${f.key}" value="${state.inputs[f.key]}" min="${f.min}" max="${f.max}" step="${f.step}"
+        oninput="updateInput('${f.key}', this.value)">
+      <div class="hint">Source: ${f.source}</div>
+    </div>
+  `).join('');
+}
+function updateInput(key, value) {
+  state.inputs[key] = parseFloat(value);
+  renderAll();
+}
+
+function renderOAForm() {
+  const form = document.getElementById('oa-input-form');
+  const stateField = `
+    <div class="field">
+      <label>State</label>
+      <select id="oa-input-state" onchange="updateOAInput('state', this.value)">${renderOAStateOptions(state.oaInputs.state)}</select>
+      <div class="hint">Source: State open access regulation — sets the third-party CSS rate used below</div>
+    </div>`;
+  form.innerHTML = stateField + OA_FIELD_META.map(f => `
+    <div class="field">
+      <label>${f.label} (${f.unit})</label>
+      <input type="number" id="oa-input-${f.key}" value="${state.oaInputs[f.key]}" min="${f.min}" max="${f.max}" step="${f.step}"
+        oninput="updateOAInput('${f.key}', this.value)">
+      <div class="hint">Source: ${f.source}</div>
+    </div>
+  `).join('');
+}
+function updateOAInput(key, value) {
+  state.oaInputs[key] = (key === 'state') ? value : parseFloat(value);
+  renderAll();
+}
+
+function renderOAComparisonTable(result) {
+  const table = document.getElementById('oa-comparison-table');
+  const order = ['captive', 'groupCaptive', 'thirdParty'];
+  const rows = order.map(k => {
+    const m = result.models[k];
+    const rec = k === result.recommendedKey ? ' ⭐' : '';
+    return `<tr>
+      <td class="label-cell">${m.label}${rec}</td>
+      <td>₹${m.landedCost.toFixed(2)}</td>
+      <td>₹${fmtINR(m.annualSavings)}</td>
+      <td>₹${fmtINR(m.capitalRequired)}</td>
+      <td>${m.simplePaybackYears === null ? 'n/a' : (m.simplePaybackYears === 0 ? 'Immediate (no capex)' : m.simplePaybackYears.toFixed(1) + ' yrs')}</td>
+      <td>${m.eligible ? '✓ Eligible' : '✗ Not eligible'}</td>
+    </tr>`;
+  }).join('');
+  table.innerHTML = `<thead><tr><th>Model</th><th>Landed Cost</th><th>Annual Savings</th><th>Capital Required</th><th>Payback</th><th>Eligibility</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+function renderOAReco(result, inputs) {
+  const el = document.getElementById('oa-reco');
+  if (!result.recommendedKey) {
+    el.innerHTML = `<div class="reco-box"><div class="reco-verdict no">No Eligible Model</div><p style="color:var(--muted); margin-top:12px;">None of the three procurement models are eligible under current inputs. Check the connected load against the ${MIN_LOAD_TPOA_KW} kW threshold.</p></div>`;
+    return;
+  }
+  const m = result.models[result.recommendedKey];
+  const others = Object.entries(result.models).filter(([k]) => k !== result.recommendedKey);
+  const reasons = [
+    { text: `Lowest landed cost among eligible models: ₹${m.landedCost.toFixed(2)}/kWh vs. current grid tariff of ₹${inputs.gridTariff.toFixed(2)}/kWh`, pos: true },
+    { text: `Estimated annual savings: ₹${fmtINR(m.annualSavings)}`, pos: true },
+  ];
+  if (m.capitalRequired > 0) reasons.push({ text: `Requires ₹${fmtINR(m.capitalRequired)} in equity capital (${CAPTIVE_EQUITY_PCT}% stake), recovered in ~${m.simplePaybackYears?.toFixed(1)} years`, pos: false });
+  else reasons.push({ text: 'No equity capital required — fully OPEX-based', pos: true });
+
+  const watch = others.filter(([,om]) => om.eligible).map(([,om]) => `${om.label} costs ₹${om.landedCost.toFixed(2)}/kWh (${om.landedCost > m.landedCost ? 'higher' : 'lower'})`);
+
+  el.innerHTML = `
+    <div class="reco-box">
+      <div class="reco-top">
+        <div class="reco-verdict proceed">Recommended: ${m.label}</div>
+      </div>
+      <div class="reco-grid">
+        <div>
+          <div class="reco-sub">Why this model</div>
+          <ul class="reco-list">${reasons.map(r => `<li class="${r.pos?'pos':'neg'}">${r.text}</li>`).join('')}</ul>
+        </div>
+        <div>
+          <div class="reco-sub">For comparison</div>
+          <ul class="reco-list">${watch.map(w => `<li style="color:var(--muted-2)">${w}</li>`).join('') || '<li style="color:var(--muted-2)">No other eligible models</li>'}</ul>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderOACostChart(canvasId, result) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  const order = ['captive', 'groupCaptive', 'thirdParty'];
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: order.map(k => result.models[k].label),
+      datasets: [{ label: 'Landed Cost (₹/kWh)', data: order.map(k => +result.models[k].landedCost.toFixed(2)), backgroundColor: order.map(k => k===result.recommendedKey ? '#5C9B79' : '#5A9BAE') }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: theme.color }, grid: { color: theme.grid } }, y: { ticks: { color: theme.color }, grid: { color: theme.grid } } },
+    },
+  });
+}
+
+function renderOASensitivityChart(canvasId, inputs) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  const cssLevels = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5];
+  const savings = cssLevels.map(css => {
+    const bankingCostPerKwh = inputs.gridTariff * (inputs.bankingChargePct / 100);
+    const landedCost = inputs.ppaTariff + inputs.wheelingCharge + css + bankingCostPerKwh;
+    return +((inputs.gridTariff - landedCost) * inputs.annualConsumptionKwh / 1e5).toFixed(2); // in ₹ Lakh
+  });
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: { labels: cssLevels.map(c => '₹' + c.toFixed(2)), datasets: [{ label: 'Annual Savings (₹ Lakh)', data: savings, borderColor: '#C79448', backgroundColor: 'rgba(199,148,72,0.15)', fill: true, tension: 0.3 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'CSS Rate (₹/kWh)', color: theme.color }, ticks: { color: theme.color }, grid: { color: theme.grid } },
+        y: { title: { display: true, text: 'Savings (₹ Lakh/yr)', color: theme.color }, ticks: { color: theme.color }, grid: { color: theme.grid } },
+      },
+    },
+  });
+}
+
+/* ---- Project Screening rendering ---- */
+function renderScreeningForm() {
+  const el = document.getElementById('screening-form');
+  el.innerHTML = SCREENING_QUESTIONS.map(q => `
+    <div class="field" style="margin-bottom:14px;">
+      <label>${q.label}</label>
+      <select id="screening-${q.key}" onchange="updateScreening('${q.key}', this.value)">
+        ${q.options.map(o => `<option value="${o.value}" ${state.screening[q.key]===o.value?'selected':''}>${o.label}</option>`).join('')}
+      </select>
+    </div>
+  `).join('');
+}
+function updateScreening(key, value) {
+  state.screening[key] = value;
+  renderAll();
+}
+function renderScreeningSummary() {
+  const el = document.getElementById('screening-summary');
+  const s = computeScreening();
+  const bandClass = s.band === 'Ready' ? 'good' : (s.band === 'Conditional' ? 'warn' : 'bad');
+  el.innerHTML = `
+    <div class="kpi-grid" style="margin-bottom:18px;">
+      <div class="kpi-card"><div class="kpi-label">Readiness Score</div><div class="kpi-value mono">${s.avg.toFixed(0)} / 100</div></div>
+      <div class="kpi-card"><div class="kpi-label">Status</div><div class="kpi-value mono ${bandClass}">${s.band}</div></div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>Question</th><th>Answer</th><th>Score</th></tr></thead>
+      <tbody>${s.breakdown.map(b => `<tr><td class="label-cell">${b.label}</td><td>${b.selectedLabel}</td><td>${b.score}</td></tr>`).join('')}</tbody>
+    </table>`;
+}
+function applyScreeningToRisk() {
+  const s = computeScreening();
+  Object.keys(s.riskSuggestions).forEach(k => { state.risk[k] = s.riskSuggestions[k]; });
+  switchPage('risk');
+}
+
+/* ---- Option Comparison rendering ---- */
+function renderOptionsForm() {
+  const el = document.getElementById('options-form');
+  el.innerHTML = state.options.configs.map((val, i) => `
+    <div class="field">
+      <label>Option ${i + 1} — Number of Chargers</label>
+      <input type="number" value="${val}" min="1" max="200" step="1" oninput="updateOptionConfig(${i}, this.value)">
+    </div>
+  `).join('');
+}
+function updateOptionConfig(index, value) {
+  state.options.configs[index] = parseInt(value);
+  renderAll();
+}
+function renderOptionsTable(results) {
+  const table = document.getElementById('options-table');
+  const best = results.reduce((b, c) => (c.irrVal ?? -1) > (b.irrVal ?? -1) ? c : b);
+  const rows = results.map(r => `
+    <tr>
+      <td class="label-cell">${r.numChargers} Chargers${r === best ? ' ⭐' : ''}</td>
+      <td>₹${fmtINR(r.totalCapex)}</td>
+      <td>${fmtPct(r.irrVal)}</td>
+      <td>₹${fmtINR(r.npvVal)}</td>
+      <td>${r.payback ? r.payback.toFixed(1) + ' yrs' : 'Never'}</td>
+      <td>${r.reco.verdict}</td>
+    </tr>`).join('');
+  table.innerHTML = `<thead><tr><th>Configuration</th><th>Investment</th><th>IRR</th><th>NPV</th><th>Payback</th><th>Recommendation</th></tr></thead><tbody>${rows}</tbody>`;
+}
+function renderOptionsChart(canvasId, results) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: results.map(r => r.numChargers + ' Chargers'),
+      datasets: [{ label: 'IRR (%)', data: results.map(r => r.irrVal !== null ? +(r.irrVal * 100).toFixed(1) : 0), backgroundColor: '#5A9BAE' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: theme.color }, grid: { color: theme.grid } }, y: { ticks: { color: theme.color }, grid: { color: theme.grid } } },
+    },
+  });
+}
+
+/* ---- Generic tornado chart renderer (floating range bars) ---- */
+function renderTornadoChart(canvasId, data) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.results.map(r => r.label),
+      datasets: [{ label: 'Range', data: data.results.map(r => [r.lo, r.hi]), backgroundColor: '#C79448' }],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { ticks: { color: theme.color }, grid: { color: theme.grid } }, y: { ticks: { color: theme.color }, grid: { display: false } } },
+    },
+  });
+}
+
+function renderRiskSliders() {
+  const el = document.getElementById('risk-sliders');
+  const labels = { technical:'Technical', financial:'Financial', market:'Market', operational:'Operational', regulatory:'Regulatory', environmental:'Environmental' };
+  el.innerHTML = Object.keys(state.risk).map(k => `
+    <div class="risk-row">
+      <label>${labels[k]}</label>
+      <input type="range" min="1" max="5" step="1" value="${state.risk[k]}" oninput="updateRisk('${k}', this.value)">
+      <div class="val mono" id="risk-val-${k}">${state.risk[k]}</div>
+    </div>
+  `).join('');
+}
+function updateRisk(key, value) {
+  state.risk[key] = parseInt(value);
+  document.getElementById('risk-val-' + key).textContent = value;
+  renderAll();
+}
+
+function renderScenarioButtons() {
+  const el = document.getElementById('scenario-buttons');
+  el.innerHTML = Object.keys(SCENARIOS).map(k => {
+    const s = SCENARIOS[k];
+    return `<button class="scenario-btn ${state.scenario===k?'active':''}" onclick="setScenario('${k}')">${s.label}<span class="sub">${s.sub}</span></button>`;
+  }).join('');
+}
+function setScenario(key) { state.scenario = key; renderAll(); }
+
+function renderScenarioTable() {
+  const table = document.getElementById('scenario-table');
+  const rows = Object.keys(SCENARIOS).map(k => {
+    const r = currentResult(k);
+    return `<tr><td class="label-cell">${SCENARIOS[k].label}</td><td>${fmtPct(r.irrVal)}</td><td>₹${fmtINR(r.npvVal)}</td><td>${r.payback ? r.payback.toFixed(1)+' yrs' : 'Never'}</td><td>${r.reco.verdict}</td></tr>`;
+  }).join('');
+  table.innerHTML = `<thead><tr><th>Scenario</th><th>IRR</th><th>NPV</th><th>Payback</th><th>Recommendation</th></tr></thead><tbody>${rows}</tbody>`;
+}
+
+const FEATURED_CASE_INPUTS = {
+  numChargers: 35, capexPerCharger: 480000, gridUpgradeCost: 4200000, opexPctOfCapex: 5.5,
+  tariffBuy: 7, serviceCharge: 13, utilizationPct: 48, avgSessionKwh: 30, sessionsPerDayPerCharger: 7,
+  projectLifeYears: 15, escalationPct: 4, capexOverrunPct: 5, discountRatePct: 12, hurdleRatePct: 15,
+};
+const FEATURED_CASE_RISK_SCORE = 2.7; // fixed, documented — kept independent of whatever the user has set in Risk Assessment, so this case study always reproduces the same story
+
+function renderFeaturedCaseStudy() {
+  const inputs = FEATURED_CASE_INPUTS;
+  const { cashFlows, totalCapex } = buildCashFlows(inputs);
+  const npvVal = npv(inputs.discountRatePct / 100, cashFlows);
+  const irrVal = irr(cashFlows);
+  const payback = simplePayback(cashFlows);
+  const reco = computeRecommendation(npvVal, irrVal, FEATURED_CASE_RISK_SCORE, inputs.hurdleRatePct);
+  const grade = investmentGrade(reco.confidence);
+
+  const el = document.getElementById('featured-case');
+  el.innerHTML = `
+    <div class="narrative-grid">
+      <div class="narrative-block">
+        <div class="n-label">Client</div>
+        <p>Regional logistics fleet operator evaluating a captive charging depot for its delivery fleet.</p>
+      </div>
+      <div class="narrative-block">
+        <div class="n-label">Problem</div>
+        <p>Should the operator build a ${inputs.numChargers}-charger depot, or continue relying on third-party public charging for its fleet?</p>
+      </div>
+      <div class="narrative-block">
+        <div class="n-label">Challenges</div>
+        <ul>
+          <li>High upfront CAPEX (₹${fmtINR(totalCapex)})</li>
+          <li>Utilization depends on fleet scheduling discipline</li>
+          <li>Grid upgrade lead time and cost</li>
+        </ul>
+      </div>
+    </div>
+    <div class="narrative-block" style="margin-bottom:16px;">
+      <div class="n-label">Analysis Performed</div>
+      <p>Full cash flow model over a ${inputs.projectLifeYears}-year horizon; NPV and IRR against a ${inputs.hurdleRatePct}% hurdle rate; risk scored across six categories (fixed at ${FEATURED_CASE_RISK_SCORE}/5 for this illustration — Moderate band per the documented thresholds, reflecting a captive fleet's more predictable utilization than public charging, but not zero-risk); tornado sensitivity to identify which assumption matters most.</p>
+    </div>
+    <div class="narrative-outcome" style="margin-bottom:16px;">
+      <div class="n-stat"><div class="v mono">${fmtPct(irrVal)}</div><div class="l">IRR</div></div>
+      <div class="n-stat"><div class="v mono">₹${fmtINR(npvVal)}</div><div class="l">NPV</div></div>
+      <div class="n-stat"><div class="v mono">${payback ? payback.toFixed(1) + ' yrs' : 'Never'}</div><div class="l">Payback</div></div>
+      <div class="n-stat"><div class="v mono">${grade.grade}</div><div class="l">Investment Grade</div></div>
+    </div>
+    <div class="narrative-block">
+      <div class="n-label">Recommendation</div>
+      <p><strong style="color:var(--text);">${reco.verdict}</strong> — ${reco.reasons.filter(r=>r.pos).map(r=>r.text).join('; ')}.</p>
+    </div>
+    <button class="btn" style="margin-top:14px;" onclick="loadFeaturedCase()">Load into EV Charging Analysis to verify →</button>
+  `;
+}
+function loadFeaturedCase() {
+  state.inputs = { ...FEATURED_CASE_INPUTS };
+  switchPage('investment');
+}
+
+function renderCaseStudies() {
+  const cases = [
+    { domain:'ev', name:'25-Charger DC Hub — Tier-2 City Highway', meta:'EV Charging · 25 chargers · 35% utilization', desc:'Standard highway fast-charging hub with moderate utilization and full grid upgrade cost.', tag:'conditions', tagText:'Proceed with Conditions',
+      inputs:{...state.inputs, numChargers:25, utilizationPct:35, gridUpgradeCost:3500000} },
+    { domain:'ev', name:'60-Charger Fleet Depot — Captive Load', meta:'EV Charging · 60 chargers · 55% utilization', desc:'Dedicated fleet depot with predictable, high utilization and a negotiated lower grid tariff via open access.', tag:'proceed', tagText:'Proceed',
+      inputs:{...state.inputs, numChargers:60, utilizationPct:55, tariffBuy:6, gridUpgradeCost:6000000} },
+    { domain:'ev', name:'10-Charger Mall Parking — Low Utilization', meta:'EV Charging · 10 chargers · 18% utilization', desc:'Small urban destination-charging site with low, unpredictable utilization typical of early-stage sites.', tag:'conditions', tagText:'Further Study Required',
+      inputs:{...state.inputs, numChargers:10, utilizationPct:18, gridUpgradeCost:1200000} },
+    { domain:'oa', name:'500 kW Textile Unit — Maharashtra', meta:'Open Access · 500 kW connected load', desc:'Mid-sized manufacturing unit evaluating renewable procurement above the 100 kW open-access threshold, in a state with a meaningful third-party surcharge.', tag:'proceed', tagText:'See recommended model',
+      inputs:{...state.oaInputs, connectedLoadKW:500, state:'maharashtra'} },
+    { domain:'oa', name:'80 kW Cold Storage Facility — Karnataka', meta:'Open Access · 80 kW connected load', desc:'Small facility sitting just below the third-party open-access load threshold — tests how the eligibility check behaves at the margin.', tag:'conditions', tagText:'Check eligibility',
+      inputs:{...state.oaInputs, connectedLoadKW:80, state:'karnataka'} },
+  ];
+  const grid = document.getElementById('case-grid');
+  grid.innerHTML = cases.map((c,i) => `
+    <div class="case-card">
+      <h4>${c.name}</h4>
+      <div class="meta">${c.meta}</div>
+      <p>${c.desc}</p>
+      <span class="case-tag ${c.tag}">${c.tagText}</span>
+      <button class="btn" style="margin-top:8px;" onclick='loadCase(${i})'>Load into ${c.domain === 'ev' ? 'EV Charging Analysis' : 'Open Access Analysis'}</button>
+    </div>
+  `).join('');
+  window._cases = cases;
+}
+function loadCase(i) {
+  const c = window._cases[i];
+  if (c.domain === 'ev') {
+    state.inputs = { ...c.inputs };
+    switchPage('investment');
+  } else {
+    state.oaInputs = { ...c.inputs };
+    switchPage('openaccess');
+  }
+}
+
+function renderDocumentation() {
+  const sections = [
+    { title: 'Decision Framework', body: `
+      <p>Every project moves through four stages: technical assumptions → financial model → risk score → recommendation. Each stage's output is a direct, visible input to the next — nothing is hidden inside a single black-box score.</p>` },
+    { title: 'Financial Methodology', body: `
+      <p><strong>Net Present Value (NPV):</strong></p>
+      <div class="formula">NPV = Σ [ CF<sub>t</sub> / (1 + r)<sup>t</sup> ]  for t = 0 to n</div>
+      <p>where CF<sub>t</sub> is the net cash flow in year t, r is the discount rate, and n is the project life.</p>
+      <p><strong>Internal Rate of Return (IRR):</strong> the discount rate r at which NPV = 0, found here via bisection search between -90% and 300%.</p>
+      <div class="formula">Find r such that: Σ [ CF<sub>t</sub> / (1 + r)<sup>t</sup> ] = 0</div>
+      <p><strong>Simple Payback:</strong> the year in which cumulative undiscounted cash flow first turns positive, interpolated within that year.</p>
+      <p><strong>Annual Net Cash Flow:</strong></p>
+      <div class="formula">CF = (Energy Delivered × Service Charge) − (Energy Delivered × Grid Tariff) − OPEX</div>
+      <p>Energy delivered, tariffs, and OPEX all escalate annually at the assumed escalation rate from Year 1.</p>` },
+    { title: 'Risk Framework', body: `
+      <p>Six categories — Technical, Financial, Market, Operational, Regulatory, Environmental — are each scored 1 (low risk) to 5 (high risk) by the user. The overall score is a simple unweighted average:</p>
+      <div class="formula">Risk Score = (Technical + Financial + Market + Operational + Regulatory + Environmental) / 6</div>
+      <p>Scores ≤2.5 are treated as Low risk, 2.5–3.5 as Moderate, and &gt;3.5 as High. Category weighting is currently equal by design — see Known Limitations.</p>` },
+    { title: 'Recommendation Logic', body: `
+      <p>The recommendation is rule-based, not a machine-learned or opaque score. It checks three conditions in order:</p>
+      <ul>
+        <li><strong>Proceed</strong> — NPV positive, IRR meets or exceeds the hurdle rate, and risk score is Low.</li>
+        <li><strong>Proceed with Conditions</strong> — NPV positive, IRR is at least 85% of the hurdle rate, and risk score is Low or Moderate.</li>
+        <li><strong>Further Study Required</strong> — NPV positive, but IRR or risk conditions above aren't met.</li>
+        <li><strong>Do Not Proceed</strong> — NPV negative, or no real IRR exists in the evaluated range.</li>
+      </ul>
+      <p><strong>Confidence score</strong> (a transparency indicator, not a probability): </p>
+      <div class="formula">Confidence = 50 + (IRR − Hurdle Rate) × 140 − (Risk Score − 3) × 9, clamped to [5, 96]</div>
+      <p><strong>Investment Grade</strong> (shown on the Dashboard) is a direct relabeling of this same confidence score — not a separate model — into four bands: A (≥75), B (55–74), C (35–54), D (&lt;35). It exists purely as an at-a-glance label for the same number already explained above.</p>` },
+    { title: 'Scenario Logic', body: `
+      <p>Scenarios apply fixed multipliers on top of the current base assumptions:</p>
+      <table class="data-table" style="margin-top:10px;">
+        <thead><tr><th>Scenario</th><th>Utilization</th><th>Escalation</th><th>CAPEX</th></tr></thead>
+        <tbody>
+          <tr><td class="label-cell">Optimistic</td><td>×1.30</td><td>+1 pt</td><td>×0.90</td></tr>
+          <tr><td class="label-cell">Base</td><td>×1.00</td><td>+0</td><td>×1.00</td></tr>
+          <tr><td class="label-cell">Pessimistic</td><td>×0.70</td><td>−1 pt</td><td>×1.15</td></tr>
+        </tbody>
+      </table>` },
+    { title: 'Project Screening Methodology', body: `
+      <p>Five qualitative questions — grid availability, land control, transformer capacity, permits, and utilization confidence — are each scored 0-100 by the selected answer. The overall Readiness Score is the simple average across all five:</p>
+      <div class="formula">Readiness Score = (Grid + Land + Transformer + Permits + Utilization) / 5</div>
+      <p>Scores ≥80 are labeled Ready, 50-79 Conditional, and below 50 Not Ready. Three of the five questions (Transformer → Technical, Permits → Regulatory, Utilization → Operational) map directly to a suggested Risk Assessment score: an answer scoring ≥80 suggests a risk level of 1, 50-79 suggests 3, and below 50 suggests 5. This is a deliberate simplification — three discrete anchor points rather than a continuous mapping — chosen so the logic stays easy to state and defend, at the cost of some granularity.</p>` },
+    { title: 'Option Comparison Methodology', body: `
+      <p>This runs the identical EV Charging financial engine from Section "Financial Methodology" once per configuration, varying only the number of chargers and holding every other assumption (tariffs, utilization rate, escalation, discount rate) fixed at the current EV Charging Analysis values. This isolates the effect of scale on IRR, NPV, and payback — it does not assume utilization or per-charger economics change with scale, which is a real limitation: in practice, larger sites can see utilization economies or diseconomies that this comparison does not model.</p>` },
+    { title: 'Sensitivity Tornado Methodology', body: `
+      <p>Both tornado charts use one-at-a-time (OAT) sensitivity: each input is independently moved to −20% and +20% of its current value (or ±2 percentage points for rate-type inputs already expressed in %), while every other input stays fixed at its current value. The resulting IRR (EV module) or annual savings (Open Access module, for the currently recommended procurement model) is recalculated at both ends, and the bar shows that range. Variables are sorted by range size, largest first — the widest bar is the assumption most worth getting right before committing to a decision.</p>
+      <p>OAT sensitivity does not capture interaction effects between variables (e.g., utilization and tariff moving together) — that is a known simplification, consistent with the decision in Section "About" to use deterministic, defensible methods rather than a probabilistic model that would need to justify a correlation structure.</p>` },
+    { title: 'Open Access / Renewable Procurement Methodology', body: `
+      <p>This module evaluates a proposed renewable power purchase against the three procurement structures permitted under India's Green Energy Open Access (GOA) Rules, 2022, and recommends the lowest-landed-cost model among those the project is actually eligible for.</p>
+      <p><strong>Landed cost per unit:</strong></p>
+      <div class="formula">Captive / Group Captive: Landed Cost = PPA Tariff + Wheeling Charge + Banking Cost</div>
+      <div class="formula">Third-Party Open Access: Landed Cost = PPA Tariff + Wheeling Charge + CSS + Banking Cost</div>
+      <p>where <strong>CSS</strong> (Cross-Subsidy Surcharge) is state-specific and applies only to third-party transactions — Captive and Group Captive are treated as exempt, consistent with most current state orders. <strong>Banking Cost</strong> is approximated as the in-kind banking charge percentage applied to the current grid tariff.</p>
+      <p><strong>Annual savings:</strong></p>
+      <div class="formula">Annual Savings = (Grid Tariff − Landed Cost) × Annual Consumption (kWh)</div>
+      <p><strong>Eligibility:</strong> Captive and Group Captive have no minimum load threshold. Third-Party Open Access requires a connected load of at least ${MIN_LOAD_TPOA_KW} kW under the GOA Rules, 2022.</p>
+      <p><strong>Capital required:</strong> for Captive and Group Captive, modeled as a ${CAPTIVE_EQUITY_PCT}% equity stake in the project's capital cost (the regulatory minimum), against a ${CAPTIVE_CONSUMPTION_PCT}% minimum self-consumption requirement. Third-Party Open Access requires no equity, since the developer owns the asset.</p>
+      <p><strong>Recommendation:</strong> among eligible models, the platform recommends whichever has the highest annual savings — a single, transparent tie-breaker rather than a weighted score, since the two outputs traded off (savings vs. capital required) are shown side by side for the user to judge.</p>
+      <p><strong>State reference data</strong> (CSS rates) are illustrative FY25-26 reference points for Maharashtra, Karnataka, Tamil Nadu, and Gujarat, included to demonstrate how state-level variation changes the recommendation — they should be verified against the current state tariff order before use in a real decision, as these rates and the underlying rules do change (see the regulatory risk note on Tamil Nadu's 2025 rule change, mentioned in the product's originating market research).</p>` },
+    { title: 'Validation Approach', body: `
+      <p>The EV charging financial engine was validated against hand-calculated cash flow, NPV, and IRR values for a fixed test case before being wired into the interface, and cross-checked so that IRR always solves NPV = 0 within numerical tolerance. The Open Access engine's landed-cost formulas were checked against the Captive / Group Captive / Third-Party comparison framework documented above, using the same category structure as the platform's originating market research. Default assumptions in both modules (charger CAPEX, service charge cap, escalation rate, CSS rates, PPA tariffs) are set to plausible illustrative values, not verified figures for any specific real project — they are meant to be edited per actual project data.</p>` },
+    { title: 'Known Limitations (Version 1.2)', body: `
+      <ul>
+        <li>EV module does not model stochastic/probabilistic demand — utilization is a fixed input, not a distribution. This is a deliberate choice; see "Deliberately Not Built" on the About page.</li>
+        <li>Neither module models debt financing, taxes, or depreciation explicitly — cash flows and savings shown are pre-tax, pre-financing.</li>
+        <li>Risk categories (EV module) are equally weighted; the platform does not yet support custom weighting.</li>
+        <li>Open Access module treats Captive and Group Captive as having identical landed cost — in practice, group captive consortiums can face additional transaction complexity not captured here.</li>
+        <li>Two domains are built (EV Charging, Open Access); rooftop/utility solar and battery storage sizing are not yet built. Site selection has no spatial/GIS component — see "Deliberately Not Built."</li>
+        <li>IRR search (EV module) is bounded to −90% to +300%; projects with cash flow patterns producing multiple IRRs are not specially handled.</li>
+        <li>State CSS data covers 4 states plus a generic "Other" fallback — not all 28+ state regulatory regimes are represented.</li>
+        <li>Project Screening's risk-suggestion mapping uses 3 discrete anchor points (1, 3, 5), not a continuous scale — a deliberate simplification for defensibility, noted above.</li>
+        <li>Option Comparison holds utilization and per-charger economics constant across configurations — it does not model scale-driven changes in utilization.</li>
+        <li>Tornado sensitivity is one-at-a-time and does not capture interaction effects between variables.</li>
+        <li>PDF export embeds whichever charts have already rendered in the browser session — visit the relevant analysis page before generating the report so the chart images are available to embed.</li>
+      </ul>` },
+  ];
+  const container = document.getElementById('doc-sections');
+  container.innerHTML = sections.map((s, i) => `
+    <div class="doc-section">
+      <div class="doc-header" onclick="toggleDoc(${i})">${s.title}<span id="doc-chevron-${i}">+</span></div>
+      <div class="doc-body" id="doc-body-${i}">${s.body}</div>
+    </div>
+  `).join('');
+}
+function toggleDoc(i) {
+  const body = document.getElementById('doc-body-' + i);
+  const chevron = document.getElementById('doc-chevron-' + i);
+  const isOpen = body.classList.toggle('open');
+  chevron.textContent = isOpen ? '−' : '+';
+}
+
+/* =========================================================
+   CHARTS
+   ========================================================= */
+function destroyChart(id) { if (state.charts[id]) { state.charts[id].destroy(); delete state.charts[id]; } }
+
+function chartTheme() {
+  return {
+    color: '#8B94A0',
+    grid: '#262D37',
+  };
+}
+
+function renderCashflowChart(canvasId, result) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: result.rows.map(r => 'Y' + r.year),
+      datasets: [{ label: 'Net Cash Flow (₹)', data: result.rows.map(r => Math.round(r.net)), backgroundColor: '#5A9BAE' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: theme.color }, grid: { color: theme.grid } },
+        y: { ticks: { color: theme.color, callback: v => fmtINR(v) }, grid: { color: theme.grid } },
+      },
+    },
+  });
+}
+
+function renderSensitivityChart(canvasId) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  const utilLevels = [10,20,30,40,50,60,70,80];
+  const irrValues = utilLevels.map(u => {
+    const inputs = { ...state.inputs, utilizationPct: u };
+    const { cashFlows } = buildCashFlows(inputs);
+    const v = irr(cashFlows);
+    return v === null ? null : +(v*100).toFixed(1);
+  });
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: utilLevels.map(u => u + '%'),
+      datasets: [{ label: 'IRR (%)', data: irrValues, borderColor: '#C79448', backgroundColor: 'rgba(199,148,72,0.15)', fill: true, tension: 0.3 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { title: { display: true, text: 'Utilization', color: theme.color }, ticks: { color: theme.color }, grid: { color: theme.grid } },
+        y: { title: { display: true, text: 'IRR (%)', color: theme.color }, ticks: { color: theme.color }, grid: { color: theme.grid } },
+      },
+    },
+  });
+}
+
+function renderRiskRadar(canvasId) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  const labels = ['Technical','Financial','Market','Operational','Regulatory','Environmental'];
+  const keys = ['technical','financial','market','operational','regulatory','environmental'];
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels,
+      datasets: [{ label: 'Risk Score', data: keys.map(k => state.risk[k]), borderColor: '#C15D53', backgroundColor: 'rgba(193,93,83,0.2)', pointBackgroundColor:'#C15D53' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { r: { min:0, max:5, ticks:{ color: theme.color, backdropColor:'transparent' }, grid:{ color: theme.grid }, angleLines:{ color: theme.grid }, pointLabels:{ color: theme.color, font:{size:11} } } },
+    },
+  });
+}
+
+function renderRiskMini(canvasId) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  const labels = ['Technical','Financial','Market','Operational','Regulatory','Environmental'];
+  const keys = ['technical','financial','market','operational','regulatory','environmental'];
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: { labels, datasets: [{ label:'Risk', data: keys.map(k=>state.risk[k]), backgroundColor:'#C15D53' }] },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: { x: { min:0, max:5, ticks:{ color: theme.color }, grid:{ color: theme.grid } }, y: { ticks:{ color: theme.color }, grid:{ display:false } } },
+    },
+  });
+}
+
+function renderScenarioChart(canvasId) {
+  destroyChart(canvasId);
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  const theme = chartTheme();
+  const keys = Object.keys(SCENARIOS);
+  const results = keys.map(k => currentResult(k));
+  state.charts[canvasId] = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: keys.map(k => SCENARIOS[k].label),
+      datasets: [
+        { label: 'IRR (%)', data: results.map(r => r.irrVal !== null ? +(r.irrVal*100).toFixed(1) : 0), backgroundColor: '#5A9BAE', yAxisID: 'y' },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { color: theme.color } } },
+      scales: {
+        x: { ticks: { color: theme.color }, grid: { color: theme.grid } },
+        y: { title:{display:true,text:'IRR (%)',color:theme.color}, ticks: { color: theme.color }, grid: { color: theme.grid } },
+      },
+    },
+  });
+}
+
+/* =========================================================
+   MASTER RENDER
+   ========================================================= */
+function renderAll() {
+  const activePage = document.querySelector('.page.active');
+  if (!activePage) return;
+  const pageId = activePage.id.replace('page-', '');
+  const result = currentResult(state.scenario);
+
+  if (pageId === 'dashboard') {
+    renderKPIs(result);
+    renderCashflowChart('chart-cashflow', result);
+    renderRiskMini('chart-risk-mini');
+    renderRecoBox('dashboard-reco', result);
+  }
+  if (pageId === 'screening') {
+    renderScreeningForm();
+    renderScreeningSummary();
+  }
+  if (pageId === 'investment') {
+    renderInputForm();
+    renderCashflowChart('chart-cashflow-2', result);
+    renderSensitivityChart('chart-sensitivity');
+    renderTornadoChart('chart-tornado-ev', computeTornadoEV());
+    renderRecoBox('investment-reco', result);
+  }
+  if (pageId === 'openaccess') {
+    renderOAForm();
+    const oaResult = computeOpenAccess(state.oaInputs);
+    renderOAComparisonTable(oaResult);
+    renderOACostChart('chart-oa-cost', oaResult);
+    renderOASensitivityChart('chart-oa-sensitivity', state.oaInputs);
+    renderTornadoChart('chart-tornado-oa', computeTornadoOA());
+    renderOAReco(oaResult, state.oaInputs);
+  }
+  if (pageId === 'options') {
+    renderOptionsForm();
+    const optResults = computeOptionsComparison();
+    renderOptionsTable(optResults);
+    renderOptionsChart('chart-options', optResults);
+  }
+  if (pageId === 'risk') {
+    renderRiskSliders();
+    renderRiskRadar('chart-risk-radar');
+    document.getElementById('risk-overall-score').textContent = overallRiskScore().toFixed(1) + ' / 5';
+  }
+  if (pageId === 'scenario') {
+    renderScenarioButtons();
+    renderScenarioChart('chart-scenario');
+    renderScenarioTable();
+  }
+  if (pageId === 'cases') {
+    renderFeaturedCaseStudy();
+    renderCaseStudies();
+  }
+  if (pageId === 'documentation') {
+    renderDocumentation();
+  }
+}
+
+// initial boot
+switchPage('dashboard');
+</script>
+</body>
+</html>
