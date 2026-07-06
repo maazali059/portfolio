@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Maaz Ali Mattehalli | Product Analyst & Business Stratergy</title>
+<title>Maaz Ali Mattehalli | Building analytical tools for business investment decisions </title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -135,6 +135,31 @@
   .hero-img-container {
     animation: float 6s ease-in-out infinite;
   }
+
+  /* Section eyebrow tag list ("Areas of Expertise") */
+  .expertise-tag {
+    background: #0a0a0a;
+    border: 1px solid #1f2937;
+    color: #d1d5db;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: border-color 0.3s ease, color 0.3s ease;
+  }
+  .expertise-tag:hover {
+    border-color: #10B981;
+    color: #10B981;
+  }
+
+  .section-tag-label {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #10B981;
+    font-weight: 700;
+  }
 </style>
 </head>
 
@@ -169,18 +194,18 @@
 <header class="min-h-[90vh] flex flex-col justify-center px-6 relative max-w-[1200px] mx-auto pt-24 pb-12">
   <div class="hero-content flex flex-col md:flex-row items-start md:items-center gap-10">
     <div class="flex-1">
-      <p class="text-accent tracking-[0.3em] text-xs font-bold mb-6 uppercase">Business Strategy & Product Analyst</p>
+      <p class="text-accent tracking-[0.3em] text-xs font-bold mb-6 uppercase">Electrical & Electronics Engineer</p>
       <h1 class="text-5xl md:text-7xl mb-2 leading-tight text-white max-w-4xl">
         Maaz Ali <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Mattehalli</span>
       </h1>
       <h2 class="text-xl md:text-2xl text-gray-300 font-['Space_Grotesk'] font-medium mb-6 tracking-wide">
-        B.Tech <span class="text-emerald-400">NIT Goa</span>
+        Energy Infrastructure & Utility Consultant <span class="text-emerald-400">· B.Tech, NIT Goa</span>
       </h2>
       <p class="text-gray-400 text-lg mb-10 leading-relaxed font-light text-left max-w-2xl">
-      I am a Product-Minded Operator who bridges the gap between physical supply chains and scalable software. I specialize in taking chaotic, real-world marketplace problems—from distributed EV charging networks to gig-economy service economics—and translating them into rigid operational frameworks, edge-case specs, and execution roadmaps. I don't just build features; I build systems designed to drive marketplace liquidity, enforce zero-defect quality, and optimize P&L. I care about engineering long-term systemic efficiency rather than applying short-term operational bandaids.
+      I build analytical decision-support systems for energy infrastructure investments. My work combines engineering fundamentals, financial modelling, regulatory analysis, and data-driven evaluation to answer one question: Should this project be built? From EV charging networks and renewable procurement to infrastructure investment appraisal, I develop transparent models that quantify risk, returns, and technical feasibility. 
       </p>
       <div class="flex flex-wrap gap-4 justify-start">
-        <a href="#experience" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105">View Experience</a>
+        <a href="#experience" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105">Explore Case Studies</a>
         <a href="#projects" class="border border-gray-600 hover:border-white text-white font-bold py-3 px-8 rounded-full transition-all">Project Case Studies</a>
       </div>
     </div>
@@ -192,25 +217,19 @@
 
 <section id="capabilities" class="py-24 bg-[#050505]">
   <div class="max-w-[1200px] mx-auto px-6">
-    <h2 class="text-4xl font-bold text-white mb-4">Capabilities</h2>
-    <p class="text-gray-400 mb-12">Where I’m most useful. Most of my work falls into a few patterns. If you see yourself in one of these, we should talk.</p>
-    <div class="grid md:grid-cols-2 gap-8">
-        <div class="glass-panel p-8">
-            <h3 class="text-xl font-bold text-emerald-400 mb-3">Product Strategy & Leadership</h3>
-            <p class="text-sm text-gray-400 leading-relaxed">When you need a fractional product partner to align founders, product, and go-to-market teams, I help clarify the bets, decide where automation or AI actually belongs, and drive tricky products from idea to adoption.</p>
-        </div>
-        <div class="glass-panel p-8">
-            <h3 class="text-xl font-bold text-cyan-400 mb-3">Product UX & Delivery</h3>
-            <p class="text-sm text-gray-400 leading-relaxed">When you have fuzzy product ideas, I define the objects, states, and flows so we can ship a clear first version. From onboarding and customer touchpoints to using vibe-coded and Figma prototypes to test the experience before we commit.</p>
-        </div>
-        <div class="glass-panel p-8">
-            <h3 class="text-xl font-bold text-emerald-400 mb-3">Data & Insights</h3>
-            <p class="text-sm text-gray-400 leading-relaxed">When you have data but no clarity, I shape the metrics, reporting, and AI-assisted analysis to answer what's going on and if it's working for product, growth, support, and leadership.</p>
-        </div>
-        <div class="glass-panel p-8">
-            <h3 class="text-xl font-bold text-cyan-400 mb-3">Workflows & Tools</h3>
-            <p class="text-sm text-gray-400 leading-relaxed">When your teams runs on hacks and scattered tools, I design and refine the underlying workflows and internal tools for ops, support, and success, so the day-to-day work gets done with less friction.</p>
-        </div>
+    <div class="section-tag-label mb-3">Areas of Expertise</div>
+    <h2 class="text-4xl font-bold text-white mb-4">Where I add the most value</h2>
+    <p class="text-gray-400 mb-10 max-w-2xl">A focused set of areas, applied consistently across the projects below.</p>
+    <div class="flex flex-wrap gap-3">
+      <span class="expertise-tag">Energy Markets</span>
+      <span class="expertise-tag">Utility Consulting</span>
+      <span class="expertise-tag">Techno-Economic Modelling</span>
+      <span class="expertise-tag">Infrastructure Strategy</span>
+      <span class="expertise-tag">Regulatory & Policy Analysis</span>
+      <span class="expertise-tag">Financial Modelling (NPV / IRR / DCF)</span>
+      <span class="expertise-tag">Risk Assessment</span>
+      <span class="expertise-tag">Scenario & Sensitivity Analysis</span>
+      <span class="expertise-tag">Stakeholder Engagement</span>
     </div>
   </div>
 </section>
@@ -250,22 +269,22 @@
 
           <div class="mb-8">
               <div class="flex justify-between items-baseline mb-3">
-                  <h4 class="text-sm font-bold text-cyan-400 uppercase tracking-widest">Phase 2: Product Intern</h4>
+                  <h4 class="text-sm font-bold text-cyan-400 uppercase tracking-widest">Phase 2: Utility & Infrastructure Consulting Intern</h4>
                   <span class="text-gray-400 font-mono text-[10px]">Jan 2026 – Present</span>
               </div>
               <ul class="list-disc pl-4 space-y-3 text-sm text-gray-400 leading-relaxed">
                   <li>
-                      <strong class="text-gray-200">Feature Specification & Workflows:</strong> Designing scalable analytical frameworks for the internal product team, aligning complex activity management workflows into clear, actionable technical product feature specifications. 
+                      <strong class="text-gray-200">Infrastructure Planning & Decision Support:</strong> Structuring analytical frameworks for internal utility and infrastructure engagements, translating complex operational and regulatory questions into clear, actionable analysis for client decision-making.
                    </li>
                 <li>
-                    <strong class="text-gray-200">Market Research and Analysis:</strong> Conducting comprehensive market research to identify customer needs, market trends, and competitive analysis. Using these insights to inform product development and strategic decisions.
+                    <strong class="text-gray-200">Market & Regulatory Research:</strong> Conducting market research and regulatory analysis to identify sector trends, policy constraints, and competitive positioning, feeding directly into client-facing recommendations.
 
                   </li>
                   <li>
-                    <strong class="text-gray-200">Stakeholder Management:</strong>  Effectively communicating with stakeholders, including executives, developers, designers, and customers, to gather requirements, provide updates, and ensure alignment with business objectives.
+                    <strong class="text-gray-200">Stakeholder Engagement:</strong> Communicating with stakeholders, including executives, engineers, and government counterparts, to gather requirements, validate assumptions, and align analysis with client objectives.
    </li>
                 <li>
-                    <strong class="text-gray-200">Roadmap Input & Prioritization:</strong>  Contributed research and analysis that informed roadmap prioritization decisions, helping identify which features and improvements would address validated user needs and market demands.
+                    <strong class="text-gray-200">Project Prioritization Input:</strong> Contributed research and analysis that informed engagement prioritization, helping identify which infrastructure interventions addressed validated sector needs.
                   <li>
                       <strong class="text-gray-200">National AI Initiative Research:</strong> Supported and researched, conducted interviews to identify value chain across 4 industry sectors to identify scalable analytical frameworks for legacy MSMEs directly contributing to study on AI adoption commissioned by <strong>MeitY</strong>, officially launched by the <strong>India AI Mission</strong> at the <strong>India AI Summit</strong>.
                   </li>
@@ -287,7 +306,7 @@
                       <strong class="text-gray-200">Project Scope & ROI Assessment </strong> Developed a techno-financial model to define project scope and assess the feasibility and ROI of a new water treatment and delivery system.
                 <li>
               
-                      <strong class="text-gray-200">Strategic Reports </strong> Authored detailed specification documents and technical reports for government stakeholders, translating complex data into actionable product and infrastructure recommendations.  
+                      <strong class="text-gray-200">Strategic Reports </strong> Authored detailed specification documents and technical reports for government stakeholders, translating complex data into actionable infrastructure recommendations.  
                   </li>
                   <li>
                       <strong class="text-gray-200">Stakeholder Engineering Specs:</strong> Actively engaged with international and governmental stakeholders to define high-level technical requirements, ensuring end-to-end data accuracy across public-sector engineering specifications.
@@ -323,7 +342,7 @@
 
           <div class="text-gray-300 space-y-4 max-w-4xl">
               <p class="leading-relaxed text-sm text-gray-400 italic bg-gray-900/50 p-4 rounded border border-gray-800">
-                  <strong>The Origin Story:</strong>What started as a mandatory academic internship evolved into a deep dive into product thinking. I saw a clear disconnect between the available products and the actual market need. I identified a critical issue, asked the right questions, and provided actionable insights, expanding the scope into my B.Tech Major Capstone Project. Through an extended internship, engineered a functional industrial grade hardware MVP that delivered a 75% cost reduction compared to importing similar solutions, proving both affordability and scalability.   
+                  <strong>The Origin Story:</strong>What started as a mandatory academic internship evolved into a deep dive into infrastructure engineering. I saw a clear disconnect between the available products and the actual market need. I identified a critical issue, asked the right questions, and provided actionable insights, expanding the scope into my B.Tech Major Capstone Project. Through an extended internship, engineered a functional industrial grade hardware MVP that delivered a 75% cost reduction compared to importing similar solutions, proving both affordability and scalability.   
             <ul class="list-disc pl-4 space-y-3 text-sm text-gray-400 leading-relaxed">
                   <li>
                       <strong class="text-gray-200">0-to-1 STP Lifecycle:</strong> Spearheaded the end-to-end product lifecycle of an industrial-grade Sewage Treatment Plant (STP) COD-BOD monitoring MVP, configuring raw IoT hardware telemetry lines to achieve zero-lag, live data synchronization with an administrative analytics dashboard enabling scalable deployment in the field.  
@@ -340,7 +359,7 @@
                   <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">IoT Telemetry</span>
                   <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Predictive ML</span>
                   <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Industrial Automation</span>
-                  <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Product Strategy</span>
+                  <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Infrastructure Strategy</span>
               </div>
           </div>
 
@@ -353,108 +372,43 @@
 
 <section id="projects" class="py-24 bg-[#0A0A0A] border-t border-gray-800 relative">
   <div class="max-w-[1200px] mx-auto px-6">
-    <div class="mb-20 text-left reveal">
+    <div class="mb-16 text-left reveal">
       <h2 class="text-4xl md:text-5xl font-bold mb-4 text-white">Project Portfolio</h2>
-      <p class="text-gray-400 text-left">6 distinct analyses covering product strategy, UX teardowns, systems auditing, and hardware MVPs.</p>
+      <p class="text-gray-400 text-left">Energy and infrastructure decision-support work, alongside earlier product strategy case studies.</p>
     </div>
 
-    <div class="space-y-12">
+    <div class="mb-10">
+      <div class="section-tag-label mb-3">Energy & Infrastructure</div>
+      <h3 class="text-2xl font-bold text-white">Techno-Economic Modelling & Feasibility</h3>
+    </div>
 
-      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group hover:border-amber-500" onclick="openModal('tpl-urban-company')">
-        <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-amber-500 font-bold tracking-widest mb-3 uppercase">01 / Marketplace Strategy</div>
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Urban Company: Case Study</h3>
-          <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
-            Analyzing the operational unit economics and gig-worker retention of India's leading home services marketplace. A deep dive into standardizing service delivery through product-led growth and dual-sided trust loops.
-          </p>
-          <div class="mt-auto text-left">
-            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-amber-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
-              <i class="ph ph-cursor-click"></i> Open Case Study
-            </span>
-          </div>
-        </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-bl from-amber-900/10 to-transparent"></div>
-          <div class="text-center relative z-10">
-            <i class="ph ph-wrench text-5xl text-amber-500 mb-4 transition-transform duration-300"></i>
-            <div class="font-mono text-sm text-gray-300">Service Unit Economics</div>
-          </div>
-        </div>
-      </div>
+    <div class="space-y-12 mb-24">
 
-      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-statiq-strategy')">
+      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group hover:border-emerald-500" onclick="window.open('enernomics.html', '_blank')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">02 / Product Strategy</div>
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Statiq EV: Rollout Strategy</h3>
+          <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">Featured / Decision Intelligence Platform</div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Enernomics: Energy Infrastructure Decision Platform</h3>
           <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
-            Built upon the systems audit to develop a 3-phase product recovery roadmap. Focused on UX journey mapping, persona development, and non-software product recommendations (e.g., Session Reconciliation Logic, Data Freshness UI) to scale reliable sessions and stop user churn.
-          </p>
-          <div class="mt-auto text-left">
-            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-blue-500 group-hover:text-white px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
-              <i class="ph ph-cursor-click"></i> Click to view Product Roadmap
-            </span>
-          </div>
-        </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-l border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent"></div>
-          <div class="text-center relative z-10">
-            <i class="ph ph-users-three text-5xl text-blue-500 mb-4 transition-transform duration-300"></i>
-            <div class="font-mono text-sm text-gray-300">UX & Persona Mapping</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group" onclick="openModal('tpl-statiq-audit')">
-        <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">03 / Product Scaling Audit</div>
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Statiq EV Network: Systems Issues</h3>
-          <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
-            Diagnosed severe app churn along high-density tourist corridors. Conducted field testing to prove that churn is driven by probabilistic distributed systems failures (telemetry lags causing "ghost availability" and OCPP hardware handshake drops).
+            A live, interactive decision-support platform for evaluating EV charging and renewable energy procurement investments — full technical assumptions, DCF/NPV/IRR modelling, six-category risk scoring, tornado sensitivity, scenario planning, and a rule-based investment recommendation, built around India's Green Energy Open Access regulations.
           </p>
           <div class="mt-auto text-left">
             <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-emerald-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
-              <i class="ph ph-cursor-click"></i> Click to view Technical Audit
+              <i class="ph ph-arrow-square-out"></i> Launch Live Platform
             </span>
           </div>
         </div>
         <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-bl from-emerald-900/10 to-transparent"></div>
-          <div class="text-center w-full max-w-xs space-y-3 relative z-10">
-             <div class="bg-red-900/20 border border-red-900/50 p-3 rounded text-left transition-transform duration-300 group-hover:translate-x-2">
-               <strong class="text-red-400 text-xs block">Telemetry Mismatch (39%)</strong>
-               <span class="text-[10px] text-gray-400">Chargers marked available were physically occupied.</span>
-             </div>
-             <div class="bg-orange-900/20 border border-orange-900/50 p-3 rounded text-left transition-transform duration-300 group-hover:-translate-x-2 delay-75">
-               <strong class="text-orange-400 text-xs block">Session Drops (16%)</strong>
-               <span class="text-[10px] text-gray-400">Handshake failures trapping vehicles at stations.</span>
-             </div>
-          </div>
-        </div>
-      </div>
- <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group hover:border-violet-500" onclick="openModal('tpl-pm-prd')">
-        <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-violet-500 font-bold tracking-widest mb-3 uppercase">04 / Product Teardown & PRD</div>
-          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Project Management Platforms: PRD</h3>
-          <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
-            A comprehensive teardown of industry leaders Asana and Jira. Identifying user experience gaps, workflow bottlenecks, and proposing a feature specification (PRD) built from scratch to optimize team agility.
-          </p>
-          <div class="mt-auto text-left">
-            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-violet-500 group-hover:text-white px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
-              <i class="ph ph-hourglass-high"></i> Coming Soon...!
-            </span>
-          </div>
-        </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-l border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-violet-900/10 to-transparent"></div>
           <div class="text-center relative z-10">
-            <i class="ph ph-kanban text-5xl text-violet-500 mb-4 transition-transform duration-300"></i>
-            <div class="font-mono text-sm text-gray-300">Asana / Jira Feature Spec</div>
+            <i class="ph ph-chart-line-up text-5xl text-emerald-500 mb-4 transition-transform duration-300"></i>
+            <div class="font-mono text-sm text-gray-300">DCF, Risk Scoring & Open Access Analysis</div>
           </div>
         </div>
       </div>
+
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-ev-report')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-cyan-500 font-bold tracking-widest mb-3 uppercase">05 / Infrastructure Strategy</div>
+          <div class="text-xs text-cyan-500 font-bold tracking-widest mb-3 uppercase">Infrastructure Strategy</div>
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">EV Fleet Analysis & Feasibility Report</h3>
           <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
             A comprehensive strategic analysis on public EV charging infrastructure in Goa. Proved that traditional top-down infrastructure deployment fails due to land acquisition costs. Modeled a Hyper-Local Public-Private Partnership (PPP) framework yielding an 18.5% annual ROI.
@@ -476,7 +430,7 @@
 
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group" onclick="openModal('tpl-water-mvp')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">06 / Major B.Tech Project</div>
+          <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">Major B.Tech Project</div>
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Water-Tech Market Disruption MVP</h3>
           <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
             IoT-driven UV Spectroscopy for COD-Based Water Quality Monitoring. Bridged physical hardware with scalable cloud architecture. Addressed the failure of expensive imported sensors in Indian wastewater conditions. Achieved a 10/10 grading for successful industry collaboration.
@@ -492,6 +446,89 @@
           <div class="text-center relative z-10">
             <i class="ph ph-cpu text-5xl text-emerald-500 mb-4 transition-transform duration-300 group-hover:rotate-12"></i>
             <div class="font-mono text-sm text-gray-300">Low-cost prototyping & MVP design.</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="mb-10">
+      <div class="section-tag-label mb-3">Product Strategy</div>
+      <h3 class="text-2xl font-bold text-white">Other Analytical Projects</h3>
+
+      
+    </div>
+
+    <div class="space-y-12">
+
+      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group hover:border-amber-500" onclick="openModal('tpl-urban-company')">
+        <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
+          <div class="text-xs text-amber-500 font-bold tracking-widest mb-3 uppercase">Marketplace Strategy</div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Urban Company: Case Study</h3>
+          <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
+            Analyzing the operational unit economics and gig-worker retention of India's leading home services marketplace. A deep dive into standardizing service delivery through product-led growth and dual-sided trust loops.
+          </p>
+          <div class="mt-auto text-left">
+            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-amber-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
+              <i class="ph ph-cursor-click"></i> Open Case Study
+            </span>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-bl from-amber-900/10 to-transparent"></div>
+          <div class="text-center relative z-10">
+            <i class="ph ph-wrench text-5xl text-amber-500 mb-4 transition-transform duration-300"></i>
+            <div class="font-mono text-sm text-gray-300">Service Unit Economics</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-statiq-strategy')">
+        <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
+          <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">Product Strategy</div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Statiq EV: Rollout Strategy</h3>
+          <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
+            Built upon the systems audit to develop a 3-phase product recovery roadmap. Focused on UX journey mapping, persona development, and non-software product recommendations (e.g., Session Reconciliation Logic, Data Freshness UI) to scale reliable sessions and stop user churn.
+          </p>
+          <div class="mt-auto text-left">
+            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-blue-500 group-hover:text-white px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
+              <i class="ph ph-cursor-click"></i> Click to view Product Roadmap
+            </span>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-l border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent"></div>
+          <div class="text-center relative z-10">
+            <i class="ph ph-users-three text-5xl text-blue-500 mb-4 transition-transform duration-300"></i>
+            <div class="font-mono text-sm text-gray-300">UX & Persona Mapping</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group" onclick="openModal('tpl-statiq-audit')">
+        <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
+          <div class="text-xs text-emerald-500 font-bold tracking-widest mb-3 uppercase">Product Scaling Audit</div>
+          <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Statiq EV Network: Systems Issues</h3>
+          <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
+            Diagnosed severe app churn along high-density tourist corridors. Conducted field testing to prove that churn is driven by probabilistic distributed systems failures (telemetry lags causing "ghost availability" and OCPP hardware handshake drops).
+          </p>
+          <div class="mt-auto text-left">
+            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-emerald-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
+              <i class="ph ph-cursor-click"></i> Click to view Technical Audit
+            </span>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-bl from-emerald-900/10 to-transparent"></div>
+          <div class="text-center w-full max-w-xs space-y-3 relative z-10">
+             <div class="bg-red-900/20 border border-red-900/50 p-3 rounded text-left transition-transform duration-300 group-hover:translate-x-2">
+               <strong class="text-red-400 text-xs block">Telemetry Mismatch (39%)</strong>
+               <span class="text-[10px] text-gray-400">Chargers marked available were physically occupied.</span>
+             </div>
+             <div class="bg-orange-900/20 border border-orange-900/50 p-3 rounded text-left transition-transform duration-300 group-hover:-translate-x-2 delay-75">
+               <strong class="text-orange-400 text-xs block">Session Drops (16%)</strong>
+               <span class="text-[10px] text-gray-400">Handshake failures trapping vehicles at stations.</span>
+             </div>
           </div>
         </div>
       </div>
@@ -606,22 +643,22 @@
 <section id="working-together" class="py-24 bg-[#0A0A0A] border-t border-gray-800">
   <div class="max-w-[1200px] mx-auto px-6">
     <h2 class="text-4xl font-bold text-white mb-4">Working Together</h2>
-    <p class="text-gray-400 mb-12">How I usually plug in. Every team and product is different, but most projects follow a simple approach.</p>
+    <p class="text-gray-400 mb-12">How I usually plug in. Every engagement is different, but most projects follow a simple approach.</p>
     <div class="grid md:grid-cols-3 gap-8">
         <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
             <div class="text-emerald-500 font-bold mb-2 text-sm">01.</div>
-            <h3 class="text-lg font-bold text-white mb-2">Start where it hurts</h3>
-            <p class="text-sm text-gray-400">It starts with what hurts and what you are trying to achieve. You walk me through the product, site, or tool, and I talk with a few users to map the current flows and constraints.</p>
+            <h3 class="text-lg font-bold text-white mb-2">Start with the fundamentals</h3>
+            <p class="text-sm text-gray-400">It starts with the technical and regulatory realities of the project. I map the assumptions, constraints, and stakeholders before touching a model.</p>
         </div>
         <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
             <div class="text-emerald-500 font-bold mb-2 text-sm">02.</div>
-            <h3 class="text-lg font-bold text-white mb-2">Shape and prototype</h3>
-            <p class="text-sm text-gray-400">I turn understanding into clear structures. User flows, interface designs, system diagrams, or prototypes, always at the right level of fidelity so we can make decisions together.</p>
+            <h3 class="text-lg font-bold text-white mb-2">Model and stress-test</h3>
+            <p class="text-sm text-gray-400">I turn assumptions into a transparent financial model — cash flows, NPV/IRR, risk scoring, and scenario and sensitivity analysis — so decisions are explainable, not a black box.</p>
         </div>
         <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
             <div class="text-emerald-500 font-bold mb-2 text-sm">03.</div>
-            <h3 class="text-lg font-bold text-white mb-2">Build, instrument, refine</h3>
-            <p class="text-sm text-gray-400">I stay involved through the first versions. Working with your team to get it built, adding measurement to learn, and refining based on real usage.</p>
+            <h3 class="text-lg font-bold text-white mb-2">Recommend and refine</h3>
+            <p class="text-sm text-gray-400">I deliver a clear, defensible recommendation with stated confidence, and stay involved to refine it as real data and regulations evolve.</p>
         </div>
     </div>
   </div>
@@ -630,8 +667,15 @@
 <section id="contact" class="py-24 px-6 border-t border-gray-800 bg-[#050505]">
   <div class="max-w-[1200px] mx-auto text-left reveal">
     <h2 class="text-4xl font-bold mb-6 text-white">Contact Details</h2>
-    <div class="text-gray-400 text-base mb-10 max-w-xl text-left">
-      Available to discuss product analysis, product thinking, MVP development, and cost‑effective engineering for real‑world impact.
+    <div class="text-gray-400 text-base mb-6 max-w-xl text-left">
+      Interested in opportunities in:
+    </div>
+    <div class="flex flex-wrap gap-3 mb-10">
+      <span class="expertise-tag">Energy Markets</span>
+      <span class="expertise-tag">Power Systems</span>
+      <span class="expertise-tag">Utility Consulting</span>
+      <span class="expertise-tag">Energy Transition</span>
+      <span class="expertise-tag">Infrastructure Strategy</span>
     </div>
     
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 text-left">
@@ -681,34 +725,6 @@
   </div>
 </div>
 
-<template id="tpl-pm-prd">
-  <div class="bg-[#0A0A0A] rounded-xl text-center overflow-hidden p-6 md:p-16 max-w-[800px] mx-auto border border-gray-800 text-gray-300 shadow-2xl relative">
-    <div class="absolute inset-0 bg-gradient-to-b from-violet-900/10 to-transparent pointer-events-none"></div>
-    <div class="modal-reveal relative z-10 flex flex-col items-center">
-      <div class="w-24 h-24 bg-violet-500/10 border border-violet-500/30 rounded-full flex items-center justify-center mb-8 shadow-[0_0_30px_rgba(139,92,246,0.2)]">
-        <i class="ph ph-kanban text-5xl text-violet-500"></i>
-      </div>
-      <div class="text-xs text-violet-500 font-bold tracking-widest uppercase mb-4">Project Under Development</div>
-      <h1 class="text-3xl md:text-5xl font-bold text-white mb-6 font-['Space_Grotesk'] leading-tight">Project Management Platforms:<br>PRD & Teardown</h1>
-      <p class="text-lg text-gray-400 font-light max-w-2xl mx-auto leading-relaxed mb-10">
-        Currently analyzing workflow engines, permission models, and drafting a 0-to-1 Product Requirements Document for an optimized project management solution comparing Asana and Jira.
-      </p>
-      
-      <div class="w-full max-w-md bg-[#111827] border border-gray-800 rounded-lg p-6 text-left relative overflow-hidden group">
-        <div class="absolute top-0 left-0 w-1 h-full bg-violet-500"></div>
-        <div class="flex items-center gap-3 mb-4">
-          <i class="ph ph-hourglass-high text-violet-400 text-xl animate-pulse"></i>
-          <span class="text-white font-bold">Status: Drafting Specifications</span>
-        </div>
-        <div class="w-full bg-gray-900 rounded-full h-2 mb-2 overflow-hidden">
-          <div class="bg-violet-500 h-2 rounded-full" style="width: 65%;"></div>
-        </div>
-        <span class="text-xs text-gray-500 font-mono">65% Complete — Publishing Soon</span>
-      </div>
-    </div>
-  </div>
-</template>
-
 <template id="tpl-urban-company">
 <style>
 .glass-card {
@@ -748,7 +764,7 @@ box-shadow: 0 0 20px rgba(59, 130, 246, 0.15);
 
 <div class="max-w-7xl mx-auto px-6 relative z-10">
 <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-sm font-medium mb-6">
-<i class="fas fa-briefcase"></i> Targeted Role: Associate Product Manager / PM
+<i class="fas fa-briefcase"></i> Product Strategy Case Study
 </div>
 <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight mb-4 leading-tight">
 Turning Around <br/><span class="gradient-text">Urban Company InstaHelp</span>
@@ -1219,7 +1235,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     <div class="modal-reveal flex flex-wrap gap-6 text-sm border-t border-gray-800 pt-6 mb-12">
       <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Author</span> <strong class="text-white">Maaz Ali Mattehalli</strong></div>
       <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Focus</span> <strong class="text-white">EV Infrastructure & Telemetry</strong></div>
-      <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Role Type</span> <strong class="text-white">Product Analyst</strong></div>
+      <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Role Type</span> <strong class="text-white">Infrastructure & Systems Analyst</strong></div>
     </div>
 
     <section class="mb-12">
