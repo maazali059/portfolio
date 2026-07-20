@@ -7,24 +7,25 @@
 <meta name="description" content="A decision-support framework for evaluating EV charging and renewable energy procurement investments.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
-  --bg:#0E1116; --panel:#161B22; --panel-2:#1B2129; --border:#262D37;
-  --text:#E6E9EE; --muted:#8B94A0; --muted-2:#5C6572;
-  --accent:#5A9BAE; --accent-dim:#3A6A78;
-  --amber:#C79448; --good:#5C9B79; --bad:#C15D53;
-  --radius:3px;
+  --bg:#15120D; --panel:#1E1912; --panel-2:#251F17; --border:#3B3222;
+  --text:#EEE6D6; --muted:#9C9280; --muted-2:#6E6553;
+  --accent:#C79144; --accent-dim:#8C6528;
+  --amber:#D8B24A; --good:#6FA285; --bad:#C15C42;
+  --radius:2px;
 }
 *{box-sizing:border-box;}
 html,body{margin:0; padding:0; background:var(--bg); color:var(--text); font-family:'Inter',sans-serif; font-size:15px;}
 .mono{font-family:'IBM Plex Mono',monospace;}
+.display{font-family:'IBM Plex Sans Condensed',sans-serif; text-transform:uppercase; letter-spacing:0.04em;}
 a{color:inherit;}
 button{font-family:inherit; cursor:pointer;}
 ::-webkit-scrollbar{width:10px; height:10px;}
-::-webkit-scrollbar-thumb{background:#2A313B; border-radius:6px;}
+::-webkit-scrollbar-thumb{background:#2E271B; border-radius:6px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 
 /* ===== LANDING ===== */
@@ -34,7 +35,7 @@ button{font-family:inherit; cursor:pointer;}
   border-bottom:1px solid var(--border);
 }
 .landing-eyebrow{font-family:'IBM Plex Mono',monospace; font-size:12px; letter-spacing:0.18em; color:var(--accent); text-transform:uppercase;}
-.landing-hero h1{font-size:clamp(2.2rem,5vw,3.4rem); font-weight:700; margin:18px 0 4px; letter-spacing:-0.01em;}
+.landing-hero h1{font-family:'IBM Plex Sans Condensed',sans-serif; text-transform:uppercase; letter-spacing:0.01em; font-size:clamp(2.4rem,5.5vw,3.8rem); font-weight:700; margin:18px 0 4px;}
 .landing-hero h2{font-size:clamp(1.1rem,2.4vw,1.5rem); font-weight:500; color:var(--muted); margin:0 0 26px;}
 .landing-hero p.desc{color:var(--muted); max-width:620px; margin:0 auto 34px; line-height:1.7; font-size:15.5px;}
 .landing-actions{display:flex; gap:14px; justify-content:center; flex-wrap:wrap;}
@@ -81,39 +82,75 @@ button{font-family:inherit; cursor:pointer;}
 .platform-shell{display:flex; height:100vh;}
 .sidebar{
   width:230px; flex-shrink:0; background:var(--panel); border-right:1px solid var(--border);
-  display:flex; flex-direction:column; padding:20px 0;
+  display:flex; flex-direction:column; padding:20px 0; overflow-y:auto;
 }
-.sidebar-brand{padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:14px;}
-.sidebar-brand .name{font-weight:700; font-size:16px;}
+.sidebar-brand{padding:0 20px 20px; border-bottom:1px solid var(--border); margin-bottom:16px; cursor:pointer; transition:opacity 0.15s ease;}
+.sidebar-brand:hover{opacity:0.75;}
+.sidebar-brand .name{font-family:'IBM Plex Sans Condensed',sans-serif; text-transform:uppercase; letter-spacing:0.04em; font-weight:700; font-size:16px;}
 .sidebar-brand .tag{font-size:11px; color:var(--muted-2); font-family:'IBM Plex Mono',monospace; margin-top:3px;}
-.nav-item{
-  padding:11px 20px; font-size:13.5px; color:var(--muted); cursor:pointer;
-  border-left:2px solid transparent; display:flex; align-items:center; gap:10px;
+.sidebar-home{
+  margin:0 20px 18px; padding:8px 12px; font-size:12px; color:var(--muted); cursor:pointer;
+  border:1px solid var(--border); border-radius:var(--radius); display:flex; align-items:center; gap:8px;
+  transition:all 0.15s ease;
 }
+.sidebar-home:hover{color:var(--text); border-color:var(--accent); background:var(--panel-2);}
+.nav-item{
+  position:relative; padding:12px 20px 12px 30px; font-size:13.5px; color:var(--muted); cursor:pointer;
+  display:flex; align-items:center; gap:10px;
+}
+.nav-item::before{content:''; position:absolute; left:23px; top:0; bottom:0; width:1px; background:var(--border);}
+.nav-item:first-of-type::before{top:50%;}
 .nav-item:hover{color:var(--text); background:var(--panel-2);}
-.nav-item.active{color:var(--text); border-left-color:var(--accent); background:var(--panel-2); font-weight:600;}
-.nav-dot{width:5px; height:5px; border-radius:50%; background:currentColor; opacity:0.5;}
+.nav-item.active{color:var(--accent); background:var(--panel-2); font-weight:600;}
+.nav-dot{
+  position:relative; z-index:1; width:7px; height:7px; border-radius:50%;
+  background:var(--bg); border:1.5px solid var(--muted-2); flex-shrink:0;
+  transition:all .15s ease;
+}
+.nav-item:hover .nav-dot{border-color:var(--text);}
+.nav-item.active .nav-dot{background:var(--accent); border-color:var(--accent); box-shadow:0 0 6px rgba(199,145,68,0.6);}
 .sidebar-foot{margin-top:auto; padding:16px 20px; font-size:11px; color:var(--muted-2); border-top:1px solid var(--border);}
 
-.main{flex:1; overflow-y:auto; padding:32px 40px 80px;}
+.main{flex:1; overflow-y:auto; display:flex; flex-direction:column;}
+.topbar{
+  position:sticky; top:0; z-index:10; background:var(--panel); border-bottom:1px solid var(--border);
+  padding:14px 40px; display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap;
+}
+.topbar-home{
+  display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer;
+  font-family:'IBM Plex Mono',monospace; white-space:nowrap; transition:color 0.15s ease;
+}
+.topbar-home:hover{color:var(--accent);}
+.topbar-steps{display:flex; align-items:center; gap:10px; font-size:12px; color:var(--muted-2); font-family:'IBM Plex Mono',monospace; flex-wrap:wrap;}
+.topbar-steps .step{padding:4px 10px; border-radius:999px; border:1px solid var(--border); transition:all 0.15s ease;}
+.topbar-steps .step.on{color:var(--accent); border-color:var(--accent); background:rgba(199,145,68,0.10); font-weight:600;}
+.topbar-steps .step-arrow{opacity:0.4;}
+.main-content{flex:1; padding:32px 40px 80px; max-width:1400px; width:100%; margin:0 auto;}
 .page{display:none;}
 .page.active{display:block;}
-.page-head{margin-bottom:28px;}
-.page-head h1{font-size:22px; margin:0 0 6px;}
+.page-head{margin-bottom:32px;}
+.page-head h1{font-family:'IBM Plex Sans Condensed',sans-serif; text-transform:uppercase; letter-spacing:0.03em; font-size:20px; font-weight:700; margin:0 0 6px;}
 .page-head p{color:var(--muted); font-size:14px; margin:0; max-width:680px; line-height:1.6;}
 
-/* ===== DASHBOARD KPI CARDS ===== */
-.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); margin-bottom:28px;}
-.kpi-card{background:var(--panel); padding:18px 18px;}
-.kpi-label{font-size:11px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.08em; font-family:'IBM Plex Mono',monospace;}
-.kpi-value{font-size:22px; font-weight:700; margin-top:6px; font-family:'IBM Plex Mono',monospace;}
+/* ===== DASHBOARD KPI CARDS — "METER READOUT" ===== */
+.kpi-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:14px; margin-bottom:32px;}
+.kpi-card{
+  position:relative; background:var(--panel); border:1px solid var(--border); padding:16px 18px 14px;
+  overflow:hidden;
+}
+.kpi-card::before{content:''; position:absolute; top:0; left:0; right:0; height:2px; background:var(--accent-dim);}
+.kpi-label{font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:var(--muted-2); text-transform:uppercase; letter-spacing:0.1em;}
+.kpi-value{font-family:'IBM Plex Mono',monospace; font-size:24px; font-weight:600; margin-top:8px; font-variant-numeric:tabular-nums; letter-spacing:-0.01em;}
 .kpi-value.good{color:var(--good);} .kpi-value.bad{color:var(--bad);} .kpi-value.warn{color:var(--amber);}
+.kpi-card:has(.kpi-value.good)::before{background:var(--good);}
+.kpi-card:has(.kpi-value.bad)::before{background:var(--bad);}
+.kpi-card:has(.kpi-value.warn)::before{background:var(--amber);}
 
-.panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; margin-bottom:22px;}
+.panel{background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; margin-bottom:26px;}
 .panel h3{font-size:14px; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin:0 0 16px; font-family:'IBM Plex Mono',monospace;}
 .chart-wrap{position:relative; height:260px;}
-.two-col{display:grid; grid-template-columns:1.1fr 1fr; gap:22px;}
-@media (max-width:980px){ .two-col{grid-template-columns:1fr;} .platform-shell{flex-direction:column;} .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:10px;} .sidebar-brand,.sidebar-foot{display:none;} .nav-item{border-left:none; border-bottom:2px solid transparent; white-space:nowrap;} .nav-item.active{border-bottom-color:var(--accent);} }
+.two-col{display:grid; grid-template-columns:1.1fr 1fr; gap:26px;}
+@media (max-width:980px){ .two-col{grid-template-columns:1fr;} .platform-shell{flex-direction:column;} .sidebar{width:100%; flex-direction:row; overflow-x:auto; padding:10px;} .sidebar-brand,.sidebar-foot,.sidebar-home{display:none;} .nav-item{padding-left:14px; white-space:nowrap;} .nav-item::before{display:none;} .nav-item.active{border-bottom:2px solid var(--accent);} .topbar{padding:12px 16px;} .main-content{padding:20px 16px 60px;} .topbar-steps .step span{display:none;} }
 
 /* ===== FORMS ===== */
 .form-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:16px;}
@@ -130,9 +167,9 @@ button{font-family:inherit; cursor:pointer;}
 .reco-top{display:flex; align-items:center; gap:16px; flex-wrap:wrap; margin-bottom:18px;}
 .reco-verdict{font-size:22px; font-weight:700; padding:8px 18px; border-radius:var(--radius);}
 .reco-verdict.proceed{background:rgba(92,155,121,0.15); color:var(--good); border:1px solid var(--good);}
-.reco-verdict.conditions{background:rgba(199,148,72,0.15); color:var(--amber); border:1px solid var(--amber);}
-.reco-verdict.study{background:rgba(199,148,72,0.1); color:var(--amber); border:1px solid var(--border);}
-.reco-verdict.no{background:rgba(193,93,83,0.15); color:var(--bad); border:1px solid var(--bad);}
+.reco-verdict.conditions{background:rgba(216,178,74,0.15); color:var(--amber); border:1px solid var(--amber);}
+.reco-verdict.study{background:rgba(216,178,74,0.1); color:var(--amber); border:1px solid var(--border);}
+.reco-verdict.no{background:rgba(193,92,66,0.15); color:var(--bad); border:1px solid var(--bad);}
 .confidence-badge{font-family:'IBM Plex Mono',monospace; font-size:13px; color:var(--muted);}
 .reco-grid{display:grid; grid-template-columns:1fr 1fr; gap:24px;}
 .reco-list{list-style:none; margin:0; padding:0; font-size:13.5px;}
@@ -154,7 +191,7 @@ button{font-family:inherit; cursor:pointer;}
   flex:1; padding:16px; border-radius:var(--radius); border:1px solid var(--border); background:var(--panel-2);
   text-align:center; font-weight:600; font-size:14px;
 }
-.scenario-btn.active{border-color:var(--accent); background:rgba(90,155,174,0.12); color:var(--accent);}
+.scenario-btn.active{border-color:var(--accent); background:rgba(199,145,68,0.14); color:var(--accent);}
 .scenario-btn .sub{display:block; font-weight:400; font-size:11.5px; color:var(--muted-2); margin-top:4px;}
 
 /* ===== TABLES ===== */
@@ -188,7 +225,7 @@ table.data-table td.label-cell{font-family:'Inter',sans-serif;}
 .case-card p{font-size:13px; color:var(--muted); margin:0; line-height:1.6;}
 .case-tag{display:inline-block; font-size:11px; padding:3px 9px; border-radius:20px; margin-top:4px; width:fit-content;}
 .case-tag.proceed{background:rgba(92,155,121,0.15); color:var(--good);}
-.case-tag.conditions{background:rgba(199,148,72,0.15); color:var(--amber);}
+.case-tag.conditions{background:rgba(216,178,74,0.15); color:var(--amber);}
 
 .about-disclaimer{border:1px solid var(--border); border-left:3px solid var(--accent); padding:16px 20px; background:var(--panel); font-size:13.5px; color:var(--muted); line-height:1.7;}
 </style>
@@ -203,8 +240,8 @@ table.data-table td.label-cell{font-family:'Inter',sans-serif;}
     <h2>Technical Analysis · Financial Modeling · Risk Assessment · Investment Decisions</h2>
     <p class="desc">A decision-support framework for evaluating EV charging and renewable energy procurement investments — combining technical assumptions, financial modeling, risk assessment, and scenario analysis into a single, explainable recommendation.</p>
     <div class="landing-actions">
-      <button class="btn primary" onclick="showView('platform')">Launch Platform →</button>
-      <button class="btn" onclick="switchPage('documentation'); showView('platform');">Read Methodology</button>
+      <button class="btn primary" onclick="showView('platform'); switchPage('investment');">Start Modeling →</button>
+      <button class="btn" onclick="showView('platform'); switchPage('dashboard');">View Sample Dashboard</button>
     </div>
 
     <div class="built-using">
@@ -268,31 +305,73 @@ table.data-table td.label-cell{font-family:'Inter',sans-serif;}
 <div id="view-platform">
   <div class="platform-shell">
     <div class="sidebar">
-      <div class="sidebar-brand">
+      <div class="sidebar-brand" onclick="showView('landing')">
         <div class="name">Enernomics</div>
         <div class="tag">v1.2 — EV + Open Access</div>
       </div>
-      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')"><span class="nav-dot"></span>Dashboard</div>
-      <div class="nav-item" data-page="screening" onclick="switchPage('screening')"><span class="nav-dot"></span>Project Screening</div>
+      <div class="sidebar-home" onclick="showView('landing')"><span>←</span> Back to Home</div>
+
+      <!-- STEP 1: INPUTS -->
+      <div style="padding: 16px 20px 8px; font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'IBM Plex Mono', monospace;">1. Inputs & Assumptions</div>
       <div class="nav-item" data-page="investment" onclick="switchPage('investment')"><span class="nav-dot"></span>EV Charging Analysis</div>
       <div class="nav-item" data-page="openaccess" onclick="switchPage('openaccess')"><span class="nav-dot"></span>Open Access Analysis</div>
-      <div class="nav-item" data-page="options" onclick="switchPage('options')"><span class="nav-dot"></span>Option Comparison</div>
+      <div class="nav-item" data-page="screening" onclick="switchPage('screening')"><span class="nav-dot"></span>Project Screening</div>
+
+      <!-- STEP 2: MODIFIERS -->
+      <div style="padding: 16px 20px 8px; font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'IBM Plex Mono', monospace;">2. Risk & Scenarios</div>
       <div class="nav-item" data-page="risk" onclick="switchPage('risk')"><span class="nav-dot"></span>Risk Assessment</div>
       <div class="nav-item" data-page="scenario" onclick="switchPage('scenario')"><span class="nav-dot"></span>Scenario Analysis</div>
+      <div class="nav-item" data-page="options" onclick="switchPage('options')"><span class="nav-dot"></span>Option Comparison</div>
+
+      <!-- STEP 3: OUTPUTS -->
+      <div style="padding: 16px 20px 8px; font-size: 11px; color: var(--muted-2); text-transform: uppercase; letter-spacing: 0.1em; font-family: 'IBM Plex Mono', monospace;">3. Final Outputs</div>
+      <div class="nav-item active" data-page="dashboard" onclick="switchPage('dashboard')"><span class="nav-dot"></span>Executive Dashboard</div>
       <div class="nav-item" data-page="cases" onclick="switchPage('cases')"><span class="nav-dot"></span>Case Studies</div>
-      <div class="nav-item" data-page="documentation" onclick="switchPage('documentation')"><span class="nav-dot"></span>Documentation</div>
+
+      <!-- RESOURCES -->
+      <div style="border-top: 1px solid var(--border); margin-top: 12px; padding-top: 12px;"></div>
+      <div class="nav-item" data-page="documentation" onclick="switchPage('documentation')"><span class="nav-dot"></span>Methodology</div>
       <div class="nav-item" data-page="about" onclick="switchPage('about')"><span class="nav-dot"></span>About</div>
+
       <div class="sidebar-foot">Maaz Ali Mattehalli<br>NIT Goa</div>
     </div>
 
     <div class="main">
 
+      <div class="topbar">
+        <div class="topbar-home" onclick="showView('landing')">
+          <span>←</span> Enernomics Home
+        </div>
+        <div class="topbar-steps" id="topbar-steps">
+          <span class="step" data-group="input"><span>1. Inputs</span></span>
+          <span class="step-arrow">→</span>
+          <span class="step" data-group="risk"><span>2. Risk & Scenarios</span></span>
+          <span class="step-arrow">→</span>
+          <span class="step" data-group="output"><span>3. Outputs</span></span>
+        </div>
+      </div>
+
+      <div class="main-content">
+
       <!-- DASHBOARD -->
       <div class="page" id="page-dashboard">
         <div class="page-head">
           <h1>Executive Dashboard</h1>
-          <p>Live summary of the current project under evaluation. Change inputs on the Investment Analysis page — this view updates automatically.</p>
+          <p>Live summary of the current projection. The engine updates automatically as you change assumptions.</p>
         </div>
+
+        <!-- Quick Start Onboarding Banner -->
+        <div class="panel" style="border-color: var(--accent); background: rgba(199,145,68,0.06); display: flex; flex-direction: column; gap: 16px;">
+          <div>
+            <h3 style="color: var(--accent); margin-bottom: 8px;">👋 Welcome to Enernomics: Quick Start</h3>
+            <p style="color: var(--text); font-size: 13.5px; margin: 0;">You are currently viewing a default illustrative scenario. To evaluate a real project, configure your assumptions below.</p>
+          </div>
+          <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+            <button class="btn primary" onclick="switchPage('investment')">Step 1: Set EV Charging Assumptions →</button>
+            <button class="btn" onclick="switchPage('openaccess')">Step 1: Set Open Access Assumptions →</button>
+          </div>
+        </div>
+
         <div class="kpi-grid" id="kpi-grid"></div>
         <div class="two-col">
           <div class="panel">
@@ -515,6 +594,7 @@ table.data-table td.label-cell{font-family:'Inter',sans-serif;}
         </div>
       </div>
 
+      </div>
     </div>
   </div>
 </div>
@@ -963,10 +1043,18 @@ function currentResult(scenarioKey) {
   return { inputs, cashFlows, totalCapex, rows, npvVal, irrVal, payback, riskScore, reco };
 }
 
+const PAGE_GROUP = {
+  investment: 'input', openaccess: 'input', screening: 'input',
+  risk: 'risk', scenario: 'risk', options: 'risk',
+  dashboard: 'output', cases: 'output',
+  documentation: null, about: null
+};
 function switchPage(pageId) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + pageId).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === pageId));
+  const group = PAGE_GROUP[pageId] || null;
+  document.querySelectorAll('.topbar-steps .step').forEach(s => s.classList.toggle('on', s.dataset.group === group));
   renderAll();
 }
 function showView(view) {
@@ -1122,7 +1210,7 @@ function renderOACostChart(canvasId, result) {
     type: 'bar',
     data: {
       labels: order.map(k => result.models[k].label),
-      datasets: [{ label: 'Landed Cost (₹/kWh)', data: order.map(k => +result.models[k].landedCost.toFixed(2)), backgroundColor: order.map(k => k===result.recommendedKey ? '#5C9B79' : '#5A9BAE') }],
+      datasets: [{ label: 'Landed Cost (₹/kWh)', data: order.map(k => +result.models[k].landedCost.toFixed(2)), backgroundColor: order.map(k => k===result.recommendedKey ? '#6FA285' : '#C79144') }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1144,7 +1232,7 @@ function renderOASensitivityChart(canvasId, inputs) {
   });
   state.charts[canvasId] = new Chart(ctx, {
     type: 'line',
-    data: { labels: cssLevels.map(c => '₹' + c.toFixed(2)), datasets: [{ label: 'Annual Savings (₹ Lakh)', data: savings, borderColor: '#C79448', backgroundColor: 'rgba(199,148,72,0.15)', fill: true, tension: 0.3 }] },
+    data: { labels: cssLevels.map(c => '₹' + c.toFixed(2)), datasets: [{ label: 'Annual Savings (₹ Lakh)', data: savings, borderColor: '#C79448', backgroundColor: 'rgba(216,178,74,0.15)', fill: true, tension: 0.3 }] },
     options: {
       responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
@@ -1228,7 +1316,7 @@ function renderOptionsChart(canvasId, results) {
     type: 'bar',
     data: {
       labels: results.map(r => r.numChargers + ' Chargers'),
-      datasets: [{ label: 'IRR (%)', data: results.map(r => r.irrVal !== null ? +(r.irrVal * 100).toFixed(1) : 0), backgroundColor: '#5A9BAE' }],
+      datasets: [{ label: 'IRR (%)', data: results.map(r => r.irrVal !== null ? +(r.irrVal * 100).toFixed(1) : 0), backgroundColor: '#C79144' }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1498,7 +1586,7 @@ function renderCashflowChart(canvasId, result) {
     type: 'bar',
     data: {
       labels: result.rows.map(r => 'Y' + r.year),
-      datasets: [{ label: 'Net Cash Flow (₹)', data: result.rows.map(r => Math.round(r.net)), backgroundColor: '#5A9BAE' }],
+      datasets: [{ label: 'Net Cash Flow (₹)', data: result.rows.map(r => Math.round(r.net)), backgroundColor: '#C79144' }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1526,7 +1614,7 @@ function renderSensitivityChart(canvasId) {
     type: 'line',
     data: {
       labels: utilLevels.map(u => u + '%'),
-      datasets: [{ label: 'IRR (%)', data: irrValues, borderColor: '#C79448', backgroundColor: 'rgba(199,148,72,0.15)', fill: true, tension: 0.3 }],
+      datasets: [{ label: 'IRR (%)', data: irrValues, borderColor: '#C79448', backgroundColor: 'rgba(216,178,74,0.15)', fill: true, tension: 0.3 }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1549,7 +1637,7 @@ function renderRiskRadar(canvasId) {
     type: 'radar',
     data: {
       labels,
-      datasets: [{ label: 'Risk Score', data: keys.map(k => state.risk[k]), borderColor: '#C15D53', backgroundColor: 'rgba(193,93,83,0.2)', pointBackgroundColor:'#C15D53' }],
+      datasets: [{ label: 'Risk Score', data: keys.map(k => state.risk[k]), borderColor: '#C15C42', backgroundColor: 'rgba(193,92,66,0.2)', pointBackgroundColor:'#C15C42' }],
     },
     options: {
       responsive: true, maintainAspectRatio: false,
@@ -1567,7 +1655,7 @@ function renderRiskMini(canvasId) {
   const keys = ['technical','financial','market','operational','regulatory','environmental'];
   state.charts[canvasId] = new Chart(ctx, {
     type: 'bar',
-    data: { labels, datasets: [{ label:'Risk', data: keys.map(k=>state.risk[k]), backgroundColor:'#C15D53' }] },
+    data: { labels, datasets: [{ label:'Risk', data: keys.map(k=>state.risk[k]), backgroundColor:'#C15C42' }] },
     options: {
       indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       plugins: { legend: { display: false } },
@@ -1587,7 +1675,7 @@ function renderScenarioChart(canvasId) {
     data: {
       labels: keys.map(k => SCENARIOS[k].label),
       datasets: [
-        { label: 'IRR (%)', data: results.map(r => r.irrVal !== null ? +(r.irrVal*100).toFixed(1) : 0), backgroundColor: '#5A9BAE', yAxisID: 'y' },
+        { label: 'IRR (%)', data: results.map(r => r.irrVal !== null ? +(r.irrVal*100).toFixed(1) : 0), backgroundColor: '#C79144', yAxisID: 'y' },
       ],
     },
     options: {
