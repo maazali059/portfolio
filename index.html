@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Maaz Ali Mattehalli | Building analytical tools for business investment decisions </title>
+<title>Maaz Ali Mattehalli | Strategy & Execution — EEE Graduate, Energy & EV Infrastructure</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 
@@ -13,29 +13,30 @@
 <script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
 <style>
   body {
-    background: #050505;
-    color: #d1d5db;
+    background: #0F172A;
+    color: #cbd5e1;
     font-family: 'Inter', sans-serif;
     overflow-x: hidden;
   }
 
   h1, h2, h3, h4 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: -0.02em;
   }
 
   .accent {
-    color: #10B981;
+    color: #3B82F6;
   }
 
   /* Subtle Grid Background */
   .bg-grid {
     background-size: 40px 40px;
-    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-                      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    background-image: linear-gradient(to right, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                      linear-gradient(to bottom, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
     z-index: -1;
@@ -43,14 +44,14 @@
 
   /* Glass Panels for Timeline & Cards */
   .glass-panel {
-    background: #0a0a0a;
-    border: 1px solid #1f2937;
-    border-radius: 12px;
-    transition: all 0.4s ease;
+    background: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    transition: all 0.3s ease;
   }
   .glass-panel:hover {
-    border-color: #10B981;
-    box-shadow: 0 10px 30px -10px rgba(16, 185, 129, 0.15);
+    border-color: #3B82F6;
+    box-shadow: 0 4px 20px -5px rgba(59, 130, 246, 0.1);
     transform: translateY(-2px);
   }
 
@@ -64,7 +65,7 @@
     top: 0;
     bottom: 0;
     width: 2px;
-    background: linear-gradient(to bottom, #10B981, rgba(31, 41, 55, 0.3));
+    background: linear-gradient(to bottom, #3B82F6, rgba(51, 65, 85, 0.3));
     z-index: 0;
   }
   .timeline-dot {
@@ -74,23 +75,23 @@
     height: 16px;
     width: 16px;
     border-radius: 50%;
-    border: 2px solid #10B981;
-    background: #050505;
+    border: 2px solid #3B82F6;
+    background: #0F172A;
     z-index: 10;
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.3);
   }
 
   /* Project Cards */
   .project-card {
-    background: #111827;
-    border: 1px solid #1f2937;
-    border-radius: 16px;
+    background: #1E293B;
+    border: 1px solid #334155;
+    border-radius: 12px;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s ease, box-shadow 0.3s ease;
   }
   .project-card:hover {
-    border-color: #10B981;
+    border-color: #3B82F6;
     transform: translateY(-5px);
-    box-shadow: 0 15px 35px -10px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
   }
   .project-card:hover .ph {
     transform: scale(1.1);
@@ -103,26 +104,27 @@
   #main-modal::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
 
   /* EV Fleet Custom Styling inside Modal */
-  .ev-report-table th { background: #1f2937; color: #10B981; padding: 12px; text-align: left; }
-  .ev-report-table td { padding: 12px; border-bottom: 1px solid #1f2937; }
-  .ev-metric-card { background: #111827; border-left: 4px solid #06b6d4; padding: 16px; border-radius: 4px; border-top: 1px solid #1f2937; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937;}
+  .ev-report-table th { background: #0F172A; color: #3B82F6; padding: 12px; text-align: left; }
+  .ev-report-table td { padding: 12px; border-bottom: 1px solid #334155; }
+  .ev-metric-card { background: #1E293B; border-left: 4px solid #3B82F6; padding: 16px; border-radius: 4px; border-top: 1px solid #334155; border-right: 1px solid #334155; border-bottom: 1px solid #334155;}
 
   /* Loader */
   #loader {
     position: fixed;
     width: 100%;
     height: 100%;
-    background: #050505;
+    background: #0F172A;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
   }
   .loader-text {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2rem;
-    color: #10B981;
-    letter-spacing: 0.2em;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 1.5rem;
+    color: #3B82F6;
+    letter-spacing: 0.1em;
     opacity: 0;
   }
 
@@ -138,26 +140,26 @@
 
   /* Section eyebrow tag list ("Areas of Expertise") */
   .expertise-tag {
-    background: #0a0a0a;
-    border: 1px solid #1f2937;
-    color: #d1d5db;
+    background: #0F172A;
+    border: 1px solid #334155;
+    color: #cbd5e1;
     padding: 10px 18px;
-    border-radius: 999px;
+    border-radius: 6px;
     font-size: 0.85rem;
     font-weight: 500;
     transition: border-color 0.3s ease, color 0.3s ease;
   }
   .expertise-tag:hover {
-    border-color: #10B981;
-    color: #10B981;
+    border-color: #3B82F6;
+    color: #3B82F6;
   }
 
   .section-tag-label {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Inter', sans-serif;
     font-size: 0.75rem;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.15em;
     text-transform: uppercase;
-    color: #10B981;
+    color: #3B82F6;
     font-weight: 700;
   }
 </style>
@@ -171,22 +173,29 @@
 
 <div class="bg-grid"></div>
 
-<nav class="fixed w-full top-0 z-40 bg-[#050505]/90 backdrop-blur-md border-b border-gray-800">
+<nav class="fixed w-full top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-700">
   <div class="max-w-[1200px] mx-auto px-6 py-4 flex justify-between items-center">
-    <div class="text-xl font-bold font-['Space_Grotesk'] tracking-tighter text-white cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+    <div class="text-xl font-bold tracking-tighter text-white cursor-pointer" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
       MAAZ<span class="accent">ALI</span>
     </div>
     <div class="space-x-8 text-sm font-semibold hidden md:flex items-center tracking-wide text-gray-400">
       <a href="#experience" class="hover:text-white transition-colors">Experience</a>
-      <a href="#projects" class="hover:text-white transition-colors">Projects</a>
+      <a href="#projects" class="hover:text-white transition-colors">Energy & EV Work</a>
       <a href="#education" class="hover:text-white transition-colors">Education</a>
       <a href="#certifications" class="hover:text-white transition-colors">Certifications</a>
       <a href="#contact" class="hover:text-white transition-colors">Contact</a>
-      <div class="text-xs bg-gray-900 border border-gray-800 px-3 py-1 rounded-md text-emerald-400 font-mono flex items-center gap-1.5 shadow-inner">
+      <div class="text-xs bg-slate-800 border border-slate-700 px-3 py-1 rounded-md text-emerald-400 font-mono flex items-center gap-1.5 shadow-inner">
         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-        ID: #<span id="visitor-count-badge">100</span>
+        SYS_NODE_ACTIVE
       </div>
-      <a href="assets/MAAZ_ALI_NIT_Goa_EEE.pdf" target="_blank" class="text-emerald-500 border border-emerald-500/50 hover:bg-emerald-500 hover:text-black px-4 py-1.5 rounded transition">Resume</a>
+      <div class="flex items-center gap-3">
+        <a href="assets/MAAZ_ALI_NIT_Goa_EEE.pdf" target="_blank" class="text-slate-300 border border-slate-600 hover:border-slate-400 px-4 py-1.5 rounded transition text-sm">
+          Resume
+        </a>
+        <a href="mailto:maazali059@gmail.com?subject=Saw%20your%20portfolio%20-%20Let's%20connect&amp;body=Hi%20Maaz%2C%0A%0AI%20am%20___________%20from%20_________.%20I%20saw%20your%20portfolio%20and%20wanted%20to%20connect.%0A%0ABest%2C" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded transition font-semibold text-sm shadow-[0_0_15px_rgba(37,99,235,0.4)]">
+          Let's Connect
+        </a>
+      </div>
     </div>
   </div>
 </nav>
@@ -194,28 +203,44 @@
 <header class="min-h-[90vh] flex flex-col justify-center px-6 relative max-w-[1200px] mx-auto pt-24 pb-12">
   <div class="hero-content flex flex-col md:flex-row items-start md:items-center gap-10">
     <div class="flex-1">
-      <p class="text-accent tracking-[0.3em] text-xs font-bold mb-6 uppercase">Electrical & Electronics Engineer</p>
-      <h1 class="text-5xl md:text-7xl mb-2 leading-tight text-white max-w-4xl">
-        Maaz Ali <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Mattehalli</span>
+      <p class="text-accent tracking-[0.3em] text-xs font-bold mb-6 uppercase">EEE Graduate · Strategy & Execution</p>
+      <h1 class="text-4xl md:text-6xl mb-6 leading-[1.1] text-white max-w-4xl">
+        I diagnose operational failures, build techno-financial models, and ship 0-to-1 hardware.
       </h1>
-      <h2 class="text-xl md:text-2xl text-gray-300 font-['Space_Grotesk'] font-medium mb-6 tracking-wide">
-        Sustainable Solutions and Strategic Consulting <span class="text-emerald-400">· B.Tech, NIT Goa</span>
+      <h2 class="text-lg md:text-xl text-gray-400 font-medium mb-8 tracking-wide">
+        Maaz Ali Mattehalli <span class="text-emerald-400">· B.Tech EEE, NIT Goa</span>
       </h2>
-      <p class="text-gray-400 text-lg mb-10 leading-relaxed font-light text-left max-w-2xl">
-      I build analytical decision-support systems for energy infrastructure investments. My work combines engineering fundamentals, financial modelling, regulatory analysis, and data-driven evaluation to answer one question: Should this project be built? From EV charging networks and renewable procurement to infrastructure investment appraisal, I develop transparent models that quantify risk, returns, and technical feasibility. 
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10 max-w-2xl">
+        <div class="glass-panel px-5 py-4">
+          <div class="text-2xl font-bold text-white">₹300–400<span class="text-emerald-400">/order</span></div>
+          <div class="text-gray-500 text-xs mt-1 leading-snug">What Urban Company was losing on every order — an unprompted teardown of their unit economics uncovered it</div>
+        </div>
+        <div class="glass-panel px-5 py-4">
+          <div class="text-2xl font-bold text-white">75%<span class="text-emerald-400"> cheaper</span></div>
+          <div class="text-gray-500 text-xs mt-1 leading-snug">The build cost of my water-quality sensor after swapping imported components for local ones, with no drop in accuracy</div>
+        </div>
+        <div class="glass-panel px-5 py-4">
+          <div class="text-2xl font-bold text-white">$2,400+</div>
+          <div class="text-gray-500 text-xs mt-1 leading-snug">Grant funding won in open competition to revive a dormant student engineering chapter from zero</div>
+        </div>
+      </div>
+
+      <p class="text-gray-400 text-base mb-10 leading-relaxed font-light text-left max-w-2xl">
+      I build analytical decision-support systems for energy and infrastructure investment: diagnosing why an operation is bleeding, structuring the techno-financial model that explains it, and — when the fix is hardware, not just a spreadsheet — building the MVP myself. Across EV charging networks, utility engagements, and marketplace audits, the output is always the same: a defensible answer to "should this get built, and how."
       </p>
       <div class="flex flex-wrap gap-4 justify-start">
-        <a href="#experience" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105">Professional Experience</a>
-        <a href="#projects" class="border border-gray-600 hover:border-white text-white font-bold py-3 px-8 rounded-full transition-all">Project Case Studies</a>
+        <a href="#experience" class="bg-emerald-500 hover:bg-emerald-600 text-black font-bold py-3 px-8 rounded-full transition-all transform hover:scale-105">Energy & Infrastructure Experience</a>
+        <a href="#projects" class="border border-gray-600 hover:border-white text-white font-bold py-3 px-8 rounded-full transition-all">EV & Energy Case Studies</a>
       </div>
     </div>
-    <div class="hidden md:block w-48 h-48 lg:w-64 lg:h-64 shrink-0 relative rounded-full p-2 border-2 border-gray-800 hover:border-emerald-500 transition-colors duration-500 hero-img-container shadow-2xl shadow-emerald-500/10">
-      <img src="assets/maaz.png" alt="Maaz Ali Mattehalli" class="w-full h-full object-cover rounded-full bg-gray-900 grayscale hover:grayscale-0 transition-all duration-500">
+    <div class="hidden md:block w-48 h-48 lg:w-64 lg:h-64 shrink-0 relative rounded-full p-2 border-2 border-slate-700 hover:border-emerald-500 transition-colors duration-500 hero-img-container shadow-2xl shadow-emerald-500/10">
+      <img src="assets/maaz.png" alt="Maaz Ali Mattehalli" class="w-full h-full object-cover rounded-full bg-slate-800 grayscale hover:grayscale-0 transition-all duration-500">
     </div>
   </div>
 </header>
 
-<section id="capabilities" class="py-24 bg-[#050505]">
+<section id="capabilities" class="py-24 bg-slate-900">
   <div class="max-w-[1200px] mx-auto px-6">
     <div class="section-tag-label mb-3">Areas of Expertise</div>
     <h2 class="text-4xl font-bold text-white mb-4">Where I add the most value</h2>
@@ -234,7 +259,7 @@
   </div>
 </section>
 
-<section id="experience" class="py-24 border-t border-gray-800 bg-[#0A0A0A]/30">
+<section id="experience" class="py-24 border-t border-slate-700 bg-slate-800/30">
   <div class="max-w-[1000px] mx-auto px-6">
     <div class="mb-16">
       <h2 class="text-4xl mb-4 text-white">Professional Experience</h2>
@@ -248,23 +273,28 @@
         <div class="timeline-dot hidden md:block"></div>
         <div class="glass-panel p-6 md:p-8 relative overflow-hidden">
           
-          <div class="absolute top-0 right-0 bg-amber-500 text-slate-900 text-[10px] font-bold px-3 py-1 uppercase tracking-widest rounded-bl-lg">
+          <div class="absolute top-0 right-0 bg-slate-700 text-blue-300 text-[10px] font-bold px-3 py-1 uppercase tracking-widest rounded-bl-lg">
               Note: Specific client names and internal deliverables withheld per confidentiality agreement; descriptions below reflect the nature and scope of the work
           </div>
 
-          <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-gray-800 pb-4 mt-2">
+          <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-slate-700 pb-4 mt-2">
               <div class="flex items-center gap-4">
                   <div class="w-14 h-14 bg-white rounded flex items-center justify-center p-1.5 shrink-0">
                       <img src="assets/athena.png" alt="Athena Logo" class="object-contain max-h-full">
                   </div>
                   <div>
-                      <h3 class="text-2xl font-bold text-white font-['Space_Grotesk']">Athena Infonomics</h3>
+                      <h3 class="text-2xl font-bold text-white">Athena Infonomics</h3>
                       <p class="text-gray-400 font-mono text-[10px]">Total Tenure: Sep 2025 – Present</p>
                   </div>
               </div>
               <div class="text-left md:text-right text-gray-500 text-xs font-mono">
                   <span>Remote · Athena Infonomics is headquartered in Chennai, India</span>
               </div>
+          </div>
+
+          <div class="mb-6">
+              <span class="section-tag-label bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full">Government Infrastructure & Strategy</span>
+              <span class="text-gray-500 text-xs ml-2">Public-sector techno-financial modelling and national AI-policy research</span>
           </div>
 
           <div class="mb-8">
@@ -325,13 +355,13 @@
               B.Tech Major Project Integration
           </div>
 
-          <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-gray-800 pb-4 mt-2">
+          <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4 border-b border-slate-700 pb-4 mt-2">
               <div class="flex items-center gap-4">
                   <div class="w-14 h-14 bg-white rounded flex items-center justify-center p-1.5 shrink-0">
                       <img src="assets/saafwater.png" alt="Saafwater Logo" class="object-contain max-h-full">
                   </div>
                   <div>
-                      <h3 class="text-2xl font-bold text-white font-['Space_Grotesk']">Saafwater</h3>
+                      <h3 class="text-2xl font-bold text-white">Saafwater</h3>
                       <p class="text-emerald-400 font-medium text-xs uppercase tracking-widest">Product R&D Intern</p>
                   </div>
               </div>
@@ -341,14 +371,27 @@
           </div>
 
           <div class="text-gray-300 space-y-4 max-w-4xl">
-              <p class="leading-relaxed text-sm text-gray-400 italic bg-gray-900/50 p-4 rounded border border-gray-800">
-                  <strong>The Origin Story:</strong>What started as a mandatory academic internship evolved into a deep dive into infrastructure engineering. I saw a clear disconnect between the available products and the actual market need. I identified a critical issue, asked the right questions, and provided actionable insights, expanding the scope into my B.Tech Major Capstone Project. Through an extended internship, engineered a functional industrial grade hardware MVP that delivered a 75% cost reduction compared to importing similar solutions, proving both affordability and scalability.   
+              <p class="leading-relaxed text-sm text-gray-400 italic bg-slate-800/50 p-4 rounded border border-slate-700">
+                  <strong>The Origin Story:</strong> What started as a mandatory academic internship evolved into a deep dive into infrastructure engineering. I saw a clear disconnect between the available products and the actual market need — imported sensors priced out most Indian municipalities and failed under local wastewater conditions. I identified the issue, asked the right questions, and expanded the scope into my B.Tech Major Capstone Project.
+              <div class="my-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div class="ev-metric-card !border-l-emerald-500">
+                      <div class="text-xl font-bold text-emerald-400">75%</div>
+                      <div class="text-xs text-gray-400 mt-1">BOM cost cut vs. imported equivalents</div>
+                  </div>
+                  <div class="ev-metric-card !border-l-blue-500">
+                      <div class="text-xl font-bold text-blue-400">100+</div>
+                      <div class="text-xs text-gray-400 mt-1">Chemical calibrations run to validate it</div>
+                  </div>
+              </div>
             <ul class="list-disc pl-4 space-y-3 text-sm text-gray-400 leading-relaxed">
+                  <li>
+                      <strong class="text-gray-200">The unglamorous part:</strong> Cutting the bill of materials by 75% meant real iteration, not a spec-sheet swap — messy breadboard prototypes, multiple failed PCB revisions, and re-running calibration charts against lab-grade references every time a local, cheaper substitute replaced an imported component.
+                  </li>
                   <li>
                       <strong class="text-gray-200">0-to-1 STP Lifecycle:</strong> Spearheaded the end-to-end product lifecycle of an industrial-grade Sewage Treatment Plant (STP) COD-BOD monitoring MVP, configuring raw IoT hardware telemetry lines to achieve zero-lag, live data synchronization with an administrative analytics dashboard enabling scalable deployment in the field.  
                 <li>
               
-                      <strong class="text-gray-200">Low-Cost MVP Engineering & Scalability Validation </strong> Standardized component selection and consulted on the Minimum Viable Product (MVP) PCB design, achieving a 75% reduction in procurement and prototype costs, while validating scalability with a low-cost MVP solution.  
+                      <strong class="text-gray-200">Low-Cost MVP Engineering & Scalability Validation:</strong> Standardized component selection and led the Minimum Viable Product (MVP) PCB design across multiple revisions, sourcing local alternatives for imported parts to reach a 75% reduction in procurement and prototype cost while validating scalability.
                   </li>
                   <li>
                       <strong class="text-gray-200">ML Anomaly Pipelines:</strong> Formulated customized machine learning models processing over 100 industrial chemical baseline calibrations, training predictive regression algorithms to instantly flag real-time sensor anomalies and issue proactive system maintenance warnings.
@@ -356,10 +399,10 @@
               </ul>
 
               <div class="pt-4 flex flex-wrap gap-2">
-                  <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">IoT Telemetry</span>
-                  <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Predictive ML</span>
-                  <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Industrial Automation</span>
-                  <span class="bg-gray-900 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-gray-800">Infrastructure Strategy</span>
+                  <span class="bg-slate-800 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-slate-700">IoT Telemetry</span>
+                  <span class="bg-slate-800 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-slate-700">Predictive ML</span>
+                  <span class="bg-slate-800 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-slate-700">Industrial Automation</span>
+                  <span class="bg-slate-800 px-3 py-1 rounded text-xs font-mono text-gray-400 border border-slate-700">Infrastructure Strategy</span>
               </div>
           </div>
 
@@ -370,7 +413,7 @@
   </div>
 </section>
 
-<section id="projects" class="py-24 bg-[#0A0A0A] border-t border-gray-800 relative">
+<section id="projects" class="py-24 bg-slate-800 border-t border-slate-700 relative">
   <div class="max-w-[1200px] mx-auto px-6">
     <div class="mb-16 text-left reveal">
       <h2 class="text-4xl md:text-5xl font-bold mb-4 text-white">Project Portfolio</h2>
@@ -397,7 +440,7 @@
             </span>
           </div>
         </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+        <div class="w-full md:w-1/2 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-700 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-bl from-emerald-900/10 to-transparent"></div>
           <div class="text-center relative z-10">
             <i class="ph ph-chart-line-up text-5xl text-emerald-500 mb-4 transition-transform duration-300"></i>
@@ -408,21 +451,21 @@
 
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-ev-report')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-cyan-500 font-bold tracking-widest mb-3 uppercase">Infrastructure Strategy</div>
+          <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">Infrastructure Strategy</div>
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">EV Fleet Analysis & Feasibility Report</h3>
           <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
             A comprehensive strategic analysis on public EV charging infrastructure in Goa. Proved that traditional top-down infrastructure deployment fails due to land acquisition costs. Modeled a Hyper-Local Public-Private Partnership (PPP) framework yielding an 18.5% annual ROI.
           </p>
           <div class="mt-auto text-left">
-            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-cyan-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
+            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-blue-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
               <i class="ph ph-cursor-click"></i> Open Analysis Report
             </span>
           </div>
         </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-l border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-transparent"></div>
+        <div class="w-full md:w-1/2 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-700 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent"></div>
           <div class="text-center relative z-10">
-            <i class="ph ph-car-profile text-5xl text-cyan-500 mb-4 transition-transform duration-300"></i>
+            <i class="ph ph-car-profile text-5xl text-blue-500 mb-4 transition-transform duration-300"></i>
             <div class="font-mono text-sm text-gray-300">TCO & Break-even Modeling</div>
           </div>
         </div>
@@ -441,7 +484,7 @@
             </span>
           </div>
         </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+        <div class="w-full md:w-1/2 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-700 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-bl from-emerald-900/10 to-transparent"></div>
           <div class="text-center relative z-10">
             <i class="ph ph-cpu text-5xl text-emerald-500 mb-4 transition-transform duration-300 group-hover:rotate-12"></i>
@@ -453,31 +496,30 @@
     </div>
 
     <div class="mb-10">
-      <div class="section-tag-label mb-3">Product Strategy</div>
-      <h3 class="text-2xl font-bold text-white">Other Analytical Projects</h3>
-
-      
+      <div class="section-tag-label mb-3">Unit Economics & EV Product Strategy</div>
+      <h3 class="text-2xl font-bold text-white">Applying the Same Teardown to Marketplaces and EV Networks</h3>
+      <p class="text-gray-400 max-w-2xl mt-2 text-sm">The same per-unit economics discipline that flags a ₹447/order EBITDA loss on a services marketplace is what a charging network needs to catch a loss-making session before it scales across hundreds of sites.</p>
     </div>
 
     <div class="space-y-12">
 
-      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group hover:border-amber-500" onclick="openModal('tpl-urban-company')">
+      <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row-reverse reveal cursor-pointer group hover:border-blue-500" onclick="openModal('tpl-urban-company')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-amber-500 font-bold tracking-widest mb-3 uppercase">Marketplace Strategy</div>
+          <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">Marketplace Strategy · Consulting Memo</div>
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Urban Company: Case Study</h3>
           <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
-            Analyzing the operational unit economics and gig-worker retention of India's leading home services marketplace. A deep dive into standardizing service delivery through product-led growth and dual-sided trust loops.
+            <strong class="text-gray-200">The paradox:</strong> Revenue grew 35.9%, but losses widened. <strong class="text-gray-200">Root cause:</strong> 10-minute SLAs imposed quick-commerce physics on human labor, breaking partner utilization. <strong class="text-gray-200">Impact:</strong> an EBITDA loss of ₹447 per order. <strong class="text-gray-200">Fix:</strong> dynamic SLA discount windows and B2B API density blitzing. Same lens, applied to charging infrastructure: session-level unit economics, not just fleet-level averages.
           </p>
           <div class="mt-auto text-left">
-            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-amber-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
+            <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-blue-500 group-hover:text-black px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
               <i class="ph ph-cursor-click"></i> Open Case Study
             </span>
           </div>
         </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
-          <div class="absolute inset-0 bg-gradient-to-bl from-amber-900/10 to-transparent"></div>
+        <div class="w-full md:w-1/2 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-700 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-bl from-blue-900/10 to-transparent"></div>
           <div class="text-center relative z-10">
-            <i class="ph ph-wrench text-5xl text-amber-500 mb-4 transition-transform duration-300"></i>
+            <i class="ph ph-wrench text-5xl text-blue-500 mb-4 transition-transform duration-300"></i>
             <div class="font-mono text-sm text-gray-300">Service Unit Economics</div>
           </div>
         </div>
@@ -485,10 +527,10 @@
 
       <div class="project-card p-0 overflow-hidden flex flex-col md:flex-row reveal cursor-pointer group" onclick="openModal('tpl-statiq-strategy')">
         <div class="w-full md:w-1/2 p-6 md:p-10 flex flex-col justify-center relative z-10">
-          <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">Product Strategy</div>
+          <div class="text-xs text-blue-500 font-bold tracking-widest mb-3 uppercase">EV Infrastructure · Consulting Memo</div>
           <h3 class="text-2xl md:text-3xl font-bold text-white mb-4">Statiq EV: Rollout Strategy</h3>
           <p class="text-gray-400 mb-6 text-sm leading-relaxed text-left">
-            Built upon the systems audit to develop a 3-phase product recovery roadmap. Focused on UX journey mapping, persona development, and non-software product recommendations (e.g., Session Reconciliation Logic, Data Freshness UI) to scale reliable sessions and stop user churn.
+            <strong class="text-gray-200">The paradox:</strong> A dense charger network, but drivers still couldn't get a reliable charge. <strong class="text-gray-200">Root cause:</strong> telemetry mismatches and termination failures, not station coverage. <strong class="text-gray-200">Impact:</strong> ~₹300–400 lost per failed session and user churn. <strong class="text-gray-200">Fix:</strong> a 3-phase roadmap — session reconciliation logic, a state-confidence UI layer, and safe-termination fallbacks.
           </p>
           <div class="mt-auto text-left">
             <span class="inline-flex items-center gap-2 text-white font-bold bg-gray-800 group-hover:bg-blue-500 group-hover:text-white px-5 py-2.5 rounded-full transition-all text-sm pointer-events-none">
@@ -496,7 +538,7 @@
             </span>
           </div>
         </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-l border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+        <div class="w-full md:w-1/2 bg-slate-900 border-t md:border-t-0 md:border-l border-slate-700 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent"></div>
           <div class="text-center relative z-10">
             <i class="ph ph-users-three text-5xl text-blue-500 mb-4 transition-transform duration-300"></i>
@@ -518,7 +560,7 @@
             </span>
           </div>
         </div>
-        <div class="w-full md:w-1/2 bg-[#050505] border-t md:border-t-0 md:border-r border-gray-800 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
+        <div class="w-full md:w-1/2 bg-slate-900 border-t md:border-t-0 md:border-r border-slate-700 flex items-center justify-center p-8 md:p-10 relative overflow-hidden">
           <div class="absolute inset-0 bg-gradient-to-bl from-emerald-900/10 to-transparent"></div>
           <div class="text-center w-full max-w-xs space-y-3 relative z-10">
              <div class="bg-red-900/20 border border-red-900/50 p-3 rounded text-left transition-transform duration-300 group-hover:translate-x-2">
@@ -537,7 +579,7 @@
   </div>
 </section>
 
-<section id="education" class="py-24 bg-[#050505] border-t border-gray-800">
+<section id="education" class="py-24 bg-slate-900 border-t border-slate-700">
   <div class="max-w-[1000px] mx-auto px-6">
     <div class="mb-16 reveal">
       <h2 class="text-4xl mb-4 text-white">Education & Research</h2>
@@ -548,16 +590,16 @@
       <div class="timeline-line hidden md:block" style="height: 100%;"></div>
       <div class="relative md:pl-16 reveal">
         <div class="timeline-dot hidden md:block"></div>
-        <div class="glass-panel p-6 md:p-8 border border-gray-800">
+        <div class="glass-panel p-6 md:p-8 border border-slate-700">
           
-          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-gray-800 pb-6">
+          <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-700 pb-6">
               <div class="flex items-center gap-4">
                   <div class="w-14 h-14 bg-white rounded flex items-center justify-center p-1.5 shrink-0">
                       <img src="assets/nit.png" alt="NIT Goa Logo" class="object-contain max-h-full">
                   </div>
                   <div>
-                      <h3 class="text-2xl font-bold text-white font-['Space_Grotesk']">National Institute of Technology, Goa</h3>
-                      <p class="text-amber-400 text-sm font-semibold">B.Tech in Electrical & Electronics Engineering (EEE)</p>
+                      <h3 class="text-2xl font-bold text-white">National Institute of Technology, Goa</h3>
+                      <p class="text-blue-400 text-sm font-semibold">B.Tech in Electrical & Electronics Engineering (EEE)</p>
                   </div>
               </div>
               <div class="font-mono text-xs text-gray-500 md:text-right">
@@ -565,14 +607,14 @@
               </div>
           </div>
 
-          <div class="bg-gray-900/60 border border-gray-800 p-5 rounded-md mb-8 text-sm text-gray-400 leading-relaxed">
+          <div class="bg-slate-800/60 border border-slate-700 p-5 rounded-md mb-8 text-sm text-gray-400 leading-relaxed">
               <span class="text-emerald-400 font-bold uppercase tracking-wider block mb-2">Academic Research: Smart Irrigation & Yield Prediction using IR (Thermal) Imaging</span>
               Trained Machine Learning models on <strong>500+ infrared and hyperspectral images</strong>. Conducted exploratory data analysis and spectral feature extraction to achieve <strong>85%+ accuracy in crop yield prediction</strong> and successfully integrated imaging techniques targeting <strong>&gt;90% accuracy in early plant disease detection</strong>.
           </div>
 
           <h4 class="text-xs font-bold text-gray-200 uppercase tracking-widest mb-4">Positions of Responsibility</h4>
           
-          <div class="space-y-6 border-l-2 border-gray-800 pl-5 ml-2">
+          <div class="space-y-6 border-l-2 border-slate-700 pl-5 ml-2">
               <div class="relative">
                   <div class="absolute -left-[27px] top-1.5 w-2.5 h-2.5 bg-cyan-400 rounded-full"></div>
                   <div class="flex justify-between items-baseline text-sm mb-1">
@@ -605,7 +647,7 @@
   </div>
 </section>
 
-<section id="certifications" class="py-24 bg-[#0A0A0A] border-t border-gray-800">
+<section id="certifications" class="py-24 bg-slate-800 border-t border-slate-700">
   <div class="max-w-[1200px] mx-auto px-6">
     <div class="mb-16 text-left reveal">
       <h2 class="text-4xl md:text-5xl font-bold mb-4 text-white">Certifications & Training</h2>
@@ -613,7 +655,7 @@
     </div>
 
     <div class="grid md:grid-cols-3 gap-6">
-      <div class="glass-panel p-6 border border-gray-800 hover:border-emerald-500 relative overflow-hidden group reveal">
+      <div class="glass-panel p-6 border border-slate-700 hover:border-emerald-500 relative overflow-hidden group reveal">
         <div class="absolute inset-0 bg-gradient-to-br from-emerald-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
         <i class="ph ph-certificate text-3xl text-emerald-500 mb-4 block relative z-10"></i>
         <h4 class="text-lg font-bold text-white mb-1 relative z-10">McKinsey & Company</h4>
@@ -621,41 +663,41 @@
         <p class="text-gray-400 text-xs leading-relaxed relative z-10">Advanced training focused on structured problem-solving, analytical communication, and digital-first leadership.</p>
       </div>
 
-      <div class="glass-panel p-6 border border-gray-800 hover:border-cyan-500 relative overflow-hidden group reveal" style="transition-delay: 100ms;">
-        <div class="absolute inset-0 bg-gradient-to-br from-cyan-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <i class="ph ph-globe-hemisphere-west text-3xl text-cyan-500 mb-4 block relative z-10"></i>
+      <div class="glass-panel p-6 border border-slate-700 hover:border-blue-500 relative overflow-hidden group reveal" style="transition-delay: 100ms;">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <i class="ph ph-globe-hemisphere-west text-3xl text-blue-500 mb-4 block relative z-10"></i>
         <h4 class="text-lg font-bold text-white mb-1 relative z-10">Aspire Institute</h4>
-        <p class="text-cyan-500 text-xs font-bold mb-3 uppercase tracking-wider relative z-10">Aspire Leaders Fellow</p>
+        <p class="text-blue-500 text-xs font-bold mb-3 uppercase tracking-wider relative z-10">Aspire Leaders Fellow</p>
         <p class="text-gray-400 text-xs leading-relaxed relative z-10">Global Leadership & Strategy fellowship focused on cross-cultural collaboration and strategic execution.</p>
       </div>
 
-      <div class="glass-panel p-6 border border-gray-800 hover:border-purple-500 relative overflow-hidden group reveal" style="transition-delay: 200ms;">
-        <div class="absolute inset-0 bg-gradient-to-br from-purple-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-        <i class="ph ph-cpu text-3xl text-purple-500 mb-4 block relative z-10"></i>
+      <div class="glass-panel p-6 border border-slate-700 hover:border-blue-500 relative overflow-hidden group reveal" style="transition-delay: 200ms;">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-900/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        <i class="ph ph-cpu text-3xl text-blue-500 mb-4 block relative z-10"></i>
         <h4 class="text-lg font-bold text-white mb-1 relative z-10">Generative AI Mastermind</h4>
-        <p class="text-purple-500 text-xs font-bold mb-3 uppercase tracking-wider relative z-10">Practical AI/ML Applications</p>
+        <p class="text-blue-500 text-xs font-bold mb-3 uppercase tracking-wider relative z-10">Practical AI/ML Applications</p>
         <p class="text-gray-400 text-xs leading-relaxed relative z-10">Focused on deploying AI for strategic insights, predictive analytics, and automated workflows.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section id="working-together" class="py-24 bg-[#0A0A0A] border-t border-gray-800">
+<section id="working-together" class="py-24 bg-slate-800 border-t border-slate-700">
   <div class="max-w-[1200px] mx-auto px-6">
     <h2 class="text-4xl font-bold text-white mb-4">Working Together</h2>
     <p class="text-gray-400 mb-12">How I usually plug in. Every engagement is different, but most projects follow a simple approach.</p>
     <div class="grid md:grid-cols-3 gap-8">
-        <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+        <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
             <div class="text-emerald-500 font-bold mb-2 text-sm">01.</div>
             <h3 class="text-lg font-bold text-white mb-2">Start with the fundamentals</h3>
             <p class="text-sm text-gray-400">It starts with the technical and regulatory realities of the project. I map the assumptions, constraints, and stakeholders before touching a model.</p>
         </div>
-        <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+        <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
             <div class="text-emerald-500 font-bold mb-2 text-sm">02.</div>
             <h3 class="text-lg font-bold text-white mb-2">Model and stress-test</h3>
             <p class="text-sm text-gray-400">I turn assumptions into a transparent financial model — cash flows, NPV/IRR, risk scoring, and scenario and sensitivity analysis — so decisions are explainable, not a black box.</p>
         </div>
-        <div class="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+        <div class="bg-slate-800/50 p-6 rounded-xl border border-slate-700">
             <div class="text-emerald-500 font-bold mb-2 text-sm">03.</div>
             <h3 class="text-lg font-bold text-white mb-2">Recommend and refine</h3>
             <p class="text-sm text-gray-400">I deliver a clear, defensible recommendation with stated confidence, and stay involved to refine it as real data and regulations evolve.</p>
@@ -664,7 +706,7 @@
   </div>
 </section>
 
-<section id="contact" class="py-24 px-6 border-t border-gray-800 bg-[#050505]">
+<section id="contact" class="py-24 px-6 border-t border-slate-700 bg-slate-900">
   <div class="max-w-[1200px] mx-auto text-left reveal">
     <h2 class="text-4xl font-bold mb-6 text-white">Contact Details</h2>
     <div class="text-gray-400 text-base mb-6 max-w-xl text-left">
@@ -679,22 +721,22 @@
     </div>
     
     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-12 text-left">
-      <div class="bg-[#0A0A0A] border border-gray-800 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal">
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal">
         <i class="ph ph-envelope-simple text-2xl text-emerald-500 mb-3"></i>
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Email</p>
         <a href="mailto:maazali059@gmail.com" class="text-sm text-gray-200 hover:text-white break-all">maazali059@gmail.com</a>
       </div>
-      <div class="bg-[#0A0A0A] border border-gray-800 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal" style="transition-delay: 100ms;">
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal" style="transition-delay: 100ms;">
         <i class="ph ph-phone text-2xl text-emerald-500 mb-3"></i>
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Phone</p>
         <p class="text-sm text-gray-200">+91 7776971531</p>
       </div>
-      <div class="bg-[#0A0A0A] border border-gray-800 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal" style="transition-delay: 200ms;">
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal" style="transition-delay: 200ms;">
         <i class="ph ph-map-pin text-2xl text-emerald-500 mb-3"></i>
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">Location</p>
         <p class="text-sm text-gray-200">Goa, India</p>
       </div>
-      <div class="bg-[#0A0A0A] border border-gray-800 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal" style="transition-delay: 300ms;">
+      <div class="bg-slate-800 border border-slate-700 p-5 rounded-xl hover:border-emerald-500 transition-colors shadow-lg reveal" style="transition-delay: 300ms;">
         <i class="ph ph-linkedin-logo text-2xl text-emerald-500 mb-3"></i>
         <p class="text-xs text-gray-500 uppercase tracking-widest mb-1">LinkedIn</p>
         <a href="https://linkedin.com/in/maazali11" target="_blank" class="text-sm text-gray-200 hover:text-white">/in/maazali11</a>
@@ -703,20 +745,20 @@
   </div>
 </section>
 
-<footer class="border-t border-gray-800 py-8 px-6 text-sm text-gray-600 bg-[#0A0A0A] flex flex-col md:flex-row justify-between items-center gap-4">
+<footer class="border-t border-slate-700 py-8 px-6 text-sm text-gray-600 bg-slate-800 flex flex-col md:flex-row justify-between items-center gap-4">
   <div class="max-w-[1200px] mx-auto text-left w-full flex flex-col md:flex-row justify-between items-center gap-2">
     <p>© 2026 Maaz Ali Mattehalli. All Rights Reserved.</p>
-    <p class="font-mono text-xs text-gray-500">Global System Footprint: <span id="visitor-footer-metric">100</span> recorded logs</p>
+    <p class="font-mono text-xs text-gray-500">Telemetry uplink established. Node actively monitored.</p>
   </div>
 </footer>
 
-<div id="main-modal" class="fixed inset-0 z-[100] hidden flex-col bg-[#050505]/95 backdrop-blur-xl overflow-y-auto w-full h-full">
-  <div class="sticky top-0 w-full flex justify-between items-center p-4 md:p-6 bg-[#050505]/80 backdrop-blur-xl z-50 border-b border-gray-800 shadow-2xl">
+<div id="main-modal" class="fixed inset-0 z-[100] hidden flex-col bg-slate-900/95 backdrop-blur-xl overflow-y-auto w-full h-full">
+  <div class="sticky top-0 w-full flex justify-between items-center p-4 md:p-6 bg-slate-900/80 backdrop-blur-xl z-50 border-b border-slate-700 shadow-2xl">
       <div class="text-gray-400 text-xs md:text-sm font-mono tracking-widest uppercase flex items-center gap-2">
         <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
         <span class="hidden md:inline">Project </span>Case Study
       </div>
-      <button onclick="closeAction()" class="text-white bg-gray-900 hover:bg-emerald-500 hover:text-black border border-gray-700 hover:border-emerald-500 rounded-full px-5 py-2 transition-all duration-300 font-bold text-xs md:text-sm flex items-center gap-2 group shadow-[0_0_15px_rgba(0,0,0,0.5)]">
+      <button onclick="closeAction()" class="text-white bg-slate-800 hover:bg-emerald-500 hover:text-black border border-gray-700 hover:border-emerald-500 rounded-full px-5 py-2 transition-all duration-300 font-bold text-xs md:text-sm flex items-center gap-2 group shadow-[0_0_15px_rgba(0,0,0,0.5)]">
         <i class="ph ph-arrow-left group-hover:-translate-x-1 transition-transform"></i> Back <span class="hidden md:inline">to Portfolio</span>
       </button>
   </div>
@@ -738,7 +780,7 @@ background: rgba(15, 23, 42, 0.5);
 border: 1px dashed rgba(255, 255, 255, 0.2);
 }
 .gradient-text {
-background: linear-gradient(to right, #60a5fa, #a78bfa);
+background: linear-gradient(to right, #93c5fd, #3b82f6);
 -webkit-background-clip: text;
 -webkit-text-fill-color: transparent;
 }
@@ -782,12 +824,12 @@ A strategic teardown balancing unit economics with user psychology to fix a stru
 
 <section id="executive-summary" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
 <div class="glass-card p-8 glow">
-<h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-bolt text-yellow-400"></i> Executive Summary</h2>
+<h2 class="text-2xl font-bold mb-4 flex items-center gap-2"><i class="fas fa-bolt text-blue-400"></i> Executive Summary</h2>
 <p class="text-slate-300 mb-4 leading-relaxed">
 Urban Company’s FY26 performance reveals a critical paradox. Operating revenue increased significantly (~35.9% YoY), but profitability collapsed, shifting from a solid net profit to a substantial net loss. 
 </p>
-<div class="bg-red-500/10 border-l-4 border-red-500 p-4 rounded-r mt-6">
-<p class="text-sm text-red-200"><strong>Key Conclusion:</strong> InstaHelp is not failing due to a lack of demand.
+<div class="bg-blue-500/10 border-l-4 border-blue-500 p-4 rounded-r mt-6">
+<p class="text-sm text-blue-200"><strong>Key Conclusion:</strong> InstaHelp is not failing due to a lack of demand.
 It is failing because the system is economically misaligned with the realities of on-demand human labor.
 The cost of fulfilling demand under a constrained Service Level Agreement (SLA) is structurally unsustainable.</p>
 </div>
@@ -807,9 +849,9 @@ The cost of fulfilling demand under a constrained Service Level Agreement (SLA) 
 <p class="text-sm text-slate-400 mb-4">Despite massive cash burn, it remains strategically indispensable:</p>
 <ul class="space-y-4">
 <li class="flex items-start gap-3"><i class="fas fa-clock text-blue-400 mt-1"></i> <div><strong class="text-slate-200">Expands Frequency:</strong> Shifts UC to a high-frequency, weekly habit.</div></li>
-<li class="flex items-start gap-3"><i class="fas fa-users text-purple-400 mt-1"></i> <div><strong class="text-slate-200">Captures New Segments:</strong> Acquires younger, convenience-driven demographic.</div></li>
+<li class="flex items-start gap-3"><i class="fas fa-users text-blue-400 mt-1"></i> <div><strong class="text-slate-200">Captures New Segments:</strong> Acquires younger, convenience-driven demographic.</div></li>
 <li class="flex items-start gap-3"><i class="fas fa-lock text-green-400 mt-1"></i> <div><strong class="text-slate-200">Habit Formation:</strong> Creates massive platform lock-in.</div></li>
-<li class="flex items-start gap-3"><i class="fas fa-filter text-orange-400 mt-1"></i> <div><strong class="text-slate-200">Cross-Sell Funnel:</strong> Primary entry point, lowering CAC for higher-margin services.</div></li>
+<li class="flex items-start gap-3"><i class="fas fa-filter text-blue-400 mt-1"></i> <div><strong class="text-slate-200">Cross-Sell Funnel:</strong> Primary entry point, lowering CAC for higher-margin services.</div></li>
 </ul>
 </div>
 </div>
@@ -825,9 +867,9 @@ The cost of fulfilling demand under a constrained Service Level Agreement (SLA) 
 <div class="text-slate-400 text-sm mb-1">Platform Revenue</div>
 <div class="text-3xl font-bold text-blue-400">~₹33</div>
 </div>
-<div class="bg-slate-800 p-4 rounded-xl border border-red-900/30 text-center">
+<div class="bg-slate-800 p-4 rounded-xl border border-blue-900/30 text-center">
 <div class="text-slate-400 text-sm mb-1">Est. EBITDA Loss</div>
-<div class="text-3xl font-bold text-red-400">-₹447</div>
+<div class="text-3xl font-bold text-blue-400">-₹447</div>
 </div>
 </div>
 <div class="relative h-48 w-full">
@@ -840,12 +882,12 @@ The cost of fulfilling demand under a constrained Service Level Agreement (SLA) 
 <h2 class="text-3xl font-bold mb-8">Root Cause & Market Dynamics</h2>
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
 <div class="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
-<i class="fas fa-chart-line text-2xl text-rose-400 mb-4"></i>
+<i class="fas fa-chart-line text-2xl text-blue-400 mb-4"></i>
 <h4 class="font-bold mb-2">Demand-Supply Mismatch</h4>
 <p class="text-sm text-slate-400">~60% demand is reactive. Supply must be rigid for instant SLAs. Result: Structurally low worker utilization.</p>
 </div>
 <div class="bg-slate-800/80 p-6 rounded-xl border border-slate-700">
-<i class="fas fa-stopwatch text-2xl text-orange-400 mb-4"></i>
+<i class="fas fa-stopwatch text-2xl text-blue-400 mb-4"></i>
 <h4 class="font-bold mb-2">SLA Over-Optimization</h4>
 <p class="text-sm text-slate-400">10-15 min window over-applied. Majority are flexible within 1-3 hrs. Causes massive routing inefficiency.</p>
 </div>
@@ -883,17 +925,17 @@ Competitors (Snabbit, Pronto) are solving supply constraints via venture capital
 <section>
 <h2 class="text-3xl font-bold mb-8">The PM Crucible: Discarded Ideas</h2>
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="bg-red-900/10 p-6 rounded-xl border border-red-500/20">
-<h4 class="font-bold text-red-400 mb-2"><del>Impulse Neighbor Promos</del></h4>
+<div class="bg-blue-900/10 p-6 rounded-xl border border-blue-500/20">
+<h4 class="font-bold text-blue-400 mb-2"><del>Impulse Neighbor Promos</del></h4>
 <p class="text-sm text-slate-400">Food is an impulse buy; inviting a stranger to clean a toilet is not.
 Synchronous impulsive demand is a product fantasy.</p>
 </div>
-<div class="bg-red-900/10 p-6 rounded-xl border border-red-500/20">
-<h4 class="font-bold text-red-400 mb-2"><del>Strict 20-Min Time-Boxes</del></h4>
+<div class="bg-blue-900/10 p-6 rounded-xl border border-blue-500/20">
+<h4 class="font-bold text-blue-400 mb-2"><del>Strict 20-Min Time-Boxes</del></h4>
 <p class="text-sm text-slate-400">Breaks UC's core brand promise. Leaving half the dishes dirty guarantees 1-star reviews and uninstalls.</p>
 </div>
-<div class="bg-red-900/10 p-6 rounded-xl border border-red-500/20">
-<h4 class="font-bold text-red-400 mb-2"><del>Subscriptions First</del></h4>
+<div class="bg-blue-900/10 p-6 rounded-xl border border-blue-500/20">
+<h4 class="font-bold text-blue-400 mb-2"><del>Subscriptions First</del></h4>
 <p class="text-sm text-slate-400">Launching a subscription model while unit economics are negative simply subsidizes the bleed on a predictable schedule.</p>
 </div>
 </div>
@@ -919,13 +961,13 @@ Synchronous impulsive demand is a product fantasy.</p>
 <p class="text-sm text-slate-400 mb-4">Buy user flexibility. Offer neighbors a 30% discount to book <em>anytime</em> within a 3-hour flexible window.</p>
 <div class="text-xs font-semibold text-emerald-400">IMPACT: Clusters 4-5 jobs in one building, eliminating transit time.</div>
 </div>
-<div class="glass-card p-8 border-t-4 border-purple-500 relative overflow-hidden group hover:bg-slate-800 transition">
+<div class="glass-card p-8 border-t-4 border-blue-500 relative overflow-hidden group hover:bg-slate-800 transition">
 <div class="absolute -right-4 -top-4 opacity-5 group-hover:opacity-10 transition"><i class="fas fa-anchor text-9xl"></i></div>
-<div class="bg-purple-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-6"><i class="fas fa-building text-purple-400 text-xl"></i></div>
+<div class="bg-blue-500/20 w-12 h-12 rounded-lg flex items-center justify-center mb-6"><i class="fas fa-building text-blue-400 text-xl"></i></div>
 <h3 class="text-xl font-bold mb-3">3. "Anchor-Base" Comp</h3>
 <p class="text-sm text-slate-400 mb-4">Assign a worker to a specific high-density society for a 4-hour block, managing all flexible tasks.
 Remove city-wide idle subsidies.</p>
-<div class="text-xs font-semibold text-purple-400">IMPACT: Increases worker earnings & lowers Cost per Fulfilled Hour.</div>
+<div class="text-xs font-semibold text-blue-400">IMPACT: Increases worker earnings & lowers Cost per Fulfilled Hour.</div>
 </div>
 </div>
 </section>
@@ -963,7 +1005,7 @@ Remove city-wide idle subsidies.</p>
 </div>
 </div>
 <div class="flex-1">
-<h3 class="text-lg font-bold text-rose-400 mb-4 uppercase tracking-wider text-sm"><i class="fas fa-shield-alt"></i> System Handling & Edge Cases</h3>
+<h3 class="text-lg font-bold text-blue-400 mb-4 uppercase tracking-wider text-sm"><i class="fas fa-shield-alt"></i> System Handling & Edge Cases</h3>
 <div class="space-y-4">
 <details class="group bg-slate-800 rounded-lg border border-slate-700 [&_summary::-webkit-details-marker]:hidden">
 <summary class="flex cursor-pointer items-center justify-between gap-1.5 p-4 text-slate-200 font-medium">
@@ -1045,10 +1087,10 @@ Partner executes base 15-item DSU. Centralized QA reviews photos post-job. Partn
 <span>Phase 2: Beta</span>
 <span class="bg-slate-800 text-slate-400 text-xs px-2 py-1 rounded-full">Next</span>
 </h4>
-<div class="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-3 shadow-lg cursor-grab hover:border-purple-500 transition opacity-80">
-<div class="text-xs text-purple-400 font-bold mb-2">DEMAND SHAPING</div>
+<div class="bg-slate-800 p-4 rounded-lg border border-slate-700 mb-3 shadow-lg cursor-grab hover:border-blue-500 transition opacity-80">
+<div class="text-xs text-blue-400 font-bold mb-2">DEMAND SHAPING</div>
 <p class="text-sm text-slate-200 mb-3">Activate Flexible Window discounts. A/B test pricing to find optimal discount point.</p>
-<div class="bg-red-900/20 p-2 rounded text-xs text-red-300 border border-red-500/20 mt-2">
+<div class="bg-blue-900/20 p-2 rounded text-xs text-blue-300 border border-blue-500/20 mt-2">
 ⚠️  Fail Condition: Adoption < 15%
 </div>
 </div>
@@ -1111,9 +1153,9 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 </template>
 
 <template id="tpl-statiq-strategy">
-  <div class="bg-[#0A0A0A] rounded-xl text-left overflow-hidden p-6 md:p-10 max-w-[900px] mx-auto border border-gray-800 text-gray-300 shadow-2xl">
-    <div class="modal-reveal" style="border-left: 4px solid #3b82f6; margin-bottom: 25px; background-color: #111827; padding: 15px 15px 15px 20px; border-radius: 0 8px 8px 0; border-top: 1px solid #1f2937; border-right: 1px solid #1f2937; border-bottom: 1px solid #1f2937;">
-        <h1 style="font-size: 19pt; font-weight: 800; color: #ffffff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.5px; font-family: 'Space Grotesk', sans-serif;">EV Infrastructure Reliability: Trust, Churn, & Systems Constraints</h1>
+  <div class="bg-slate-800 rounded-xl text-left overflow-hidden p-6 md:p-10 max-w-[900px] mx-auto border border-slate-700 text-gray-300 shadow-2xl">
+    <div class="modal-reveal" style="border-left: 4px solid #3b82f6; margin-bottom: 25px; background-color: #1E293B; padding: 15px 15px 15px 20px; border-radius: 0 8px 8px 0; border-top: 1px solid #334155; border-right: 1px solid #334155; border-bottom: 1px solid #334155;">
+        <h1 style="font-size: 19pt; font-weight: 800; color: #ffffff; margin-bottom: 6px; line-height: 1.2; letter-spacing: -0.5px; font-family: 'Inter', sans-serif;">EV Infrastructure Reliability: Trust, Churn, & Systems Constraints</h1>
         <div style="font-size: 11pt; color: #9ca3af; margin-bottom: 15px; font-weight: 500; text-transform: uppercase; letter-spacing: 1px; font-size: 0.75rem;">A Product Strategy</div>
         <div style="font-size: 9pt; color: #6b7280; margin-top: 8px; line-height: 1.5;">
             <strong class="text-gray-300">Author:</strong> Maaz Ali Mattehalli <span class="mx-2 text-gray-600">|</span> <strong class="text-gray-300">Context:</strong> Field data mapped against J.D. Power & ChargerHelp benchmarks.<br>
@@ -1121,39 +1163,39 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
         </div>
     </div>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">1. The Indian Market Problem Context & Hypothesis</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">1. The Indian Market Problem Context & Hypothesis</h2>
     <p class="modal-reveal" style="margin-bottom: 12px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">Service network churn in India is widely misattributed to pricing sensitivity. However, Industry reports (e.g., ADL, JMK) suggest reliability is a major barrier, often cited alongside cost. Users prioritize reliability over marginal savings; similar to how Indian consumers willingly pay a premium on Blinkit for the certainty of 10-minute delivery; EV drivers behave identically.The Shell Recharge 2024 Driver Programme found that 76% of US EV drivers are willing to travel further or pay a premium to avoid a bad charging experience. Time and certainty heavily outweigh marginal ₹/kWh savings.</p>
     <p class="modal-reveal" style="margin-bottom: 8px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">While charger density drives initial acquisition, assuming that churn is fundamentally driven by <strong class="text-white">state reconciliation failures</strong> (mismatches between app-reported states and physical reality).</p>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">2. The Business Impact: Unit Economics of System Failures</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">2. The Business Impact: Unit Economics of System Failures</h2>
     <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">In the highly competitive Indian market, CPO (Charge Point Operator) margins are razor-thin. A hardware-software handshake failure doesn't just frustrate a user—it actively destroys unit economics.</p>
 
     <div class="modal-reveal" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; margin-bottom: 20px;">
-        <div style="background-color: #111827; border: 1px solid #1f2937; border-left: 4px solid #ef4444; padding: 16px; border-radius: 6px;">
+        <div style="background-color: #1E293B; border: 1px solid #334155; border-left: 4px solid #ef4444; padding: 16px; border-radius: 6px;">
             <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px;">Revenue Loss (Handshake Drop)</div>
             <div style="font-size: 8.5pt; margin-bottom: 8px; line-height: 1.4; color: #9ca3af;"><strong class="text-gray-300">Estimated Cost:</strong> ₹300 – ₹400 per failed session (based on typical fast-charge assumptions)</div>
             <div style="font-size: 8.5pt; line-height: 1.4;"><span style="color: #10B981; font-weight: 700;">Logic:</span> An average fast-charge session yields ~20kWh at ₹18/kWh. A telemetry lag that causes a user to abandon the session equates directly to abandoned cart revenue.</div>
         </div>
-        <div style="background-color: #111827; border: 1px solid #1f2937; border-left: 4px solid #ef4444; padding: 16px; border-radius: 6px;">
+        <div style="background-color: #1E293B; border: 1px solid #334155; border-left: 4px solid #ef4444; padding: 16px; border-radius: 6px;">
             <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px;">Support OPEX (Session Lock-ins)</div>
             <div style="font-size: 8.5pt; margin-bottom: 8px; line-height: 1.4; color: #9ca3af;"><strong class="text-gray-300">Estimated Cost:</strong> ₹100 – ₹200 per support ticket (based on typical L1/L2 workflows)</div>
             <div style="font-size: 8.5pt; line-height: 1.4;"><span style="color: #ef4444; font-weight: 700;">Logic:</span> A locked connector triggers an L1 support call + L2 remote unlock procedure. This ~₹150 OPEX cost completely wipes out the net margin of 4 to 5 subsequent successful charging sessions.</div>
         </div>
     </div>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">3. Evidence from Field Observations & Benchmarks</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">3. Evidence from Field Observations & Benchmarks</h2>
     <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">To test this hypothesis against macro trends, I conducted 18 active charging attempts in Goa, benchmarking observations against the <strong>ChargerHelp 2025 EV Charging Reliability Report</strong> (which notes first-time charge success rates drop to 70% at aging stations) and <strong>J.D. Power 2025</strong> (citing 14% non-charge failure rates).</p>
     
     <div class="modal-reveal" style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 15px;">
         <div style="flex: 1 1 200px; box-sizing: border-box;">
-            <div style="background-color: #111827; border: 1px solid #1f2937; border-top: 3px solid #ef4444; padding: 16px; border-radius: 6px; height: 100%;">
+            <div style="background-color: #1E293B; border: 1px solid #334155; border-top: 3px solid #ef4444; padding: 16px; border-radius: 6px; height: 100%;">
                 <div style="font-weight: bold; font-size: 10.5pt; color: #ffffff; margin-bottom: 8px;">3.1 Telemetry Mismatch</div>
                 <p style="margin-bottom: 8px; color: #9ca3af; font-size: 9pt;"><strong>Data:</strong> In 7 of 18 attempts (~39%), chargers marked "Available" in-app were physically occupied or offline.</p>
                 <p style="margin-bottom: 0; color: #9ca3af; font-size: 9pt;"><strong>Hypothesized Cause:</strong> Delayed telemetry sync or aggressive client-side caching.</p>
             </div>
         </div>
         <div style="flex: 1 1 200px; box-sizing: border-box;">
-            <div style="background-color: #111827; border: 1px solid #1f2937; border-top: 3px solid #f59e0b; padding: 16px; border-radius: 6px; height: 100%;">
+            <div style="background-color: #1E293B; border: 1px solid #334155; border-top: 3px solid #f59e0b; padding: 16px; border-radius: 6px; height: 100%;">
                 <div style="font-weight: bold; font-size: 10.5pt; color: #ffffff; margin-bottom: 8px;">3.2 Session Termination Failures</div>
                 <p style="margin-bottom: 8px; color: #9ca3af; font-size: 9pt;"><strong>Data:</strong> In 3 of 18 attempts (~16%), sessions failed to terminate cleanly, resulting in connector lock-ins.</p>
                 <p style="margin-bottom: 0; color: #9ca3af; font-size: 9pt;"><strong>Hypothesized Cause:</strong> Backend database fails to reconcile the end-of-session trigger with the physical charger state.</p>
@@ -1165,48 +1207,48 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
         <strong class="text-white">Field Note:</strong> At one location, the app showed "Available" for ~5 minutes <em>after</em> a user had already plugged in and started charging. Without backend access, it is unclear if this was edge-network cellular lag, aggressive client-side caching to save server load, or a rigid OCPP polling interval. 
     </div>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">4. The Behavioral Churn Mechanics</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">4. The Behavioral Churn Mechanics</h2>
     <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">Textual architecture issues manifest as severe UX friction. Users adapt to this uncertainty by developing a <strong>"Dual-App Verification Loop."</strong> Because single-app trust is broken, Users frequently switch between multiple charging apps to compare alternative nearby options and select the one perceived as most reliable.</p>
 
-    <div class="modal-reveal" style="background-color: #111827; border: 1px solid #1f2937; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+    <div class="modal-reveal" style="background-color: #1E293B; border: 1px solid #334155; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
         <div style="font-weight: 700; font-size: 9.5pt; color: #ffffff; margin-bottom: 15px; text-align: center;">Figure 1: Session Drop-Off Funnel (Field Friction + J.D. Power / ChargerHelp Data)</div>
         <div style="background-color: #0284c7; color: #ffffff; font-weight: 600; font-size: 8.5pt; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; text-align: left; width: 100%;">Discovery (App Views Pin) - 100% Volume</div>
         <div style="background-color: #0369a1; color: #ffffff; font-weight: 600; font-size: 8.5pt; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; text-align: left; width: 86%;">Arrival (Physical Navigation) - 86% Conversion (J.D. Power 14% Non-Charge Rate)</div>
         <div style="background-color: #075985; color: #ffffff; font-weight: 600; font-size: 8.5pt; padding: 8px 12px; margin-bottom: 6px; border-radius: 4px; text-align: left; width: 70%;">Session Auth (Hardware Handshake) - ~70% Success (ChargerHelp Yr-3 Baseline)</div>
-        <div style="background-color: #1f2937; color: #ffffff; font-weight: 600; font-size: 8.5pt; padding: 8px 12px; margin-bottom: 4px; border-radius: 4px; text-align: left; width: 55%; border: 1px solid #374151;">Clean Termination (No Support Needed) - ~55% Estimated Success</div>
+        <div style="background-color: #334155; color: #ffffff; font-weight: 600; font-size: 8.5pt; padding: 8px 12px; margin-bottom: 4px; border-radius: 4px; text-align: left; width: 55%; border: 1px solid #374151;">Clean Termination (No Support Needed) - ~55% Estimated Success</div>
     </div>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">5. Core Problem Framing: Which Root Cause Matters Most?</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">5. Core Problem Framing: Which Root Cause Matters Most?</h2>
     <p class="modal-reveal" style="margin-bottom: 12px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">This distributed systems problem spans physical hardware, cellular networks, backend logic, and payment APIs. But <strong>which one matters most?</strong></p>
     <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">The highest impact root cause is the <strong class="text-white">Physical-to-Cloud State Handshake</strong>. If an app has a clunky UI or a slow payment gateway, users might complain, but they eventually charge. However, if the physical node cannot confirm its state to the network, the user is physically parked but digitally blocked. This specific failure creates the highest anxiety, eliminates trust, and causes immediate session abandonment.</p>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">6. Phased Product Roadmap & Risk Modeling</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">6. Phased Product Roadmap & Risk Modeling</h2>
     <p class="modal-reveal" style="margin-bottom: 16px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;"><strong>Impact vs. Effort Rationale:</strong> Why focus on Session Reconciliation (Phase 1) before building predictive Guided Fallback Routing (Phase 3)? While Fallback Routing sounds like a magic bullet for retention, if the underlying state reconciliation isn't accurate, the app will route the stranded user to a <em>second</em> broken charger. We must stabilize baseline data accuracy before introducing predictive features.</p>
 
     <div class="modal-reveal" style="display: grid; grid-template-columns: 1fr; gap: 12px; margin-bottom: 20px;">
-        <div style="background-color: #111827; border: 1px solid #1f2937; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 6px;">
-            <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; align-items: center;">Phase 1: Session Reconciliation & Safety Logic <span style="font-size: 7.5pt; background-color: #1f2937; padding: 4px 8px; border-radius: 12px; color: #9ca3af; border: 1px solid #374151;">Critical Foundation</span></div>
+        <div style="background-color: #1E293B; border: 1px solid #334155; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 6px;">
+            <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; align-items: center;">Phase 1: Session Reconciliation & Safety Logic <span style="font-size: 7.5pt; background-color: #334155; padding: 4px 8px; border-radius: 12px; color: #9ca3af; border: 1px solid #374151;">Critical Foundation</span></div>
             <div style="font-size: 9pt; margin-bottom: 6px; line-height: 1.4; color: #d1d5db;"><strong class="text-white">Spec:</strong> Implement automated OCPP timeout loops and safe termination fallbacks.</div>
             <div style="font-size: 9pt; margin-bottom: 6px; line-height: 1.4; color: #9ca3af;"><span style="color: #10B981; font-weight: 700;">Rationale:</span> "Ghost availability" is frustrating, but a locked connector traps a user's vehicle, guaranteeing severe brand damage and a costly support call.</div>
             <div style="font-size: 9pt; line-height: 1.4; color: #9ca3af;"><span style="color: #ef4444; font-weight: 700;">System Tradeoff:</span> Requires higher server load for high-frequency heartbeats, and risks premature termination for slow-charging EVs.</div>
         </div>
 
-        <div style="background-color: #111827; border: 1px solid #1f2937; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 6px;">
-            <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; align-items: center;">Phase 2: Client-Side State Confidence UI <span style="font-size: 7.5pt; background-color: #1f2937; padding: 4px 8px; border-radius: 12px; color: #9ca3af; border: 1px solid #374151;">Trust Building</span></div>
+        <div style="background-color: #1E293B; border: 1px solid #334155; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 6px;">
+            <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; align-items: center;">Phase 2: Client-Side State Confidence UI <span style="font-size: 7.5pt; background-color: #334155; padding: 4px 8px; border-radius: 12px; color: #9ca3af; border: 1px solid #374151;">Trust Building</span></div>
             <div style="font-size: 9pt; margin-bottom: 6px; line-height: 1.4; color: #d1d5db;"><strong class="text-white">Spec:</strong> Display "Last updated X mins ago" rather than binary Available/Unavailable map pins.</div>
             <div style="font-size: 9pt; margin-bottom: 6px; line-height: 1.4; color: #9ca3af;"><span style="color: #10B981; font-weight: 700;">Rationale:</span> Appending data freshness shifts the risk decision to the user, reducing the betrayal of a false positive map pin.</div>
             <div style="font-size: 9pt; line-height: 1.4; color: #9ca3af;"><span style="color: #ef4444; font-weight: 700;">System Tradeoff:</span> Exposes backend latency to the public. May temporarily lower perceived network quality to rebuild long-term trust.</div>
         </div>
 
-        <div style="background-color: #111827; border: 1px solid #1f2937; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 6px;">
-            <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; align-items: center;">Phase 3: Guided Fallback Routing <span style="font-size: 7.5pt; background-color: #1f2937; padding: 4px 8px; border-radius: 12px; color: #9ca3af; border: 1px solid #374151;">Retention Protection</span></div>
+        <div style="background-color: #1E293B; border: 1px solid #334155; border-left: 4px solid #3b82f6; padding: 16px; border-radius: 6px;">
+            <div style="font-weight: 700; font-size: 10pt; color: #ffffff; margin-bottom: 8px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px; align-items: center;">Phase 3: Guided Fallback Routing <span style="font-size: 7.5pt; background-color: #334155; padding: 4px 8px; border-radius: 12px; color: #9ca3af; border: 1px solid #374151;">Retention Protection</span></div>
             <div style="font-size: 9pt; margin-bottom: 6px; line-height: 1.4; color: #d1d5db;"><strong class="text-white">Spec:</strong> If an OCPP handshake fails, the UI automatically routes to the nearest High-Confidence node.</div>
             <div style="font-size: 9pt; margin-bottom: 6px; line-height: 1.4; color: #9ca3af;"><span style="color: #10B981; font-weight: 700;">Rationale:</span> Converts a dead-end technical fault into a controlled recovery loop.</div>
             <div style="font-size: 9pt; line-height: 1.4; color: #9ca3af;"><span style="color: #ef4444; font-weight: 700;">Worst-Case Scenario:</span> High engineering load. If the secondary fallback node also drops the handshake, churn probability approaches 100%. Fallback must be heavily gated by real-time hardware health pings.</div>
         </div>
     </div>
 
-    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #1f2937; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Space Grotesk', sans-serif;">7. What I Would Validate Next (Day 1 Actions)</h2>
+    <h2 class="modal-reveal" style="font-size: 14pt; color: #ffffff; margin-top: 25px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #334155; text-transform: uppercase; letter-spacing: 0.5px; font-family: 'Inter', sans-serif;">7. What I Would Validate Next (Day 1 Actions)</h2>
     <p class="modal-reveal" style="margin-bottom: 12px; color: #d1d5db; text-align: left; font-size: 9.5pt; line-height: 1.6;">To move from external hypothesis to an engineering-ready roadmap, I would query the following internal metrics:</p>
     <ul class="modal-reveal" style="margin-top: 8px; margin-bottom: 16px; padding-left: 20px; color: #9ca3af; font-size: 9.5pt; line-height: 1.6;">
         <li style="margin-bottom: 6px;"><strong class="text-white">App Switching & Abandonment Rate:</strong> Query the % of users who open the app, view a station pin, but fail to initiate a session within 15 minutes (a strong behavioral proxy for users cross-referencing PlugShare and abandoning the funnel).</li>
@@ -1214,32 +1256,32 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
         <li style="margin-bottom: 6px;"><strong class="text-white">OEM-Level Failure Distribution:</strong> Isolate if termination lock-ups are geographically random or tied to specific hardware manufacturers (e.g., Exicom vs. Delta).</li>
     </ul>
 
-    <div class="modal-reveal" style="font-size: 8pt; color: #6b7280; font-style: italic; border-top: 1px solid #1f2937; padding-top: 12px; margin-top: 25px; text-align: center;">
+    <div class="modal-reveal" style="font-size: 8pt; color: #6b7280; font-style: italic; border-top: 1px solid #334155; padding-top: 12px; margin-top: 25px; text-align: center;">
         ⚠️ Note: These observations are derived from independent field testing (N=18) and macro industry benchmarks. They require validation against internal CSMS backend data before deployment.
     </div>
   </div>
 </template>
 
 <template id="tpl-statiq-audit">
-  <div class="bg-[#0A0A0A] text-[#d1d5db] rounded-xl shadow-2xl text-left overflow-hidden p-6 md:p-10 max-w-[900px] mx-auto border border-gray-800 font-sans">
+  <div class="bg-slate-800 text-[#d1d5db] rounded-xl shadow-2xl text-left overflow-hidden p-6 md:p-10 max-w-[900px] mx-auto border border-slate-700 font-sans">
     <div class="modal-reveal text-emerald-500 font-bold tracking-widest text-xs uppercase mb-4 flex items-center gap-2">
       <i class="ph ph-magnifying-glass"></i> Product & Systems Audit
     </div>
-    <h1 class="modal-reveal text-3xl md:text-5xl mb-6 tracking-tight font-['Space_Grotesk'] text-white">
+    <h1 class="modal-reveal text-3xl md:text-5xl mb-6 tracking-tight text-white">
       Statiq EV Network: <br><span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-500">Systems Reliability & UX Friction</span>
     </h1>
     <p class="modal-reveal text-lg md:text-xl text-gray-400 font-light mb-8">
       A comprehensive teardown diagnosing severe app churn along high-density tourist corridors. Proving that churn is driven by probabilistic distributed systems failures, not pricing sensitivity.
     </p>
     
-    <div class="modal-reveal flex flex-wrap gap-6 text-sm border-t border-gray-800 pt-6 mb-12">
+    <div class="modal-reveal flex flex-wrap gap-6 text-sm border-t border-slate-700 pt-6 mb-12">
       <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Author</span> <strong class="text-white">Maaz Ali Mattehalli</strong></div>
       <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Focus</span> <strong class="text-white">EV Infrastructure & Telemetry</strong></div>
       <div><span class="block text-gray-500 text-xs uppercase tracking-wider mb-1">Role Type</span> <strong class="text-white">Infrastructure & Systems Analyst</strong></div>
     </div>
 
     <section class="mb-12">
-      <h2 class="modal-reveal text-2xl font-['Space_Grotesk'] text-white border-l-4 border-emerald-500 pl-4 mb-6">1. The Problem Context & Validation</h2>
+      <h2 class="modal-reveal text-2xl text-white border-l-4 border-emerald-500 pl-4 mb-6">1. The Problem Context & Validation</h2>
       <p class="modal-reveal mb-6 text-gray-300 leading-relaxed">
         EV adoption in tourist-heavy regions like Goa depends heavily on charging reliability during transient, high-density usage. While network providers report uptime at an infrastructure level, user trust is shaped entirely at the session level. The central thesis of this audit is that <strong class="text-white">Statiq's destination-centric product model faces massive conversion challenges due to physical-to-cloud state handshakes failing.</strong>
       </p>
@@ -1253,22 +1295,22 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </section>
 
     <section class="mb-12">
-      <h2 class="modal-reveal text-2xl font-['Space_Grotesk'] text-white border-l-4 border-emerald-500 pl-4 mb-6">2. Evidence from Field Observations</h2>
+      <h2 class="modal-reveal text-2xl text-white border-l-4 border-emerald-500 pl-4 mb-6">2. Evidence from Field Observations</h2>
       <p class="modal-reveal mb-8 text-gray-300 leading-relaxed">Across multiple charging attempts, there is a consistent mismatch between app-reported charger states and real-world hardware behavior. This actively destroys unit economics through abandoned sessions and spiked L1 support costs.</p>
 
       <div class="modal-reveal grid md:grid-cols-2 gap-6">
-        <div class="bg-[#111827] border border-gray-800 p-6 rounded-xl hover:border-orange-500/50 transition duration-300">
-          <h3 class="text-orange-400 text-lg font-['Space_Grotesk'] mb-3 flex items-center gap-2"><i class="ph ph-wifi-x"></i> Telemetry Mismatch</h3>
+        <div class="bg-[#1E293B] border border-slate-700 p-6 rounded-xl hover:border-orange-500/50 transition duration-300">
+          <h3 class="text-orange-400 text-lg mb-3 flex items-center gap-2"><i class="ph ph-wifi-x"></i> Telemetry Mismatch</h3>
           <p class="text-sm text-gray-300 mb-4">Chargers marked "Available" in-app were physically occupied or completely offline.</p>
-          <div class="text-xs text-gray-400 bg-[#050505] border border-gray-800 px-4 py-3 rounded">
+          <div class="text-xs text-gray-400 bg-slate-900 border border-slate-700 px-4 py-3 rounded">
             <strong class="text-white">Root Cause:</strong> Significant latency lag between charger state update and app display due to cellular edge networks.
           </div>
         </div>
 
-        <div class="bg-[#111827] border border-gray-800 p-6 rounded-xl hover:border-red-500/50 transition duration-300">
-          <h3 class="text-red-400 text-lg font-['Space_Grotesk'] mb-3 flex items-center gap-2"><i class="ph ph-lock-key"></i> Termination Failures</h3>
+        <div class="bg-[#1E293B] border border-slate-700 p-6 rounded-xl hover:border-red-500/50 transition duration-300">
+          <h3 class="text-red-400 text-lg mb-3 flex items-center gap-2"><i class="ph ph-lock-key"></i> Termination Failures</h3>
           <p class="text-sm text-gray-300 mb-4">Sessions fail to terminate cleanly, resulting in connector lock-ins forcing a manual server release.</p>
-          <div class="text-xs text-gray-400 bg-[#050505] border border-gray-800 px-4 py-3 rounded">
+          <div class="text-xs text-gray-400 bg-slate-900 border border-slate-700 px-4 py-3 rounded">
             <strong class="text-white">Root Cause:</strong> Backend state does not reconcile with the physical charger state. User physically exits, but session persists.
           </div>
         </div>
@@ -1276,53 +1318,53 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </section>
 
     <section class="mb-12">
-      <h2 class="modal-reveal text-2xl font-['Space_Grotesk'] text-white border-l-4 border-emerald-500 pl-4 mb-6">3. Human Impact & User Journey</h2>
+      <h2 class="modal-reveal text-2xl text-white border-l-4 border-emerald-500 pl-4 mb-6">3. Human Impact & User Journey</h2>
       <p class="modal-reveal mb-8 text-gray-300 leading-relaxed">These systemic architectural issues manifest as severe UX friction. Users adapt to this uncertainty by developing a <strong class="text-white">"Dual-App Verification Loop"</strong>—cross-referencing the Statiq map with third-party tools like PlugShare to verify reliability.</p>
 
       <div class="modal-reveal grid md:grid-cols-2 gap-6 mb-12">
-        <div class="border border-gray-800 rounded-lg p-6 bg-[#111827]">
+        <div class="border border-slate-700 rounded-lg p-6 bg-[#1E293B]">
           <div class="flex items-center gap-3 mb-4">
             <span class="bg-blue-500/20 text-blue-400 text-[10px] font-bold px-2 py-1 rounded uppercase">Persona A</span>
             <h4 class="font-bold text-white text-lg">The Interstate Road-Tripper</h4>
           </div>
-          <p class="text-xs text-gray-400 mb-3 border-b border-gray-800 pb-3"><strong class="text-gray-300">Profile:</strong> Long-distance travel from tier-1 cities.</p>
+          <p class="text-xs text-gray-400 mb-3 border-b border-slate-700 pb-3"><strong class="text-gray-300">Profile:</strong> Long-distance travel from tier-1 cities.</p>
           <p class="text-sm text-gray-300 leading-relaxed">Highly dependent on fast chargers. Driving 15km off route for a "Ghost Available" charger destroys their travel schedule and completely eliminates trust in the network.</p>
         </div>
         
-        <div class="border border-gray-800 rounded-lg p-6 bg-[#111827]">
+        <div class="border border-slate-700 rounded-lg p-6 bg-[#1E293B]">
           <div class="flex items-center gap-3 mb-4">
             <span class="bg-purple-500/20 text-purple-400 text-[10px] font-bold px-2 py-1 rounded uppercase">Persona B</span>
             <h4 class="font-bold text-white text-lg">The Local Rental Tourist</h4>
           </div>
-          <p class="text-xs text-gray-400 mb-3 border-b border-gray-800 pb-3"><strong class="text-gray-300">Profile:</strong> Holiday explorer using rented EVs.</p>
+          <p class="text-xs text-gray-400 mb-3 border-b border-slate-700 pb-3"><strong class="text-gray-300">Profile:</strong> Holiday explorer using rented EVs.</p>
           <p class="text-sm text-gray-300 leading-relaxed">Unfamiliar with network rules. Extremely vulnerable to session lock-ins. A stuck connector forces them to spend valuable vacation time calling L1 customer support.</p>
         </div>
       </div>
 
-      <h3 class="modal-reveal text-lg mb-4 text-white font-medium font-['Space_Grotesk']">End-User Emotional Journey Map</h3>
-      <div class="modal-reveal bg-[#111827] border border-gray-800 rounded-xl p-6 md:p-10 flex flex-col md:flex-row justify-between relative overflow-hidden z-10 gap-6 md:gap-0 shadow-inner">
+      <h3 class="modal-reveal text-lg mb-4 text-white font-medium">End-User Emotional Journey Map</h3>
+      <div class="modal-reveal bg-[#1E293B] border border-slate-700 rounded-xl p-6 md:p-10 flex flex-col md:flex-row justify-between relative overflow-hidden z-10 gap-6 md:gap-0 shadow-inner">
         
         <div class="journey-step flex-1 text-center relative z-10">
           <div class="icon-wrapper border border-emerald-500 text-emerald-400 bg-emerald-500/10 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-[0_0_15px_rgba(16,185,129,0.2)]">😃</div>
-          <h5 class="text-sm font-bold text-white mb-2 font-['Space_Grotesk']">1. Planning</h5>
+          <h5 class="text-sm font-bold text-white mb-2">1. Planning</h5>
           <p class="text-xs text-gray-400 px-2 leading-relaxed">Sees dense network dots across Goa; feels confident.</p>
         </div>
 
         <div class="journey-step flex-1 text-center relative z-10">
           <div class="icon-wrapper border border-red-500 text-red-400 bg-red-500/10 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-[0_0_15px_rgba(239,68,68,0.2)]">🤬</div>
-          <h5 class="text-sm font-bold text-white mb-2 font-['Space_Grotesk']">2. Arrival</h5>
+          <h5 class="text-sm font-bold text-white mb-2">2. Arrival</h5>
           <p class="text-xs text-gray-400 px-2 leading-relaxed">Arrives at "green pin"; finds terminal physically occupied.</p>
         </div>
 
         <div class="journey-step flex-1 text-center relative z-10">
           <div class="icon-wrapper border border-orange-500 text-orange-400 bg-orange-500/10 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-[0_0_15px_rgba(245,158,11,0.2)]">🤔</div>
-          <h5 class="text-sm font-bold text-white mb-2 font-['Space_Grotesk']">3. Charging</h5>
+          <h5 class="text-sm font-bold text-white mb-2">3. Charging</h5>
           <p class="text-xs text-gray-400 px-2 leading-relaxed">Faces session cutoff anxieties due to rigid slot blocks.</p>
         </div>
 
         <div class="journey-step flex-1 text-center relative z-10">
           <div class="icon-wrapper border border-red-600 text-red-500 bg-red-600/10 w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-[0_0_15px_rgba(220,38,38,0.2)]">😡</div>
-          <h5 class="text-sm font-bold text-white mb-2 font-['Space_Grotesk']">4. Exit</h5>
+          <h5 class="text-sm font-bold text-white mb-2">4. Exit</h5>
           <p class="text-xs text-gray-400 px-2 leading-relaxed">Session freezes; gun gets stuck, forcing a support call.</p>
         </div>
 
@@ -1330,36 +1372,36 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </section>
 
     <section class="mb-12">
-      <h2 class="modal-reveal text-2xl font-['Space_Grotesk'] text-white border-l-4 border-emerald-500 pl-4 mb-6">4. Cross-Network Teardown Matrix</h2>
-      <div class="modal-reveal overflow-x-auto border border-gray-800 rounded-xl">
-        <table class="w-full border-collapse min-w-[600px] bg-[#111827]">
+      <h2 class="modal-reveal text-2xl text-white border-l-4 border-emerald-500 pl-4 mb-6">4. Cross-Network Teardown Matrix</h2>
+      <div class="modal-reveal overflow-x-auto border border-slate-700 rounded-xl">
+        <table class="w-full border-collapse min-w-[600px] bg-[#1E293B]">
           <thead>
             <tr>
-              <th class="bg-[#1f2937] text-[0.75rem] tracking-wider p-4 text-left border-b-2 border-gray-800 text-emerald-500 uppercase">Feature Element</th>
-              <th class="bg-[#1f2937] text-[0.75rem] tracking-wider p-4 text-left border-b-2 border-gray-800 text-emerald-500 uppercase">Statiq App Performance</th>
-              <th class="bg-[#1f2937] text-[0.75rem] tracking-wider p-4 text-left border-b-2 border-gray-800 text-emerald-500 uppercase">Tata Power / Zeon Edge</th>
+              <th class="bg-[#334155] text-[0.75rem] tracking-wider p-4 text-left border-b-2 border-slate-700 text-emerald-500 uppercase">Feature Element</th>
+              <th class="bg-[#334155] text-[0.75rem] tracking-wider p-4 text-left border-b-2 border-slate-700 text-emerald-500 uppercase">Statiq App Performance</th>
+              <th class="bg-[#334155] text-[0.75rem] tracking-wider p-4 text-left border-b-2 border-slate-700 text-emerald-500 uppercase">Tata Power / Zeon Edge</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-300"><strong>Primary Asset</strong></td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Massive charger discovery & highway aggregation.</td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Controlled site deployments focused on 99% uptime.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-300"><strong>Primary Asset</strong></td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Massive charger discovery & highway aggregation.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Controlled site deployments focused on 99% uptime.</td>
             </tr>
             <tr>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-300"><strong>Telemetry Sync</strong></td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Latency lags of several minutes on map clusters.</td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Near-instant backend sync loop updates.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-300"><strong>Telemetry Sync</strong></td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Latency lags of several minutes on map clusters.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Near-instant backend sync loop updates.</td>
             </tr>
             <tr>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-300"><strong>Session Control</strong></td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Manual reliance; highly vulnerable to process freezes.</td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Automated termination timeout loops within 60 seconds.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-300"><strong>Session Control</strong></td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Manual reliance; highly vulnerable to process freezes.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Automated termination timeout loops within 60 seconds.</td>
             </tr>
             <tr>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-300"><strong>User Trust</strong></td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Requires 3rd-party validation (PlugShare).</td>
-              <td class="p-4 border-b border-gray-800 text-sm text-gray-400">Higher perceived reliability; direct app usage.</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-300"><strong>User Trust</strong></td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Requires 3rd-party validation (PlugShare).</td>
+              <td class="p-4 border-b border-slate-700 text-sm text-gray-400">Higher perceived reliability; direct app usage.</td>
             </tr>
           </tbody>
         </table>
@@ -1367,50 +1409,50 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </section>
 
     <section class="mb-12">
-      <h2 class="modal-reveal text-2xl font-['Space_Grotesk'] text-white border-l-4 border-emerald-500 pl-4 mb-6">5. Solution Framework (System-Aware Features)</h2>
+      <h2 class="modal-reveal text-2xl text-white border-l-4 border-emerald-500 pl-4 mb-6">5. Solution Framework (System-Aware Features)</h2>
       <p class="modal-reveal mb-6 text-gray-300 leading-relaxed">This is not a UI issue fixable with frontend tweaks. It is a distributed systems problem requiring system-aware product interventions to protect revenue and retention.</p>
 
       <div class="modal-reveal grid md:grid-cols-2 gap-6">
-        <div class="bg-[#111827] border border-gray-800 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
-          <h3 class="text-emerald-400 text-lg font-['Space_Grotesk'] mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> State Confidence Layer</h3>
+        <div class="bg-[#1E293B] border border-slate-700 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
+          <h3 class="text-emerald-400 text-lg mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> State Confidence Layer</h3>
           <ul class="solution-list text-sm text-gray-400 list-disc pl-5 space-y-2">
             <li>Instead of binary "Available", display a "Last updated X mins ago" timestamp.</li>
             <li>Display a network Confidence Indicator (High/Low based on active ping).</li>
-            <li class="text-gray-500 mt-4 text-xs border-t border-gray-800 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Shifts risk decision to the user; reduces the betrayal of false positive map pins.</li>
+            <li class="text-gray-500 mt-4 text-xs border-t border-slate-700 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Shifts risk decision to the user; reduces the betrayal of false positive map pins.</li>
           </ul>
         </div>
 
-        <div class="bg-[#111827] border border-gray-800 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
-          <h3 class="text-emerald-400 text-lg font-['Space_Grotesk'] mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> Session Reconciliation Logic</h3>
+        <div class="bg-[#1E293B] border border-slate-700 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
+          <h3 class="text-emerald-400 text-lg mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> Session Reconciliation Logic</h3>
           <ul class="solution-list text-sm text-gray-400 list-disc pl-5 space-y-2">
             <li>Implement automated OCPP timeout loops for inactive sessions.</li>
             <li>Build a backend + hardware state sync verification loop (high-frequency heartbeat).</li>
-            <li class="text-gray-500 mt-4 text-xs border-t border-gray-800 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Prevents ghost sessions and physically trapped connectors.</li>
+            <li class="text-gray-500 mt-4 text-xs border-t border-slate-700 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Prevents ghost sessions and physically trapped connectors.</li>
           </ul>
         </div>
 
-        <div class="bg-[#111827] border border-gray-800 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
-          <h3 class="text-emerald-400 text-lg font-['Space_Grotesk'] mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> Safe Termination Fallback</h3>
+        <div class="bg-[#1E293B] border border-slate-700 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
+          <h3 class="text-emerald-400 text-lg mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> Safe Termination Fallback</h3>
           <ul class="solution-list text-sm text-gray-400 list-disc pl-5 space-y-2">
             <li>Replace the error-prone simple "Force Stop" button.</li>
             <li>Implement: Retry Request &rarr; Soft Unlock Signal &rarr; Escalation Trigger.</li>
-            <li class="text-gray-500 mt-4 text-xs border-t border-gray-800 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Avoids system inconsistency and billing errors without requiring human support.</li>
+            <li class="text-gray-500 mt-4 text-xs border-t border-slate-700 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Avoids system inconsistency and billing errors without requiring human support.</li>
           </ul>
         </div>
 
-        <div class="bg-[#111827] border border-gray-800 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
-          <h3 class="text-emerald-400 text-lg font-['Space_Grotesk'] mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> Adaptive Session Buffers</h3>
+        <div class="bg-[#1E293B] border border-slate-700 p-6 rounded-xl transition duration-300 hover:border-emerald-500/50">
+          <h3 class="text-emerald-400 text-lg mb-4 flex items-center gap-2"><i class="ph ph-check-circle"></i> Adaptive Session Buffers</h3>
           <ul class="solution-list text-sm text-gray-400 list-disc pl-5 space-y-2">
             <li>Implement UI grace periods before session auto-cutoff.</li>
             <li>Offer flexible, small extension pop-ups to active drivers.</li>
-            <li class="text-gray-500 mt-4 text-xs border-t border-gray-800 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Prevents abrupt disconnections and accommodates variable charging curves.</li>
+            <li class="text-gray-500 mt-4 text-xs border-t border-slate-700 pt-3 pb-0 list-none -ml-5"><strong class="text-gray-300">Result:</strong> Prevents abrupt disconnections and accommodates variable charging curves.</li>
           </ul>
         </div>
       </div>
     </section>
 
     <section class="pb-12">
-      <h2 class="modal-reveal text-2xl font-['Space_Grotesk'] text-white border-l-4 border-emerald-500 pl-4 mb-6">6. Validation & Day-1 Actions</h2>
+      <h2 class="modal-reveal text-2xl text-white border-l-4 border-emerald-500 pl-4 mb-6">6. Validation & Day-1 Actions</h2>
       <div class="modal-reveal bg-[#0f172a] border border-[#1e3a8a] rounded-xl p-6 md:p-8 shadow-inner">
         <p class="text-blue-200 mb-6 font-medium text-base">To move from qualitative hypothesis to quantitative certainty, I would pull the following internal metrics immediately upon joining:</p>
         <ul class="space-y-4 text-sm text-blue-100/70">
@@ -1424,53 +1466,53 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 </template>
 
 <template id="tpl-ev-report">
-  <div class="bg-[#0A0A0A] rounded-xl border border-gray-800 shadow-2xl text-left overflow-hidden max-w-[1000px] mx-auto">
-    <div class="modal-reveal bg-[#111827] p-6 md:p-10 border-b border-gray-800 relative overflow-hidden">
+  <div class="bg-slate-800 rounded-xl border border-slate-700 shadow-2xl text-left overflow-hidden max-w-[1000px] mx-auto">
+    <div class="modal-reveal bg-[#1E293B] p-6 md:p-10 border-b border-slate-700 relative overflow-hidden">
       <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 to-blue-500"></div>
       <div class="text-xs font-bold text-cyan-400 tracking-widest uppercase mb-3">Feasibility Report</div>
-      <h2 class="text-3xl md:text-4xl font-bold text-white font-['Space_Grotesk'] mb-3">Public EV Charging in Goa</h2>
+      <h2 class="text-3xl md:text-4xl font-bold text-white mb-3">Public EV Charging in Goa</h2>
       <p class="text-gray-400 text-sm font-mono">Prepared by Maaz Ali Mattehalli</p>
     </div>
 
-    <div class="p-6 md:p-10 space-y-12 text-sm text-gray-300 leading-relaxed bg-[#0A0A0A]">
+    <div class="p-6 md:p-10 space-y-12 text-sm text-gray-300 leading-relaxed bg-slate-800">
       
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">1. Executive Summary</h3>
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">1. Executive Summary</h3>
         <p class="mb-4 text-gray-300">This report presents a comprehensive analysis of the techno-financial and socio-political feasibility of deploying a public Electric Vehicle (EV) charging network in Goa. A traditional infrastructure deployment model is not viable due to significant local opposition and the high cost of land acquisition.</p>
         <p class="text-gray-300">The central finding is that a <strong class="text-white">Public-Private Partnership (PPP)</strong> model, founded on a hyper-local strategy, is essential for success. This approach transforms major capital liabilities into operational partnerships.</p>
       </div>
 
       <div class="modal-reveal grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div class="ev-metric-card hover:bg-[#1f2937] transition-colors duration-300">
+          <div class="ev-metric-card hover:bg-[#334155] transition-colors duration-300">
               <div class="text-xl md:text-2xl font-bold text-cyan-400 mb-2">₹3.8 Cr</div>
               <div class="text-xs text-gray-500 uppercase tracking-widest font-semibold">Total Private Investment</div>
           </div>
-          <div class="ev-metric-card hover:bg-[#1f2937] transition-colors duration-300" style="border-left-color: #10B981;">
+          <div class="ev-metric-card hover:bg-[#334155] transition-colors duration-300" style="border-left-color: #10B981;">
               <div class="text-xl md:text-2xl font-bold text-emerald-400 mb-2">18.5%</div>
               <div class="text-xs text-gray-500 uppercase tracking-widest font-semibold">Average Annual ROI</div>
           </div>
-          <div class="ev-metric-card hover:bg-[#1f2937] transition-colors duration-300" style="border-left-color: #8b5cf6;">
+          <div class="ev-metric-card hover:bg-[#334155] transition-colors duration-300" style="border-left-color: #8b5cf6;">
               <div class="text-xl md:text-2xl font-bold text-white mb-2">~4 Years</div>
               <div class="text-xs text-gray-500 uppercase tracking-widest font-semibold">Breakeven Point</div>
           </div>
-          <div class="ev-metric-card hover:bg-[#1f2937] transition-colors duration-300" style="border-left-color: #f59e0b;">
+          <div class="ev-metric-card hover:bg-[#334155] transition-colors duration-300" style="border-left-color: #f59e0b;">
               <div class="text-xl md:text-2xl font-bold text-white mb-2">₹2.54 Cr</div>
               <div class="text-xs text-gray-500 uppercase tracking-widest font-semibold">5-Year Net Profit</div>
           </div>
       </div>
 
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">2. Market Drivers & Core Recommendations</h3>
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">2. Market Drivers & Core Recommendations</h3>
         <ul class="space-y-4 list-none text-gray-300">
-            <li class="flex items-start gap-3 bg-[#111827] p-4 rounded-lg border border-gray-800"><i class="ph ph-check-circle text-emerald-500 mt-1 text-xl"></i> <span><strong class="text-white block mb-1">Hyper-Local Partnership Model:</strong> Forgo traditional land acquisition. Partner directly with Goan businesses (hotels, shacks) offering them a revenue-sharing model.</span></li>
-            <li class="flex items-start gap-3 bg-[#111827] p-4 rounded-lg border border-gray-800"><i class="ph ph-check-circle text-emerald-500 mt-1 text-xl"></i> <span><strong class="text-white block mb-1">E20 Petrol Imperative:</strong> E20 fuel policies are degrading pre-2023 ICE vehicles, shifting EV adoption from a TCO calculation to a critical risk management decision.</span></li>
-            <li class="flex items-start gap-3 bg-[#111827] p-4 rounded-lg border border-gray-800"><i class="ph ph-check-circle text-emerald-500 mt-1 text-xl"></i> <span><strong class="text-white block mb-1">Taxi Industry Integration:</strong> Convert local taxi lobbies from opponents to advocates by offering subsidized EV financing and commercial charging plans.</span></li>
+            <li class="flex items-start gap-3 bg-[#1E293B] p-4 rounded-lg border border-slate-700"><i class="ph ph-check-circle text-emerald-500 mt-1 text-xl"></i> <span><strong class="text-white block mb-1">Hyper-Local Partnership Model:</strong> Forgo traditional land acquisition. Partner directly with Goan businesses (hotels, shacks) offering them a revenue-sharing model.</span></li>
+            <li class="flex items-start gap-3 bg-[#1E293B] p-4 rounded-lg border border-slate-700"><i class="ph ph-check-circle text-emerald-500 mt-1 text-xl"></i> <span><strong class="text-white block mb-1">E20 Petrol Imperative:</strong> E20 fuel policies are degrading pre-2023 ICE vehicles, shifting EV adoption from a TCO calculation to a critical risk management decision.</span></li>
+            <li class="flex items-start gap-3 bg-[#1E293B] p-4 rounded-lg border border-slate-700"><i class="ph ph-check-circle text-emerald-500 mt-1 text-xl"></i> <span><strong class="text-white block mb-1">Taxi Industry Integration:</strong> Convert local taxi lobbies from opponents to advocates by offering subsidized EV financing and commercial charging plans.</span></li>
         </ul>
       </div>
 
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">3. Financial Projections (Visualized)</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 bg-[#111827] p-6 rounded-xl border border-gray-800 shadow-inner">
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">3. Financial Projections (Visualized)</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-6 bg-[#1E293B] p-6 rounded-xl border border-slate-700 shadow-inner">
             <div>
                 <h4 class="text-xs text-center text-gray-400 font-bold uppercase mb-4 tracking-widest">Profitability vs OPEX</h4>
                 <div style="position: relative; height: 250px; width: 100%;">
@@ -1487,11 +1529,11 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
       </div>
 
       <div class="modal-reveal">
-         <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">4. 5-Year Data Table (PPP Model)</h3>
-         <div class="overflow-x-auto rounded-lg border border-gray-800">
-           <table class="w-full text-sm text-left ev-report-table min-w-[600px] bg-[#111827]">
+         <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">4. 5-Year Data Table (PPP Model)</h3>
+         <div class="overflow-x-auto rounded-lg border border-slate-700">
+           <table class="w-full text-sm text-left ev-report-table min-w-[600px] bg-[#1E293B]">
              <thead>
-                 <tr><th class="bg-[#1f2937]">Metric</th><th class="bg-[#1f2937]">Year 1</th><th class="bg-[#1f2937]">Year 2</th><th class="bg-[#1f2937]">Year 3</th><th class="bg-[#1f2937]">Year 4</th><th class="bg-[#1f2937]">Year 5</th></tr>
+                 <tr><th class="bg-[#334155]">Metric</th><th class="bg-[#334155]">Year 1</th><th class="bg-[#334155]">Year 2</th><th class="bg-[#334155]">Year 3</th><th class="bg-[#334155]">Year 4</th><th class="bg-[#334155]">Year 5</th></tr>
              </thead>
              <tbody class="text-gray-300">
                  <tr><td class="font-medium text-white">Active Stations</td><td>10</td><td>20</td><td>25</td><td>25</td><td>25</td></tr>
@@ -1504,36 +1546,36 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
       </div>
 
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">5. Goa's Unique Context & Market Drivers</h3>
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">5. Goa's Unique Context & Market Drivers</h3>
         <p class="mb-4 text-gray-300"><strong class="text-white">5.1. The Duality of Demand:</strong> Goa's unique market profile is characterized by a split demand for EV charging infrastructure. The user base is not a single, homogeneous group but is divided into two distinct segments: residents and tourists. Residents require charging solutions that are primarily located at their homes and workplaces for daily commutes. In contrast, the significant tourist population demands charging facilities at hotels, along coastal roads, at beaches, and near major attractions. This duality creates a complex demand map with high seasonal variance, necessitating a flexible and adaptable infrastructure model that can serve both urban residents and transient tourists.</p>
         <p class="mb-4 text-gray-300"><strong class="text-white">5.2. The E20 Petrol Imperative: A Powerful Market Catalyst:</strong> A critical and often-understated factor driving the transition to electric vehicles in India is the rapid, nationwide rollout of E20 petrol. The government has prioritized a fuel mix containing 20% ethanol to reduce the crude oil import bill and lower carbon emissions. However, this policy creates a significant and mounting problem for a large portion of the vehicle fleet. Vehicles manufactured before March 2023 were not designed to operate on E20 fuel and are now experiencing a range of compatibility issues, including component degradation and reduced fuel efficiency. This shift transforms the decision to adopt an EV from a simple Total Cost of Ownership (TCO) calculation to a critical risk management decision against the long-term reliability issues of ICE vehicles.</p>
         <p class="mb-4 text-gray-300"><strong class="text-white">5.3. The Power of Local Lobbies:</strong> The success of any new business venture in Goa is inextricably linked to its ability to navigate a complex socio-political landscape. The history of strong, organized opposition to projects perceived as benefiting outside interests presents a very high strategic risk. The long-term and successful opposition of the local taxi lobby to ride-sharing platforms like Ola and Uber serves as a critical precedent. It demonstrates that a top-down, tech-driven rollout of a new service without local buy-in is almost certain to fail.</p>
       </div>
 
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">6. The Role of EV Taxis & Commercial Fleets</h3>
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">6. The Role of EV Taxis & Commercial Fleets</h3>
         <p class="mb-4 text-gray-300"><strong class="text-white">6.1. The Unit Economics of EV Fleets:</strong> Commercial fleet operators, including taxi drivers, are a prime early-adopter segment for electric vehicles due to their superior unit economics. A study by the Council on Energy, Environment and Water (CEEW) reveals that the running cost of an electric two-wheeler is approximately ₹1.48 per kilometer compared to ₹2.46 for a petrol-powered version. The advantage is even starker for three-wheelers, with EVs costing ₹1.28 per kilometer versus ₹3.21 for petrol models. In a broader sense, EV fleets can achieve operational costs that are 60% to 70% lower than traditional ICE cabs, a powerful economic incentive for fleet operators. This advantage is further enhanced by the low maintenance requirements of electric vehicles due to their simpler mechanical design. These economic advantages make EV taxis a natural source of guaranteed, high-frequency demand for a public charging network.</p>
         <p class="mb-4 text-gray-300"><strong class="text-white">6.2. Strategic Integration of the Taxi Industry:</strong> The powerful local taxi lobby is a critical stakeholder whose potential opposition could threaten the project's viability. However, this group can be transformed from a high-risk opponent into a powerful advocate. The key is to position the charging network not as an external threat but as a tool to improve their profitability and secure their future. The strategic framework must not displace the existing taxi industry but actively integrate it. A partnership framework could be proposed to existing taxi unions or individual drivers, offering them subsidized access to EV financing and special commercial charging plans. By offering revenue-sharing and partnership opportunities, the charging network becomes a service that empowers the local taxi driver, turning a high-risk group into a powerful network of local advocates.</p>
       </div>
 
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">7. Strategic Framework for Deployment</h3>
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">7. Strategic Framework for Deployment</h3>
         <p class="mb-3 text-gray-300"><strong class="text-white">The Hyper-Local Model: A Phased Approach:</strong> Financial viability is necessary but not sufficient for success. Strategic execution is paramount. A phased, partnership-driven approach is the only way to mitigate significant socio-political risks.</p>
         <div class="space-y-4">
-          <div class="bg-[#111827] p-5 rounded border-l-2 border-cyan-500">
+          <div class="bg-[#1E293B] p-5 rounded border-l-2 border-cyan-500">
             <p class="text-gray-300"><strong class="text-white block mb-1">Phase 1: Tourism & Hospitality Integration (Pilot)</strong> Focus on the high-traffic North Goa tourist belt. Forgo land acquisition and partner directly with 10 to 20 well-known hotels, restaurants, and shacks. This "host" model transforms land from a capital liability into an operational partnership. The pitch to hosts is that the charger is a premium amenity that attracts high-value tourists. This establishes a foundational network of local advocates through a revenue-sharing model.</p>
           </div>
-          <div class="bg-[#111827] p-5 rounded border-l-2 border-cyan-500">
+          <div class="bg-[#1E293B] p-5 rounded border-l-2 border-cyan-500">
             <p class="text-gray-300"><strong class="text-white block mb-1">Phase 2: Local Commercial & Urban Partnerships</strong> Following a successful pilot, expand the network to key commercial centers like Panjim, Margao, and Mapusa. Partner with local Goan businesses to install chargers on their properties. This creates revenue-sharing opportunities for a broader base of local entrepreneurs, positioning the project as a local business initiative, not an outside imposition.</p>
           </div>
-          <div class="bg-[#111827] p-5 rounded border-l-2 border-cyan-500">
+          <div class="bg-[#1E293B] p-5 rounded border-l-2 border-cyan-500">
             <p class="text-gray-300"><strong class="text-white block mb-1">Phase 3: Public Transport & Government Fleet Electrification</strong> Collaborate with government bodies like the Goa Tourism Development Corporation (GTDC) to install chargers for their fleets as they electrify. This demonstrates public sector leadership and creates a reliable baseline of demand, which is critical for long-term utilization and financial stability. The urgency for this phase is highlighted by the existing issues faced by the Kadamba Transport Corporation.</p>
           </div>
         </div>
       </div>
 
       <div class="modal-reveal">
-        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-gray-800 pb-2 font-['Space_Grotesk']">8. Implementation & Risk Mitigation Plan</h3>
+        <h3 class="text-xl font-bold text-cyan-400 mb-4 border-b border-slate-700 pb-2">8. Implementation & Risk Mitigation Plan</h3>
         <p class="mb-4 text-gray-300"><strong class="text-white">8.1. Strategic Roadmap & Branding:</strong> The project must begin with the recommended 10-station pilot phase in North Goa before committing to the full 25-station network. This de-risks the project by testing core assumptions in the most promising market first. Branding is equally critical. The network must be branded as the "Green Goa Charging Network" in close collaboration with the GTDC. This aligns the project with the state’s core economic and environmental interests, creating a positive public narrative vital for mitigating opposition.</p>
         <p class="mb-4 text-gray-300"><strong class="text-white">8.2. Operational & Maintenance Strategy:</strong> High uptime is critical for customer satisfaction and revenue generation. A robust O&M strategy is essential:</p>
         <ul class="space-y-3 list-none border-l-2 border-gray-700 pl-5 text-gray-400">
@@ -1545,8 +1587,8 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
         </ul>
       </div>
 
-      <div class="modal-reveal bg-[#111827] p-8 rounded-xl border border-gray-800 text-center">
-        <h3 class="text-2xl font-bold text-white mb-4 font-['Space_Grotesk']">Conclusion & Final Recommendations</h3>
+      <div class="modal-reveal bg-[#1E293B] p-8 rounded-xl border border-slate-700 text-center">
+        <h3 class="text-2xl font-bold text-white mb-4">Conclusion & Final Recommendations</h3>
         <p class="mb-4 text-gray-400 max-w-3xl mx-auto">The feasibility of a public EV charging network in Goa is not a question of technology or capital; it is fundamentally a question of strategic execution. A traditional, top-down deployment will likely fail due to the high socio-political and land acquisition risks unique to the state.</p>
         <p class="mb-6 text-gray-400 max-w-3xl mx-auto">This report confirms that the hyper-local Public-Private Partnership (PPP) model is the only viable path to success. This strategic framework transforms the project's biggest risks into its greatest strengths by leveraging government policy, turning potential local opposition into vested partnerships, and branding the initiative as a win for sustainable tourism and local enterprise.</p>
         <div class="inline-block bg-cyan-900/30 border border-cyan-500/50 p-4 rounded-lg text-left">
@@ -1576,38 +1618,38 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 </template>
 
 <template id="tpl-water-mvp">
-  <div class="bg-[#0A0A0A] text-gray-300 rounded-xl shadow-2xl text-left overflow-hidden p-6 md:p-12 max-w-[1000px] mx-auto border border-gray-800 font-sans leading-relaxed">
-    <div class="modal-reveal flex flex-col justify-center items-center py-10 border-b border-gray-800 mb-10">
+  <div class="bg-slate-800 text-gray-300 rounded-xl shadow-2xl text-left overflow-hidden p-6 md:p-12 max-w-[1000px] mx-auto border border-slate-700 font-sans leading-relaxed">
+    <div class="modal-reveal flex flex-col justify-center items-center py-10 border-b border-slate-700 mb-10">
         <div class="mb-6">
             <svg width="180" height="180" viewBox="0 0 200 200" class="mx-auto max-w-full drop-shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                 <circle cx="100" cy="100" r="45" fill="#1e3a8a" />
                 <path d="M100 70 C85 88 83 98 83 106 C83 116 91 123 100 123 C109 123 117 116 117 106 C117 98 115 88 100 70 Z" fill="#3b82f6" />
                 <path d="M93 108 C93 111 95 113 98 113" stroke="#93c5fd" stroke-width="2" stroke-linecap="round" fill="none"/>
                 
-                <circle cx="45" cy="55" r="16" fill="#111827" stroke="#3b82f6" stroke-width="2"/>
+                <circle cx="45" cy="55" r="16" fill="#1E293B" stroke="#3b82f6" stroke-width="2"/>
                 <circle cx="42" cy="52" r="5" fill="none" stroke="#60a5fa" stroke-width="2" />
                 <line x1="46" y1="56" x2="52" y2="62" stroke="#60a5fa" stroke-width="2" stroke-linecap="round" />
                 
-                <circle cx="45" cy="145" r="16" fill="#111827" stroke="#3b82f6" stroke-width="2"/>
+                <circle cx="45" cy="145" r="16" fill="#1E293B" stroke="#3b82f6" stroke-width="2"/>
                 <rect x="37" y="138" width="16" height="14" fill="none" stroke="#60a5fa" stroke-width="1.5" />
                 <path d="M40 148 L44 143 L47 145 L51 140" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
                 
-                <circle cx="155" cy="55" r="16" fill="#111827" stroke="#3b82f6" stroke-width="2"/>
+                <circle cx="155" cy="55" r="16" fill="#1E293B" stroke="#3b82f6" stroke-width="2"/>
                 <circle cx="151" cy="51" r="3" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
                 <circle cx="159" cy="58" r="3" fill="none" stroke="#60a5fa" stroke-width="1.5"/>
                 
-                <circle cx="155" cy="145" r="16" fill="#111827" stroke="#3b82f6" stroke-width="2"/>
+                <circle cx="155" cy="145" r="16" fill="#1E293B" stroke="#3b82f6" stroke-width="2"/>
                 <path d="M147 145 C150 142 153 142 156 145 L161 145 C163 147 161 150 158 148 Z" fill="#60a5fa" stroke="#60a5fa" stroke-width="1"/>
                 <path d="M163 145 C160 142 157 142 154 145 L149 145 C147 147 149 150 152 148 Z" fill="#60a5fa" stroke="#60a5fa" stroke-width="1"/>
             </svg>
         </div>
 
-        <h1 class="text-center text-3xl md:text-4xl font-bold mb-3 text-white font-['Space_Grotesk'] leading-tight">From Internship Insight to a<br><span class="text-blue-400">Market-Ready MVP</span></h1>
+        <h1 class="text-center text-3xl md:text-4xl font-bold mb-3 text-white leading-tight">From Internship Insight to a<br><span class="text-blue-400">Market-Ready MVP</span></h1>
         <p class="text-center text-base text-gray-400 mt-0 font-light max-w-xl mx-auto">
             A Product Case Study on De-risking a B2B Hardware Venture by Starting with the User
         </p>
 
-        <div class="text-center mt-10 p-6 bg-[#111827] border border-gray-800 rounded-xl w-full max-w-sm">
+        <div class="text-center mt-10 p-6 bg-[#1E293B] border border-slate-700 rounded-xl w-full max-w-sm">
             <p class="text-center text-lg font-bold mb-1 text-white">Maaz Ali Mattehalli</p>
             <p class="text-center m-0 text-sm text-gray-400">B.Tech - Electrical & Electronics Engineering</p>
             <p class="text-center m-0 text-sm text-gray-400">National Institute of Technology Goa</p>
@@ -1615,22 +1657,22 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </div>
 
     <div class="modal-reveal mb-12">
-        <h2 class="text-2xl font-bold text-white border-l-4 border-blue-500 pl-4 pb-2 mb-6 font-['Space_Grotesk']">Product Development Process</h2>
+        <h2 class="text-2xl font-bold text-white border-l-4 border-blue-500 pl-4 pb-2 mb-6">Product Development Process</h2>
         
-        <div class="bg-[#111827] border border-gray-800 rounded-xl p-6 text-center mb-8 overflow-x-auto shadow-inner">
+        <div class="bg-[#1E293B] border border-slate-700 rounded-xl p-6 text-center mb-8 overflow-x-auto shadow-inner">
             <p class="font-bold mb-6 text-blue-400 text-center uppercase tracking-widest text-xs">The Framework</p>
-            <div class="flex flex-col md:flex-row justify-around items-center bg-[#050505] p-6 rounded-lg border border-gray-800 gap-4 min-w-[600px]">
-                <div class="flex-1 text-center border-r border-gray-800 pr-4 last:border-0 last:pr-0 w-full">
+            <div class="flex flex-col md:flex-row justify-around items-center bg-slate-900 p-6 rounded-lg border border-slate-700 gap-4 min-w-[600px]">
+                <div class="flex-1 text-center border-r border-slate-700 pr-4 last:border-0 last:pr-0 w-full">
                     <div class="font-bold text-white text-lg">Discover</div>
                     <div class="text-xs text-gray-400 mt-2 mb-3">Market Research<br>User Pain Points</div>
                     <div class="text-[10px] text-blue-200 bg-blue-900/50 border border-blue-800/50 px-2 py-1 inline-block rounded uppercase tracking-wider">Problem Space</div>
                 </div>
-                <div class="flex-1 text-center border-r border-gray-800 pr-4 last:border-0 last:pr-0 w-full">
+                <div class="flex-1 text-center border-r border-slate-700 pr-4 last:border-0 last:pr-0 w-full">
                     <div class="font-bold text-white text-lg">Define</div>
                     <div class="text-xs text-gray-400 mt-2 mb-3">Problem Definition<br>Value Proposition</div>
                     <div class="text-[10px] text-blue-200 bg-blue-900/50 border border-blue-800/50 px-2 py-1 inline-block rounded uppercase tracking-wider">Problem Space</div>
                 </div>
-                <div class="flex-1 text-center border-r border-gray-800 pr-4 last:border-0 last:pr-0 w-full">
+                <div class="flex-1 text-center border-r border-slate-700 pr-4 last:border-0 last:pr-0 w-full">
                     <div class="font-bold text-white text-lg">Develop</div>
                     <div class="text-xs text-gray-400 mt-2 mb-3">Prototyping (MVP)<br>Iteration</div>
                     <div class="text-[10px] text-emerald-200 bg-emerald-900/50 border border-emerald-800/50 px-2 py-1 inline-block rounded uppercase tracking-wider">Solution Space</div>
@@ -1644,7 +1686,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
             <span class="text-xs text-gray-500 italic mt-4 block text-center">Figure 1: A standard product development process.</span>
         </div>
 
-        <h3 class="text-xl font-bold text-white mb-4 mt-8 font-['Space_Grotesk']">The Catalyst: An Intern's Observation</h3>
+        <h3 class="text-xl font-bold text-white mb-4 mt-8">The Catalyst: An Intern's Observation</h3>
         <p class="mb-4 text-gray-300 text-justify">My journey with this product began not in a lab, but as an R&D Intern at Saafwater, a water-tech startup. While learning their product ecosystem, I was struck by a recurring operational challenge: the reliance on expensive, imported sensors for monitoring water quality. I started asking a simple question: "Why are we buying hardware for Rs. 3-6 lakh that isn't even designed for our primary market?"</p>
         <p class="mb-4 text-gray-300 text-justify">These imported systems were a constant source of user friction. They were financially prohibitive for most local municipalities, frequently failed in the unique conditions of Indian wastewater, and were not aligned with Central Pollution Control Board (CPCB) regulations. I saw a clear disconnect between the available products and the actual market need. I identified a critical issue, asked the right questions, and provided actionable insights—expanding the scope into my B.Tech Major Capstone Project. Through an extended internship, engineered a functional industrial grade hardware MVP that delivered a 75% cost reduction compared to importing similar solutions, proving both affordability and scalability.
         <p class="mb-4 text-gray-300 text-justify">I moved into a dedicated research phase, applying a structured approach to understand the problem space before jumping to a solution. This process mirrors a standard product design framework, focusing first on deep problem discovery and then on defining a clear value proposition.</p>
@@ -1652,28 +1694,28 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </div>
 
     <div class="modal-reveal mb-12 overflow-x-auto">
-        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">User Persona: The STP Field Operator</h3>
+        <h3 class="text-xl font-bold text-white mb-4">User Persona: The STP Field Operator</h3>
         <p class="mb-6 text-gray-300 text-justify">To anchor the product strategy, I defined the primary user persona based on field observations and conversations.</p>
         
-        <table class="w-full border-collapse mb-8 min-w-[600px] text-sm bg-[#111827] rounded-lg overflow-hidden border border-gray-800">
+        <table class="w-full border-collapse mb-8 min-w-[600px] text-sm bg-[#1E293B] rounded-lg overflow-hidden border border-slate-700">
             <thead>
                 <tr>
-                    <th class="bg-[#1f2937] text-blue-400 font-bold p-4 text-left border-b border-gray-800 uppercase tracking-wider text-xs" style="width: 25%;">Attribute</th>
-                    <th class="bg-[#1f2937] text-blue-400 font-bold p-4 text-left border-b border-gray-800 uppercase tracking-wider text-xs" style="width: 75%;">Description</th>
+                    <th class="bg-[#334155] text-blue-400 font-bold p-4 text-left border-b border-slate-700 uppercase tracking-wider text-xs" style="width: 25%;">Attribute</th>
+                    <th class="bg-[#334155] text-blue-400 font-bold p-4 text-left border-b border-slate-700 uppercase tracking-wider text-xs" style="width: 75%;">Description</th>
                 </tr>
             </thead>
             <tbody class="text-gray-300">
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Role</strong></td>
-                    <td class="p-4 border-b border-gray-800">Field Operator at a municipal or decentralized Sewage Treatment Plant (STP) in India.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Role</strong></td>
+                    <td class="p-4 border-b border-slate-700">Field Operator at a municipal or decentralized Sewage Treatment Plant (STP) in India.</td>
                 </tr>
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Goals</strong></td>
-                    <td class="p-4 border-b border-gray-800">Maintain regulatory compliance with CPCB; Avoid equipment downtime and penalties; Complete daily tasks efficiently.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Goals</strong></td>
+                    <td class="p-4 border-b border-slate-700">Maintain regulatory compliance with CPCB; Avoid equipment downtime and penalties; Complete daily tasks efficiently.</td>
                 </tr>
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Pain Points</strong></td>
-                    <td class="p-4 border-b border-gray-800">Current sensors are too expensive; Existing probes foul easily and require difficult, frequent cleaning; Lab test results are too slow to be actionable.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Pain Points</strong></td>
+                    <td class="p-4 border-b border-slate-700">Current sensors are too expensive; Existing probes foul easily and require difficult, frequent cleaning; Lab test results are too slow to be actionable.</td>
                 </tr>
                 <tr>
                     <td class="p-4"><strong class="text-white">Job-to-be-Done</strong></td>
@@ -1682,42 +1724,42 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
             </tbody>
         </table>
 
-        <h3 class="text-xl font-bold text-white mb-4 mt-8 font-['Space_Grotesk']">Market Analysis & Competitive Landscape</h3>
+        <h3 class="text-xl font-bold text-white mb-4 mt-8">Market Analysis & Competitive Landscape</h3>
         <p class="mb-6 text-gray-300 text-justify">The Indian water quality monitoring market is dominated by international incumbents whose products are sold through local distributors. These companies, while technically advanced, have not tailored their product strategy for the unique operational and economic realities of the Indian municipal sector. Key players include Real Tech Inc., Hach (a Danaher company), and Endress+Hauser. Their products, like the Real UVT sensor, Hach UVAS sc, and Endress+Hauser Viomax CAS51D, are high-quality but represent a strategic mismatch for our target user.</p>
 
-        <table class="w-full border-collapse mb-8 min-w-[700px] text-sm bg-[#111827] rounded-lg overflow-hidden border border-gray-800">
+        <table class="w-full border-collapse mb-8 min-w-[700px] text-sm bg-[#1E293B] rounded-lg overflow-hidden border border-slate-700">
             <thead>
                 <tr>
-                    <th class="bg-[#1f2937] text-blue-400 font-bold p-4 text-left border-b border-gray-800 uppercase tracking-wider text-xs" style="width: 20%;">Metric</th>
-                    <th class="bg-[#1f2937] text-blue-400 font-bold p-4 text-left border-b border-gray-800 uppercase tracking-wider text-xs" style="width: 40%;">Incumbent Products (e.g., Hach, Real Tech)</th>
-                    <th class="bg-[#1f2937] text-emerald-400 font-bold p-4 text-left border-b border-gray-800 uppercase tracking-wider text-xs" style="width: 40%;">My MVP's Value Proposition</th>
+                    <th class="bg-[#334155] text-blue-400 font-bold p-4 text-left border-b border-slate-700 uppercase tracking-wider text-xs" style="width: 20%;">Metric</th>
+                    <th class="bg-[#334155] text-blue-400 font-bold p-4 text-left border-b border-slate-700 uppercase tracking-wider text-xs" style="width: 40%;">Incumbent Products (e.g., Hach, Real Tech)</th>
+                    <th class="bg-[#334155] text-emerald-400 font-bold p-4 text-left border-b border-slate-700 uppercase tracking-wider text-xs" style="width: 40%;">My MVP's Value Proposition</th>
                 </tr>
             </thead>
             <tbody class="text-gray-300">
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Target Market</strong></td>
-                    <td class="p-4 border-b border-gray-800 text-gray-400">Primarily large-scale industrial plants and Western municipalities.</td>
-                    <td class="p-4 border-b border-gray-800 bg-emerald-900/5"><strong class="text-emerald-400">India-first:</strong> Decentralized and municipal STPs in India.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Target Market</strong></td>
+                    <td class="p-4 border-b border-slate-700 text-gray-400">Primarily large-scale industrial plants and Western municipalities.</td>
+                    <td class="p-4 border-b border-slate-700 bg-emerald-900/5"><strong class="text-emerald-400">India-first:</strong> Decentralized and municipal STPs in India.</td>
                 </tr>
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Unit Cost</strong></td>
-                    <td class="p-4 border-b border-gray-800 text-gray-400">High (typically Rs. 3,00,000+).</td>
-                    <td class="p-4 border-b border-gray-800 bg-emerald-900/5"><strong class="text-emerald-400">Ultra Low-Cost:</strong> Target sale price ~ Rs. 50,000.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Unit Cost</strong></td>
+                    <td class="p-4 border-b border-slate-700 text-gray-400">High (typically Rs. 3,00,000+).</td>
+                    <td class="p-4 border-b border-slate-700 bg-emerald-900/5"><strong class="text-emerald-400">Ultra Low-Cost:</strong> Target sale price ~ Rs. 50,000.</td>
                 </tr>
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">CPCB Compliance</strong></td>
-                    <td class="p-4 border-b border-gray-800 text-gray-400">Often non-compliant with preferred flow-through sampling. Many are submersible probes.</td>
-                    <td class="p-4 border-b border-gray-800 bg-emerald-900/5"><strong class="text-emerald-400">Compliance-by-Design:</strong> Built as a flow-through system to meet CPCB (OCEMS) guidelines.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">CPCB Compliance</strong></td>
+                    <td class="p-4 border-b border-slate-700 text-gray-400">Often non-compliant with preferred flow-through sampling. Many are submersible probes.</td>
+                    <td class="p-4 border-b border-slate-700 bg-emerald-900/5"><strong class="text-emerald-400">Compliance-by-Design:</strong> Built as a flow-through system to meet CPCB (OCEMS) guidelines.</td>
                 </tr>
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Maintenance Model</strong></td>
-                    <td class="p-4 border-b border-gray-800 text-gray-400">Requires specialist technicians and expensive service contracts. Prone to fouling.</td>
-                    <td class="p-4 border-b border-gray-800 bg-emerald-900/5"><strong class="text-emerald-400">User-Centric:</strong> Simple, user-replaceable flow-cell cartridge to minimize downtime and OPEX.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Maintenance Model</strong></td>
+                    <td class="p-4 border-b border-slate-700 text-gray-400">Requires specialist technicians and expensive service contracts. Prone to fouling.</td>
+                    <td class="p-4 border-b border-slate-700 bg-emerald-900/5"><strong class="text-emerald-400">User-Centric:</strong> Simple, user-replaceable flow-cell cartridge to minimize downtime and OPEX.</td>
                 </tr>
                 <tr>
-                    <td class="p-4 border-b border-gray-800"><strong class="text-white">Business Model</strong></td>
-                    <td class="p-4 border-b border-gray-800 text-gray-400">One-time, high-margin hardware sale.</td>
-                    <td class="p-4 border-b border-gray-800 bg-emerald-900/5"><strong class="text-emerald-400">Hybrid Model:</strong> Accessible hardware sale plus recurring revenue from replacement cartridges.</td>
+                    <td class="p-4 border-b border-slate-700"><strong class="text-white">Business Model</strong></td>
+                    <td class="p-4 border-b border-slate-700 text-gray-400">One-time, high-margin hardware sale.</td>
+                    <td class="p-4 border-b border-slate-700 bg-emerald-900/5"><strong class="text-emerald-400">Hybrid Model:</strong> Accessible hardware sale plus recurring revenue from replacement cartridges.</td>
                 </tr>
             </tbody>
         </table>
@@ -1726,14 +1768,14 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </div>
 
     <div class="modal-reveal mb-12">
-        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">The MVP Hypothesis: A User-Centric Solution</h3>
+        <h3 class="text-xl font-bold text-white mb-4">The MVP Hypothesis: A User-Centric Solution</h3>
         <div class="bg-blue-900/10 border border-blue-800/30 p-6 rounded-lg mb-8">
             <p class="text-blue-200 text-lg text-center italic">
                 "It is possible to build a CPCB-compliant, real-time COD sensor for the Indian market at a target sale price under Rs. 50,000 that is more reliable in local conditions than imported systems costing 10x more."
             </p>
         </div>
 
-        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">The Development Phase: From Prototype to Validation</h3>
+        <h3 class="text-xl font-bold text-white mb-4">The Development Phase: From Prototype to Validation</h3>
         <p class="mb-4 text-gray-300 text-justify">With a clearly defined problem and MVP scope, we moved into the development phase. The process involved:</p>
         <ul class="list-disc pl-5 space-y-3 mb-8 text-gray-300">
             <li><strong class="text-white">Rapid Prototyping:</strong> Leveraging 3D printing labs at NIT Goa to quickly fabricate and iterate on the modular flow cell design.</li>
@@ -1741,19 +1783,19 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
             <li><strong class="text-white">Rigorous Field Validation:</strong> Taking the MVP to the on-campus STP and validating its performance against 100+ real-world effluent samples.</li>
         </ul>
 
-        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">A Deeper Dive: From MVP Cost to Unit Economics</h3>
+        <h3 class="text-xl font-bold text-white mb-4">A Deeper Dive: From MVP Cost to Unit Economics</h3>
         <p class="mb-4 text-gray-300 text-justify">A key part of the validation was to prove the Economic Fit. My initial MVP, incorporating significant R&D, calibration expenses, and single-unit component costs, required an investment of approximately Rs. 50,000 to produce. This is a realistic figure for a first-run hardware prototype designed to de-risk the technical challenges.</p>
         <p class="mb-4 text-gray-300 text-justify">The critical insight comes from analyzing the Bill of Materials (BOM) to project the unit cost at scale. Strategic sourcing (bulk purchasing), amortized R&D, and optimized manufacturing (switching from 3D printing to injection molding) create a clear path to market disruption.</p>
     </div>
 
     <div class="modal-reveal mb-12">
-        <h3 class="text-xl font-bold text-white mb-6 font-['Space_Grotesk']">Unit Cost Journey: From Prototype to Scaled Production</h3>
+        <h3 class="text-xl font-bold text-white mb-6">Unit Cost Journey: From Prototype to Scaled Production</h3>
         
-        <div class="bg-[#111827] border border-gray-800 rounded-xl p-8 mb-8 shadow-inner overflow-x-auto">
+        <div class="bg-[#1E293B] border border-slate-700 rounded-xl p-8 mb-8 shadow-inner overflow-x-auto">
             <div class="min-w-[500px]">
                 <div class="mb-6">
                     <div class="text-sm font-bold mb-2 text-white">MVP Prototype (Rs. 50,000)</div>
-                    <div class="flex items-center w-full bg-[#050505] rounded-full h-8 overflow-hidden">
+                    <div class="flex items-center w-full bg-slate-900 rounded-full h-8 overflow-hidden">
                         <div class="bg-amber-500 h-full flex items-center pl-3 text-black font-bold text-xs" style="width: 16.6%;">
                             1x
                         </div>
@@ -1762,7 +1804,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 
                 <div class="mb-6">
                     <div class="text-sm font-bold mb-2 text-white">MVP at Scale Projected (Rs. 6,900)</div>
-                    <div class="flex items-center w-full bg-[#050505] rounded-full h-8 overflow-hidden">
+                    <div class="flex items-center w-full bg-slate-900 rounded-full h-8 overflow-hidden">
                         <div class="bg-emerald-500 h-full flex items-center justify-center text-black font-bold text-xs" style="width: 5%; min-width: 40px;">
                             Scale
                         </div>
@@ -1771,7 +1813,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 
                 <div class="mb-4">
                     <div class="text-sm font-bold mb-2 text-white">Typical Imported Sensor (Rs. 3,00,000+)</div>
-                    <div class="flex items-center w-full bg-[#050505] rounded-full h-8 overflow-hidden">
+                    <div class="flex items-center w-full bg-slate-900 rounded-full h-8 overflow-hidden">
                         <div class="bg-red-500 h-full flex items-center justify-end pr-4 text-white font-bold text-xs" style="width: 100%;">
                             6x Prototype Cost
                         </div>
@@ -1792,7 +1834,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
 
         <p class="mb-8 text-gray-300 text-justify">As the analysis shows, the path to a scalable unit cost of approximately Rs. 6,900 is clear. This allows for a final sale price of Rs. 50,000 while maintaining a healthy margin.</p>
         
-        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">Beyond the Sale: A Strategy for Long-Term Value</h3>
+        <h3 class="text-xl font-bold text-white mb-4">Beyond the Sale: A Strategy for Long-Term Value</h3>
         <p class="mb-4 text-gray-300 text-justify">The most significant user pain point for incumbent sensors is maintenance, specifically the cleaning of optical components due to biofilm accumulation. My product strategy addresses this head-on. The modular design of the flow cell is the foundation of a new business model. Instead of requiring users to perform difficult manual cleaning, our product is designed with a low-cost, user-replaceable flow-cell cartridge.</p>
         <ul class="list-disc pl-5 space-y-3 mb-8 text-gray-300">
             <li><strong class="text-white">For the User:</strong> This transforms a high-friction maintenance task into a simple, 2-minute swap. It dramatically increases uptime and system reliability.</li>
@@ -1801,9 +1843,9 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
     </div>
 
     <div class="modal-reveal mb-12">
-        <h3 class="text-xl font-bold text-white mb-6 font-['Space_Grotesk']">3-Year Total Cost of Ownership (TCO) Comparison</h3>
+        <h3 class="text-xl font-bold text-white mb-6">3-Year Total Cost of Ownership (TCO) Comparison</h3>
 
-        <div class="bg-[#111827] border border-gray-800 rounded-xl p-8 mb-8 shadow-inner">
+        <div class="bg-[#1E293B] border border-slate-700 rounded-xl p-8 mb-8 shadow-inner">
             
             <div class="flex justify-center flex-wrap gap-6 mb-8 text-sm text-gray-300">
                 <div class="flex items-center gap-2">
@@ -1816,7 +1858,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
                 </div>
             </div>
 
-            <div class="flex items-end justify-around h-[260px] border-b border-gray-800 pb-4">
+            <div class="flex items-end justify-around h-[260px] border-b border-slate-700 pb-4">
                 
                 <div class="text-center w-2/5 group">
                     <div class="flex flex-col-reverse items-center h-[200px] justify-start mb-4">
@@ -1846,39 +1888,39 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
             </div>
         </div>
 
-        <h3 class="text-xl font-bold text-white mb-4 font-['Space_Grotesk']">The Vision: A Strategic Product Roadmap</h3>
+        <h3 class="text-xl font-bold text-white mb-4">The Vision: A Strategic Product Roadmap</h3>
         <p class="mb-8 text-gray-300 text-justify">This project proved that a massive market is waiting for thoughtful, field-aligned technology. It showed the power of starting with a user-centric question and following it through the entire product lifecycle. This strategic thinking is captured in the product roadmap.</p>
 
         <div class="flex flex-col md:flex-row gap-6 mb-8">
-            <div class="flex-1 bg-[#111827] border-t-4 border-blue-500 rounded-b-lg p-6 shadow-lg">
+            <div class="flex-1 bg-[#1E293B] border-t-4 border-blue-500 rounded-b-lg p-6 shadow-lg">
                 <div class="font-bold text-white text-lg mb-1">Phase 1 <span class="text-xs font-normal text-gray-500 ml-2">(First 3 Months)</span></div>
                 <div class="text-blue-400 text-sm mb-4">User Research & SaaS V1</div>
-                <div class="bg-[#050505] border border-gray-800 p-3 rounded text-sm text-gray-300 mb-3 hover:border-blue-500/50 transition-colors">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded text-sm text-gray-300 mb-3 hover:border-blue-500/50 transition-colors">
                     <strong class="text-white">M1:</strong> Conduct 15+ user interviews with STP operators to validate pain points.
                 </div>
-                <div class="bg-[#050505] border border-gray-800 p-3 rounded text-sm text-gray-300 hover:border-blue-500/50 transition-colors">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded text-sm text-gray-300 hover:border-blue-500/50 transition-colors">
                     <strong class="text-white">M2:</strong> Launch basic cloud dashboard for real-time data and critical alerts.
                 </div>
             </div>
 
-            <div class="flex-1 bg-[#111827] border-t-4 border-blue-500 rounded-b-lg p-6 shadow-lg">
+            <div class="flex-1 bg-[#1E293B] border-t-4 border-blue-500 rounded-b-lg p-6 shadow-lg">
                 <div class="font-bold text-white text-lg mb-1">Phase 2 <span class="text-xs font-normal text-gray-500 ml-2">(3-6 Months)</span></div>
                 <div class="text-blue-400 text-sm mb-4">Pilot Program</div>
-                <div class="bg-[#050505] border border-gray-800 p-3 rounded text-sm text-gray-300 mb-3 hover:border-blue-500/50 transition-colors">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded text-sm text-gray-300 mb-3 hover:border-blue-500/50 transition-colors">
                     <strong class="text-white">M1:</strong> Deploy 10 MVP units with key municipal and industrial pilot partners.
                 </div>
-                <div class="bg-[#050505] border border-gray-800 p-3 rounded text-sm text-gray-300 hover:border-blue-500/50 transition-colors">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded text-sm text-gray-300 hover:border-blue-500/50 transition-colors">
                     <strong class="text-white">M2:</strong> Refine hardware design and calibration models based on field performance data.
                 </div>
             </div>
 
-            <div class="flex-1 bg-[#111827] border-t-4 border-blue-500 rounded-b-lg p-6 shadow-lg">
+            <div class="flex-1 bg-[#1E293B] border-t-4 border-blue-500 rounded-b-lg p-6 shadow-lg">
                 <div class="font-bold text-white text-lg mb-1">Phase 3 <span class="text-xs font-normal text-gray-500 ml-2">(6-12 Months)</span></div>
                 <div class="text-blue-400 text-sm mb-4">Scale & Expansion</div>
-                <div class="bg-[#050505] border border-gray-800 p-3 rounded text-sm text-gray-300 mb-3 hover:border-blue-500/50 transition-colors">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded text-sm text-gray-300 mb-3 hover:border-blue-500/50 transition-colors">
                     <strong class="text-white">M1:</strong> Finalize Design for Manufacturing (DFM) for mass production.
                 </div>
-                <div class="bg-[#050505] border border-gray-800 p-3 rounded text-sm text-gray-300 hover:border-blue-500/50 transition-colors">
+                <div class="bg-slate-900 border border-slate-700 p-3 rounded text-sm text-gray-300 hover:border-blue-500/50 transition-colors">
                     <strong class="text-white">M2:</strong> Begin research for expansion into adjacent industrial markets.
                 </div>
             </div>
@@ -2016,6 +2058,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
   let unitChartInstance = null;
   let compChartInstance = null;
 
+
   function initUrbanCompanyCharts() {
     // Chart.js Default Configs for Dark Mode
     Chart.defaults.color = '#94a3b8';
@@ -2145,7 +2188,6 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
         });
     }
   }
-
   function initEVCharts() {
     const financialData = {
         years: ['Year 1', 'Year 2', 'Year 3', 'Year 4', 'Year 5'],
@@ -2183,7 +2225,7 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
                     legend: { labels: { color: '#d1d5db' } }
                 },
                 scales: { 
-                  y: { grid: { color: '#1f2937'}, ticks: { callback: (v) => '₹' + (v / 1000000) + 'M' } },
+                  y: { grid: { color: '#334155'}, ticks: { callback: (v) => '₹' + (v / 1000000) + 'M' } },
                   x: { grid: { display: false } }
                 }
             }
@@ -2216,61 +2258,13 @@ Urban Company InstaHelp Case Study & Strategy by Maaz Ali Mattehalli.
                     legend: { labels: { color: '#d1d5db' } }
                 },
                 scales: { 
-                  y: { grid: { color: '#1f2937'}, ticks: { callback: (v) => '₹' + (v / 1000000).toFixed(0) + 'M' } },
+                  y: { grid: { color: '#334155'}, ticks: { callback: (v) => '₹' + (v / 1000000).toFixed(0) + 'M' } },
                   x: { grid: { display: false } }
                 }
             }
         });
     }
   }
-
-  // ================= VISITOR TRACKING & METRIC LOGIC =================
-  (function trackVisitorMetrics() {
-    try {
-      // Configuration constants
-      const INITIAL_OFFSET = 100;
-      const STORAGE_KEY_COUNT = 'maaz_portfolio_visitor_count';
-      const STORAGE_KEY_SESSION = 'maaz_portfolio_session_token';
-
-      // 1. Reconcile historical state from LocalStorage
-      let storedCount = localStorage.getItem(STORAGE_KEY_COUNT);
-      let currentMetric = storedCount ? parseInt(storedCount, 10) : INITIAL_OFFSET;
-
-      // 2. Identify unique session parameters to filter repeated hot-reloads
-      let sessionToken = sessionStorage.getItem(STORAGE_KEY_SESSION);
-      if (!sessionToken) {
-        currentMetric += 1;
-        sessionStorage.setItem(STORAGE_KEY_SESSION, 'active_session_' + Date.now());
-        localStorage.setItem(STORAGE_KEY_COUNT, currentMetric);
-      }
-
-      // 3. Mutate DOM Targets to represent the calculated visitor identity
-      const badgeTarget = document.getElementById('visitor-count-badge');
-      const footerTarget = document.getElementById('visitor-footer-metric');
-      
-      if(badgeTarget) badgeTarget.innerText = currentMetric;
-      if(footerTarget) footerTarget.innerText = currentMetric;
-
-      // 4. Extract client device data footprint silently (Metadata capture)
-      const telemetryPayload = {
-        visitorId: currentMetric,
-        timestamp: new Date().toISOString(),
-        locale: navigator.language || 'Unknown',
-        viewport: `${window.innerWidth}x${window.innerHeight}`,
-        userAgent: navigator.userAgent,
-        referrer: document.referrer || 'Direct Session'
-      };
-
-      // Output analytical trace directly into terminal log environments
-      console.groupCollapsed(`%c[System Analytics] Log Captured — Session ID #${currentMetric}`, 'color: #10B981; font-weight: bold;');
-      console.table(telemetryPayload);
-      console.log('%cDeployment Note: To pipe this payload permanently across clients, bind an active endpoint (e.g., Supabase or Google Firebase) inside this closure loop.', 'color: #9ca3af; font-style: italic;');
-      console.groupEnd();
-
-    } catch (telemetryError) {
-      console.warn('System Analytics engine suppressed due to sandbox environment constraints:', telemetryError);
-    }
-  })();
 </script>
 
 </body>
