@@ -103,6 +103,8 @@ button{font-family:inherit;cursor:pointer;}
 .persona-opt.active{background:var(--blue-light);color:var(--blue);}
 
 .bell{position:relative;flex:0 0 auto;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.bell:disabled{opacity:.35;cursor:not-allowed;}
+.bell:disabled:hover{background:var(--surface);}
 .bell .dot{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0 3px;}
 
 /* ===== Layout ===== */
@@ -273,6 +275,42 @@ tbody tr.clickable:hover{background:var(--blue-light);}
 .wt-item.active span.t{color:var(--text);font-weight:700;}
 .wt-foot{padding:10px 14px;border-top:1px solid var(--border);}
 
+/* ===== Guided Product Tour ===== */
+#tourRoot{position:fixed;inset:0;z-index:500;pointer-events:none;}
+.tour-overlay{position:fixed;inset:0;background:rgba(16,24,40,.55);pointer-events:auto;transition:opacity .2s ease;}
+.tour-spotlight{
+  position:fixed;pointer-events:auto;border-radius:12px;
+  box-shadow:0 0 0 4000px rgba(16,24,40,.55), 0 0 0 3px var(--blue), 0 0 24px 2px rgba(41,82,204,.55);
+  background:rgba(255,255,255,.03);
+  transition:top .28s cubic-bezier(.4,0,.2,1), left .28s cubic-bezier(.4,0,.2,1), width .28s cubic-bezier(.4,0,.2,1), height .28s cubic-bezier(.4,0,.2,1);
+  z-index:1;
+}
+.tour-card{
+  position:fixed;pointer-events:auto;width:360px;max-width:calc(100vw - 32px);
+  background:var(--surface);border-radius:16px;box-shadow:var(--shadow-lg);border:1px solid var(--border);
+  padding:16px 18px 14px;z-index:2;
+  transition:top .28s cubic-bezier(.4,0,.2,1), left .28s cubic-bezier(.4,0,.2,1);
+  animation:tourCardIn .22s ease;
+}
+@keyframes tourCardIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+.tour-card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.tour-step-count{font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);background:var(--blue-light);border:1px solid var(--blue-line);padding:3px 8px;border-radius:100px;}
+.tour-close{background:transparent;border:none;color:var(--text-3);font-size:14px;line-height:1;padding:4px;border-radius:6px;}
+.tour-close:hover{background:var(--grey-chip);color:var(--text);}
+.tour-progress{height:4px;background:var(--grey-chip);border-radius:100px;overflow:hidden;margin-bottom:12px;}
+.tour-progress .fill{height:100%;background:var(--blue);transition:width .25s ease;}
+.tour-title{margin:0 0 6px;font-size:15px;font-weight:800;letter-spacing:-.01em;}
+.tour-text{margin:0;font-size:12.5px;line-height:1.55;color:var(--text-2);}
+.tour-text b{color:var(--text);}
+.tour-text ul{margin:8px 0 0;padding-left:18px;}
+.tour-text li{margin-bottom:3px;}
+.tour-flow{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:10px;font-size:12px;font-weight:700;color:var(--text);}
+.tour-flow .fnode{background:var(--blue-light);border:1px solid var(--blue-line);color:var(--blue-dark);border-radius:8px;padding:6px 12px;width:100%;text-align:center;box-sizing:border-box;}
+.tour-flow .farrow{color:var(--text-3);font-size:13px;}
+.tour-actions{display:flex;align-items:center;gap:8px;margin-top:14px;}
+.tour-kbd-hint{font-size:10.5px;color:var(--text-3);margin-top:10px;text-align:center;}
+.tour-kbd-hint kbd{background:var(--grey-chip);border:1px solid var(--border);border-radius:4px;padding:1px 5px;font-family:'JetBrains Mono',monospace;font-size:9.5px;}
+
 /* banner */
 .banner{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
 .banner.green{background:var(--green-light);color:var(--green);border:1px solid var(--green-line);}
@@ -423,6 +461,15 @@ let REQUESTS = [
   {id:'r3',course:'ME210 (Weekend Make-up Lab)',faculty:'Dr Iyer',dept:'Mechanical Engineering',date:'2026-08-08',time:'19:00',strength:32,facilities:['AC'],roomId:'MLAB1',status:'pending_dept',stage:1,crossDept:false,flowType:'offhours',offHours:true},
 ];
 
+/* Snapshot of initial data — used to reset the app to a clean state each time the Guided Tour (re)starts */
+const TOUR_SNAPSHOT = {
+  rooms: JSON.parse(JSON.stringify(ROOMS)),
+  sessions: JSON.parse(JSON.stringify(SESSIONS)),
+  conflicts: JSON.parse(JSON.stringify(CONFLICTS)),
+  requests: JSON.parse(JSON.stringify(REQUESTS)),
+  timetableMeta: JSON.parse(JSON.stringify(TIMETABLE_META)),
+};
+
 let AUDIT_LOG = [];
 function logAudit(text){
   AUDIT_LOG.unshift({time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),text});
@@ -431,6 +478,7 @@ function logAudit(text){
 /* ---------------- STATE ---------------- */
 
 const state = {
+  history:[],                // stack of previous full-state snapshots, for the global Back button
   mode:'planning',          // planning | operations
   screen:'import',          // current screen id
   persona:'registrar',      // registrar | hod | faculty
@@ -505,10 +553,34 @@ function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;
 
 /* ---------------- NAV / ROUTING ---------------- */
 
+/* Fields that describe WHERE you are (which screen/filter/focus) rather than WHAT you changed.
+   The Back button only ever restores these — so import progress, force-cancel reasons, faculty
+   request drafts, publish status, etc. are never rewound just because you navigated. */
+const NAV_FIELDS = ['screen','mode','persona','focusBuildingId','focusRoomId','focusConflictId','mtView','mtDay'];
+
 function go(screen, extra){
+  if(state.screen && state.screen!==screen){
+    const snap = {};
+    NAV_FIELDS.forEach(f=>{ snap[f] = state[f]; });
+    snap.mtFilters = {...state.mtFilters};
+    state.history.push(snap);
+    if(state.history.length>50) state.history.shift();
+  }
   state.screen = screen;
   state.searchOpen=false; state.personaMenuOpen=false;
   if(extra) Object.assign(state, extra);
+  window.scrollTo(0,0);
+  render();
+}
+
+/* Global Back button — returns to the previous screen (with its filters/focus restored) while
+   leaving every actual change you made — anywhere, on any screen — exactly as it was. */
+function goBack(){
+  if(!state.history.length) return;
+  const prev = state.history.pop();
+  Object.assign(state, prev);
+  state.searchOpen=false; state.personaMenuOpen=false;
+  state.modal = null; // never resurrect a modal that happened to be open on the previous screen
   window.scrollTo(0,0);
   render();
 }
@@ -537,11 +609,11 @@ function renderTopnav(){
   if(state.persona==='registrar'){
     const items = [
       {id:'registrarDashboard', label:'Dashboard', mode:'operations'},
-      {id:'import', label:'Planning', mode:'planning'},
+      {id:'import', label:'Planning', mode:'planning', tour:'nav-planning'},
       {id:'registrarDashboard', label:'Operations', mode:'operations', key:'operations'},
-      {id:'masterTimetable', label:'Master Timetable'},
+      {id:'masterTimetable', label:'Master Timetable', tour:'nav-master-timetable'},
       {id:'buildings', label:'Buildings'},
-      {id:'conflictInbox', label:'Conflict Inbox'},
+      {id:'conflictInbox', label:'Conflict Inbox', tour:'nav-conflict-inbox'},
       {id:'approvals', label:'Approvals'},
       {id:'reports', label:'Reports'},
     ];
@@ -550,7 +622,7 @@ function renderTopnav(){
       const isActive = (it.key==='operations') ? (state.mode==='operations' && ['registrarDashboard','buildingOps','roomOps','emergencyOverride'].includes(state.screen))
         : (it.id==='import') ? (state.mode==='planning' && state.screen!=='masterTimetable')
         : state.screen===it.id;
-      return `<button class="${isActive?'active':''}" onclick="handleTopnav('${it.id}','${it.mode||''}')">${it.label}</button>`;
+      return `<button class="${isActive?'active':''}" ${it.tour?`data-tour="${it.tour}"`:''} onclick="handleTopnav('${it.id}','${it.mode||''}')">${it.label}</button>`;
     }).join('');
   }
   if(state.persona==='hod'){
@@ -624,10 +696,12 @@ function renderTopbar(){
   const openConflicts = CONFLICTS.filter(c=>c.status==='open').length;
   return `
   <div class="topbar">
+    ${tourState.active ? '' : `<button class="bell" title="${state.history.length?'Back to previous screen':'No previous screen'}" ${!state.history.length?'disabled':''} onclick="goBack()">←</button>`}
     <div class="logo"><span class="mark">CO</span> CampusOps <span class="mode-badge ${state.mode}">${state.mode}</span></div>
     ${timetableStatusBadge()}
     <div class="topnav">${renderTopnav()}</div>
     ${renderSearch()}
+    <button class="btn primary sm" title="Start Guided Tour" onclick="startTour()">🧭 Start Guided Tour</button>
     <button class="btn ghost sm" title="Help" onclick="state.modal={type:'help'}; render();">❔ Help</button>
     <button class="btn ghost sm" title="Report an issue" onclick="state.modal={type:'report'}; render();">🚩 Report</button>
     <button class="bell" title="Notifications" onclick="go('auditView')">🔔${openConflicts?`<span class="dot">${openConflicts}</span>`:''}</button>
@@ -681,7 +755,7 @@ function screenImport(){
   </div>
 
   ${status==='not_imported' ? `
-  <div class="card card-pad" style="max-width:640px">
+  <div class="card card-pad" style="max-width:640px" data-tour="import-card">
     <div class="dropzone" id="dz" ondragover="event.preventDefault(); this.classList.add('hover')" ondragleave="this.classList.remove('hover')" ondrop="event.preventDefault(); this.classList.remove('hover'); startImport();">
       <div class="icon">⇧</div>
       <div style="font-weight:800;font-size:15px;margin-bottom:4px;">Drop CSV Here</div>
@@ -696,7 +770,7 @@ function screenImport(){
   </div>` : ''}
 
   ${status==='importing' ? `
-  <div class="card card-pad" style="max-width:520px">
+  <div class="card card-pad" style="max-width:520px" data-tour="import-pipeline">
     <div style="font-weight:800;font-size:14px;margin-bottom:8px;">Processing sis_export_fall2026.csv</div>
     ${PIPE_STEPS.map((s,i)=>`
       <div class="pipe-item ${i<state.importStep?'done':''} ${i===state.importStep?'spin':''}">
@@ -705,6 +779,7 @@ function screenImport(){
   </div>` : ''}
 
   ${status==='draft' || status==='published' || status==='archived' ? `
+  <div data-tour="import-summary">
   <div class="grid cols-4" style="margin-bottom:22px;">
     <div class="card stat-card"><div class="stat-label">Sessions Imported</div><div class="stat-value">2,987</div></div>
     <div class="card stat-card"><div class="stat-label">Automatically Allocated</div><div class="stat-value green">2,798</div></div>
@@ -719,14 +794,15 @@ function screenImport(){
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="go('timetable')">View Timetable</button>
       <button class="btn" onclick="markWt('reviewedMaster'); go('masterTimetable')">Review University Master Timetable</button>
-      ${status==='draft' ? `<button class="btn primary" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : status==='published' ? `<span class="chip green">Published</span><button class="btn ghost sm" onclick="archiveTimetable()">🗄 Archive Timetable</button>` : `<span class="chip grey">Archived</span>`}
+      ${status==='draft' ? `<button class="btn primary" data-tour="publish-btn" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : status==='published' ? `<span class="chip green">Published</span><button class="btn ghost sm" onclick="archiveTimetable()">🗄 Archive Timetable</button>` : `<span class="chip grey">Archived</span>`}
     </div>
+  </div>
   </div>
   ${status==='archived' ? `<div class="banner amber" style="margin-top:16px;">🗄 This timetable is archived and read-only (Draft → Published → Archived).</div>` : ''}
 
   ${status==='published' ? `
   <div class="section-title">Mid-Semester Update</div>
-  <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+  <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;" data-tour="mid-update-btn">
     <div>
       <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Import Updated SIS Schedule</div>
       <div style="color:var(--text-2);font-size:12.5px;">Runs incremental validation — only affected allocations require review. Existing allocations remain untouched.</div>
@@ -775,7 +851,7 @@ function runMidUpdateStep(){
 function renderMidUpdatePipeline(){
   if(state.midUpdateStatus==='idle') return '';
   return `
-  <div class="card card-pad" style="margin-top:14px;max-width:480px;">
+  <div class="card card-pad" style="margin-top:14px;max-width:480px;" data-tour="mid-update-pipeline">
     <div style="font-weight:800;font-size:13px;margin-bottom:8px;">${state.midUpdateStatus==='done'?'Incremental Validation Complete':'Processing sis_export_fall2026_update.csv'}</div>
     ${MID_UPDATE_STEPS.map((s,i)=>`
       <div class="pipe-item ${i<state.midUpdateStep || state.midUpdateStatus==='done'?'done':''} ${i===state.midUpdateStep && state.midUpdateStatus==='running'?'spin':''}">
@@ -891,7 +967,7 @@ function screenMasterTimetable(){
       ${canEdit?`<button class="btn primary sm" onclick="toast('Click a timetable block, then use Edit Allocation on the room page.','ℹ')">Edit Allocation</button>`:''}
       ${state.mode==='planning' ? `
         <button class="btn sm" onclick="go('conflictInbox')">Conflict Inbox (${CONFLICTS.filter(c=>c.status==='open').length})</button>
-        <button class="btn primary sm" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>
+        <button class="btn primary sm" data-tour="publish-btn" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>
       ` : ''}
     </div>
   </div>
@@ -927,7 +1003,7 @@ function screenMasterTimetable(){
     ${(f.dept||f.building||f.room||f.faculty||f.course)?`<button class="btn ghost sm" onclick="state.mtFilters={dept:'',building:'',room:'',faculty:'',course:''}; render();">Clear filters</button>`:''}
   </div>
 
-  <div class="grid" style="grid-template-columns:repeat(${days.length},1fr);gap:14px;">
+  <div class="grid" style="grid-template-columns:repeat(${days.length},1fr);gap:14px;" data-tour="master-timetable-view">
     ${days.map(day=>`
       <div>
         <div class="section-title" style="margin-top:0;">${day==='Mon'?'Monday':day==='Tue'?'Tuesday':day==='Wed'?'Wednesday':day==='Thu'?'Thursday':'Friday'}</div>
@@ -949,15 +1025,15 @@ function screenConflictInbox(){
     <div><h1 class="page-title">Conflict Inbox</h1><p class="page-sub">Every allocation failure surfaces here — nothing is silently resolved.</p></div>
     <div style="display:flex;gap:8px;">
       <button class="btn ghost sm" onclick="state.modal={type:'priorityLegend'}; render();">ⓘ Priority Legend</button>
-      ${state.mode==='planning' ? `<button class="btn primary" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : ''}
+      ${state.mode==='planning' ? `<button class="btn primary" data-tour="publish-btn" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : ''}
     </div>
   </div>
   <div class="banner ${remainingP1()>0?'amber':'green'}">
     ${remainingP1()>0 ? `⚠ ${remainingP1()} P1 conflict${remainingP1()>1?'s':''} must be resolved before the timetable can be published.` : '✓ All P1 conflicts resolved.'}
   </div>
   <div class="table-wrap" style="margin-bottom:10px;">
-    ${open.length ? open.map(c=>`
-      <div class="conflict-item" style="${state.focusConflictId===c.id?'background:var(--blue-light)':''}">
+    ${open.length ? open.map((c,i)=>`
+      <div class="conflict-item" ${i===0?`data-tour="first-open-conflict"`:''} style="${state.focusConflictId===c.id?'background:var(--blue-light)':''}">
         <span class="pri ${c.priority}">${c.priority}</span>
         <div class="conflict-main">
           <div class="conflict-title">${esc(c.title)} <span class="chip ${c.origin==='Mid Semester Update'?'amber':'grey'}">${c.origin||'Initial Planning'}</span></div>
@@ -1009,15 +1085,15 @@ function renderModal(){
     const suggestions = suggestedRoomsFor(c);
     return `
     <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
-      <div class="modal">
+      <div class="modal" data-tour="allocation-modal">
         <div class="modal-head"><h3>Manual Allocation Assistant</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
         <div class="modal-body">
           <div class="conflict-title" style="margin-bottom:2px;">${esc(c.title)} <span class="pri ${c.priority}">${c.priority}</span></div>
           <div class="conflict-sub" style="margin-bottom:16px;">${esc(c.subtitle)}</div>
           <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin-bottom:10px;">Suggested Rooms — pre-filtered for eligibility</div>
-          ${suggestions.map(sg=>{
+          ${suggestions.map((sg,i)=>{
             const r = ROOMS[sg.id];
-            return `<div class="room-suggest">
+            return `<div class="room-suggest" ${i===0?`data-tour="assign-room-btn"`:''}>
               <div><div class="rname">${r.name}</div><div class="rmeta">Capacity ${r.capacity} · ${sg.reason || 'Available'} ${r.facilities.length?'· '+r.facilities.join(', '):''}</div></div>
               <button class="btn sm primary" onclick="assignRoom('${c.id}','${r.id}')">Assign</button>
             </div>`;
@@ -1253,7 +1329,7 @@ function screenRegistrarDashboard(){
     <button class="btn" onclick="go('emergencyOverride')">⚡ Emergency Override</button>
   </div>
 
-  <div class="grid cols-4">
+  <div class="grid cols-4" data-tour="dash-stats">
     <div class="card stat-card"><div class="stat-label">Rooms Offline</div><div class="stat-value red">${offlineRoomCount()}</div><div class="stat-foot">Across all buildings</div></div>
     <div class="card stat-card"><div class="stat-label">Critical Conflicts</div><div class="stat-value ${openConflicts.filter(c=>c.priority==='P1').length?'red':'green'}">${openConflicts.filter(c=>c.priority==='P1').length}</div><div class="stat-foot">P1 priority, open</div></div>
     <div class="card stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value amber">${REQUESTS.filter(r=>r.status!=='approved'&&r.status!=='room_assigned').length}</div><div class="stat-foot">Awaiting approval</div></div>
@@ -1278,7 +1354,7 @@ function screenRegistrarDashboard(){
     ${BUILDINGS.map(b=>{
       const occ = buildingOccupancy(b.id);
       const alert = buildingAlert(b.id);
-      return `<div class="card tile" onclick="${b.noRooms?'':`go('buildingOps',{focusBuildingId:'${b.id}'}); markWt('openedBuilding');`}">
+      return `<div class="card tile" ${b.id==='eng'?`data-tour="building-card-eng"`:''} onclick="${b.noRooms?'':`go('buildingOps',{focusBuildingId:'${b.id}'}); markWt('openedBuilding');`}">
         <div class="tile-top"><span class="tile-name">${b.name}</span>${alert?`<span class="chip red">⚠</span>`:''}</div>
         <div class="tile-meta">${alert ? alert : (b.noRooms?'Operational':occ+'% Occupied')}</div>
         ${!b.noRooms?`<div class="occ-bar"><div class="fill" style="width:${occ}%"></div></div>`:''}
@@ -1410,7 +1486,7 @@ function screenRoomOps(){
   ${(r.status==='Offline'||r.status==='Maintenance') ? `<div class="banner red">⚠ This room was marked <b>&nbsp;${r.status==='Offline'?'Offline_Maintenance':'Maintenance'}&nbsp;</b> — all future bookings were automatically cancelled and routed here for reallocation (BR2 · Hardware Failure Cascade).</div>` : ''}
   ${r.status==='Reserved' && r.allocatedTo ? `<div class="banner blue">🔒 Locked for ${esc(r.allocatedTo)} — ${esc(r.allocatedCourse||'ad-hoc booking')}.</div>` : ''}
 
-  <div class="two-col">
+  <div class="two-col" data-tour="room-ops-impact">
     <div>
       <div class="card card-pad" style="margin-bottom:16px;">
         <div class="kv">
@@ -1686,7 +1762,7 @@ function screenFacultyWorkspace(){
   const myRequests = REQUESTS.filter(r=>r.faculty==='Dr Iyer');
   return `
   <div class="crumbs"><span class="cur">Faculty Workspace</span></div>
-  <div class="page-head"><div><h1 class="page-title">My Classes</h1><p class="page-sub">Dr. Priya Iyer · Mechanical Engineering</p></div><button class="btn primary" onclick="go('facultyRequest')">Request Alternate Room</button></div>
+  <div class="page-head"><div><h1 class="page-title">My Classes</h1><p class="page-sub">Dr. Priya Iyer · Mechanical Engineering</p></div><button class="btn primary" data-tour="faculty-request-btn" onclick="go('facultyRequest')">Request Alternate Room</button></div>
 
   <div class="table-wrap" style="margin-bottom:24px;">
     <table>
@@ -1869,10 +1945,10 @@ function screenApprovals(){
     ${!isHod?`<button class="btn ghost sm" onclick="state.modal={type:'priorityLegend'}; render();">ⓘ Priority Legend</button>`:''}
   </div>
   <div class="table-wrap">
-    ${pending.length? pending.map(r=>{
+    ${pending.length? pending.map((r,i)=>{
       const room = ROOMS[r.roomId];
       return `
-      <div class="conflict-item">
+      <div class="conflict-item" ${i===0?`data-tour="cross-dept-approval"`:''}>
         <div class="conflict-main"><div class="conflict-title">${esc(r.course)} ${room?ownershipBadge(room):''} ${flowBadge(r.flowType)}</div><div class="conflict-sub">${r.faculty} · ${r.dept} · Requesting ${room?room.name:'—'} · ${isHod?'recommended by Home HoD':'submitted directly by Faculty'} · ${r.date} ${r.time}</div></div>
         <div style="display:flex;gap:6px;">
           <button class="btn sm danger" onclick="rejectRequestPrompt('${r.id}')">Reject</button>
@@ -1919,7 +1995,7 @@ function screenEmergencyOverride(){
         </div>
 
         ${state.forceCancelStage===0 ? `
-          <button class="btn danger" style="margin-top:16px;" onclick="state.forceCancelStage=1; render();">Force Cancel</button>
+          <button class="btn danger" data-tour="force-cancel-btn" style="margin-top:16px;" onclick="state.forceCancelStage=1; render();">Force Cancel</button>
         ` : ''}
 
         ${state.forceCancelStage===1 ? `
@@ -2003,7 +2079,7 @@ function renderOnboardModal(){
         <div class="onboard-tip"><span class="ic">📚</span><div><b>Faculty</b> — requests alternate rooms; own-department requests are auto-validated, never allocates directly.</div></div>
         <div class="onboard-tip"><span class="ic">🧭</span><div>Use the <b>Guided Walkthrough</b> panel (bottom-left) to follow the full operational lifecycle.</div></div>
       </div>
-      <div class="modal-foot"><button class="btn primary" onclick="state.modal=null; state.seenOnboard=true; render();">Start Walkthrough</button></div>
+      <div class="modal-foot"><button class="btn primary" onclick="state.modal=null; state.seenOnboard=true; render(); startTour();">Start Walkthrough</button></div>
     </div>
   </div>`;
 }
@@ -2036,6 +2112,326 @@ function resetWalkthrough(){
   state.mode='planning'; state.persona='registrar'; state.timetableStatus='not_imported'; state.importStep=-1;
   state.midUpdateStatus='idle'; state.midUpdateStep=-1;
   go('import');
+}
+
+/* ---------------- GUIDED PRODUCT TOUR ---------------- */
+
+let tourState = {active:false, index:0, pollTimer:null};
+
+function clearTourPoll(){
+  if(tourState.pollTimer){ clearInterval(tourState.pollTimer); tourState.pollTimer=null; }
+}
+
+/* Restores every mutable data structure + state field to its original values so the tour
+   always tells the same clean story, whether it's the first run or a restart. */
+function resetForTour(){
+  Object.keys(ROOMS).forEach(k=>delete ROOMS[k]);
+  Object.assign(ROOMS, JSON.parse(JSON.stringify(TOUR_SNAPSHOT.rooms)));
+  SESSIONS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.sessions));
+  CONFLICTS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.conflicts));
+  REQUESTS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.requests));
+  Object.assign(TIMETABLE_META, JSON.parse(JSON.stringify(TOUR_SNAPSHOT.timetableMeta)));
+  Object.keys(wtFlags).forEach(k=>delete wtFlags[k]);
+  AUDIT_LOG.length = 0;
+
+  state.history = [];
+  state.mode='planning'; state.screen='import'; state.persona='registrar';
+  state.timetableStatus='not_imported'; state.importStep=-1;
+  state.focusBuildingId=null; state.focusRoomId=null; state.focusConflictId=null;
+  state.searchOpen=false; state.searchQuery=''; state.personaMenuOpen=false; state.modal=null;
+  state.wtOpen=false; state.wtCollapsed=false;
+  state.forceCancelReason=''; state.forceCancelStage=0; state.forceCancelPipe=0;
+  state.facultyDraft={date:'2026-08-06',time:'14:00',strength:40,projector:true,ac:false,roomId:null};
+  state.toasts=[];
+  state.mtView='weekly'; state.mtDay='Mon'; state.mtFilters={dept:'',building:'',room:'',faculty:'',course:''};
+  state.midUpdateStatus='idle'; state.midUpdateStep=-1;
+  state.facultyPipeStage=0; state.facultyPipeStep=-1;
+}
+
+/* Resolves every currently-open P1 conflict using the same suggested-room logic as the
+   Manual Allocation Assistant — used so the tour's single demonstrated resolution (step 7)
+   still leaves the timetable genuinely publishable (step 8), exactly as the product requires. */
+function tourResolveRemainingP1(){
+  CONFLICTS.filter(c=>c.status==='open' && c.priority==='P1').forEach(c=>{
+    const suggestions = suggestedRoomsFor(c);
+    if(suggestions.length){ assignRoom(c.id, suggestions[0].id); }
+    else { escalateConflict(c.id); }
+  });
+}
+
+const TOUR_STEPS = [
+  { // 1
+    title:'Welcome to CampusOps',
+    body:`CampusOps manages <b>where</b> physical classes happen — it is not an academic scheduler. Your Student Information System (SIS) remains the single source of truth for <b>when</b> a class happens and <b>who</b> teaches it; CampusOps only ever solves for the room.`,
+    selector:'[data-tour="nav-planning"]',
+    onEnter:()=>{ resetForTour(); go('import'); },
+  },
+  { // 2
+    title:'Planning Mode',
+    body:`Planning Mode runs once per term. The Registrar imports the latest SIS export — CampusOps then generates the physical teaching-space timetable by assigning venues to the fixed academic schedule, without ever touching courses, instructors or timings.<br><br>Click <b>Next</b> to simulate the import.`,
+    selector:'[data-tour="import-card"]',
+    onEnter:()=>{ go('import'); },
+    onNext:()=>{ if(state.timetableStatus==='not_imported') startImport(); },
+  },
+  { // 3
+    title:'Generating the Teaching-Space Timetable',
+    body:`The Room Allocation Engine works through a strict pipeline:
+    <ul>
+      <li>Reading Academic Sessions</li>
+      <li>Validating Data</li>
+      <li>Locking Hardware Labs</li>
+      <li>Assigning Department Rooms</li>
+      <li>Assigning Common Facilities</li>
+      <li>Detecting Conflicts</li>
+    </ul>`,
+    selector:'[data-tour="import-pipeline"]',
+    autoAdvanceWait:()=> state.timetableStatus==='draft',
+  },
+  { // 4
+    title:'Generation Summary',
+    body:`The draft is ready for review: sessions imported, sessions automatically allocated, and the handful that need manual review. <b>Publish stays disabled</b> until every P1 conflict — the classes with no suitable room at all — has been resolved.`,
+    selector:'[data-tour="import-summary"]',
+  },
+  { // 5
+    title:'University Master Timetable',
+    body:`This is the complete, filterable physical timetable — by Department, Building, Room, Faculty or Course. Clicking any session block opens <b>Room Operations</b> for that venue.`,
+    selector:'[data-tour="master-timetable-view"]',
+    onEnter:()=>{ markWt('reviewedMaster'); go('masterTimetable'); },
+  },
+  { // 6
+    title:'Conflict Inbox',
+    body:`Every allocation failure surfaces here as an actionable ticket — CampusOps <b>fails loudly</b> instead of silently making an unsafe decision. Items are sorted P1 → nearest upcoming class → largest student count.`,
+    selector:'[data-tour="first-open-conflict"]',
+    onEnter:()=>{ go('conflictInbox'); },
+  },
+  { // 7
+    title:'Manual Allocation Assistant',
+    body:`For conflicts the algorithm can't auto-resolve, the Assistant suggests rooms — only venues that are eligible on capacity, ownership and facilities are ever shown.<br><br>Click <b>Next</b> to assign the suggested room automatically.`,
+    selector:'[data-tour="assign-room-btn"]',
+    onEnter:()=>{
+      const c = CONFLICTS.find(x=>x.status==='open' && x.priority==='P1');
+      if(c) openConflictAction(c.id);
+    },
+    onNext:()=>{
+      if(state.modal && state.modal.type==='assist'){
+        const c = CONFLICTS.find(x=>x.id===state.modal.conflictId);
+        if(c){
+          const suggestions = suggestedRoomsFor(c);
+          if(suggestions.length) assignRoom(c.id, suggestions[0].id);
+        }
+      }
+      tourResolveRemainingP1();
+    },
+  },
+  { // 8
+    title:'Publish the Timetable',
+    body:`With every P1 conflict resolved, the timetable can now be published. Click <b>Next</b> to publish — CampusOps will automatically transition from Planning Mode into continuous Operations Mode.`,
+    selector:'[data-tour="publish-btn"]',
+    onNext:()=>{ if(state.timetableStatus==='draft') publishTimetable(); },
+  },
+  { // 9
+    title:'Registrar Command Centre',
+    body:`This is the daily operational command centre: Rooms Offline, Critical (P1) Conflicts, and Pending Requests — the three signals a Registrar checks first, every day.`,
+    selector:'[data-tour="dash-stats"]',
+    onEnter:()=>{ go('registrarDashboard'); },
+  },
+  { // 10
+    title:'Buildings',
+    body:`Buildings are the primary navigation unit for daily operations. Click <b>Next</b> to open the Engineering Block, which currently has a room offline.`,
+    selector:'[data-tour="building-card-eng"]',
+    onEnter:()=>{ go('registrarDashboard'); },
+    onNext:()=>{ go('buildingOps', {focusBuildingId:'eng'}); },
+  },
+  { // 11
+    title:'Room Operations — Impact Analysis',
+    body:`Hall A103 went offline due to an electrical failure — under BR2 (Hardware Failure Cascade), every future booking for this room was automatically cancelled and routed here. CampusOps shows the affected classes alongside suggested alternative venues, ready for one-click reassignment.`,
+    selector:'[data-tour="room-ops-impact"]',
+    onEnter:()=>{ go('roomOps', {focusRoomId:'A103', focusBuildingId:'eng'}); markWt('openedRoom'); },
+  },
+  { // 12
+    title:'Faculty Portal — Request Alternate Room',
+    body:`Faculty can self-serve an alternate room whenever their own is unsuitable. Offline, occupied and facility-mismatched rooms are filtered out automatically. Click <b>Next</b> to submit a request for a room in Dr. Iyer's own department — own-department, business-hours requests are auto-validated and allocated by the system, with no HoD approval needed.`,
+    selector:'[data-tour="faculty-request-btn"]',
+    onEnter:()=>{ setPersona('faculty'); },
+    onNext:()=>{
+      go('facultyRequest');
+      Object.assign(state.facultyDraft, {projector:false, ac:true, roomId:'MLAB1'});
+      render();
+      setTimeout(()=>{ submitFacultyRequest(); }, 350);
+    },
+    waitAfterNext:()=> REQUESTS.some(r=>r.roomId==='MLAB1' && r.status==='room_assigned'),
+  },
+  { // 13
+    title:'Cross-Department Approval',
+    body:`
+      <div class="tour-flow">
+        <div class="fnode">📚 Faculty requests a room outside their department</div>
+        <div class="farrow">↓</div>
+        <div class="fnode">🏢 Home HoD recommendation</div>
+        <div class="farrow">↓</div>
+        <div class="fnode">🏢 Owning Department HoD approval</div>
+        <div class="farrow">↓</div>
+        <div class="fnode">✓ Room allocated</div>
+      </div>
+      <div style="margin-top:12px;">This request from Dr. Shah (Electrical Engineering) for Mechanical Engineering's Hall M101 has already been recommended by his Home HoD, and is now awaiting your final approval as the Owning HoD. Cross-department governance exists so no department loses control of its own space. Click <b>Next</b> to approve it.</div>`,
+    selector:'[data-tour="cross-dept-approval"]',
+    onEnter:()=>{ setPersona('hod'); go('approvals'); },
+    onNext:()=>{ approveOwningHod('r2'); },
+  },
+  { // 14
+    title:'Registrar Force Cancel',
+    body:`The Registrar can always override — algorithms lack institutional context (e.g. "the Dean needs this hall"). Force Cancel requires a <b>mandatory reason</b> (BR1) before it can be submitted, and every override is written to the immutable audit log with automatic notifications to displaced faculty. Click <b>Next</b> to open the reason dialog.`,
+    selector:'[data-tour="force-cancel-btn"]',
+    onEnter:()=>{ setPersona('registrar'); go('emergencyOverride'); },
+    onNext:()=>{
+      state.forceCancelStage=1;
+      state.forceCancelReason='Campus Placement Drive requires the Main Auditorium for 500+ attendees at 3:00 PM.';
+      render();
+    },
+  },
+  { // 15
+    title:'Mid-Semester SIS Update',
+    body:`Updated SIS imports run <b>incremental validation only</b>. Existing published allocations remain completely unchanged — only the sessions actually affected by the update are returned to the Conflict Inbox for review.<br><br>That's the full lifecycle: CampusOps plans, publishes and continuously operates university teaching spaces, term after term.`,
+    selector:'[data-tour="mid-update-pipeline"]',
+    onEnter:()=>{
+      setPersona('registrar');
+      go('import', {mode:'planning'});
+      if(state.midUpdateStatus==='idle') startMidSemesterUpdate();
+    },
+  },
+];
+
+function tourGoTo(i){
+  if(i>=TOUR_STEPS.length){ tourFinish(); return; }
+  if(i<0) return;
+  tourEnterStep(i);
+}
+
+function tourEnterStep(i){
+  clearTourPoll();
+  tourState.index = i;
+  const step = TOUR_STEPS[i];
+  if(step.onEnter) step.onEnter();
+  render();
+  setTimeout(()=>{
+    if(!tourState.active || tourState.index!==i) return;
+    const el = step.selector ? document.querySelector(step.selector) : null;
+    if(el) el.scrollIntoView({behavior:'smooth', block:'center', inline:'nearest'});
+  }, 60);
+  if(step.autoAdvanceWait){
+    tourState.pollTimer = setInterval(()=>{
+      if(!tourState.active || tourState.index!==i){ clearInterval(tourState.pollTimer); return; }
+      if(step.autoAdvanceWait()){
+        clearInterval(tourState.pollTimer); tourState.pollTimer=null;
+        setTimeout(()=>{ if(tourState.active && tourState.index===i) tourGoTo(i+1); }, 700);
+      }
+    }, 300);
+  }
+}
+
+function startTour(){
+  clearTourPoll();
+  tourState = {active:true, index:0, pollTimer:null};
+  tourEnterStep(0);
+}
+
+function tourNext(){
+  const i = tourState.index;
+  const step = TOUR_STEPS[i];
+  if(step.onNext) step.onNext();
+  if(step.waitAfterNext){
+    clearTourPoll();
+    tourState.pollTimer = setInterval(()=>{
+      if(!tourState.active || tourState.index!==i){ clearInterval(tourState.pollTimer); return; }
+      if(step.waitAfterNext()){
+        clearInterval(tourState.pollTimer); tourState.pollTimer=null;
+        setTimeout(()=>{ if(tourState.active && tourState.index===i) tourGoTo(i+1); }, 500);
+      }
+    }, 300);
+    render();
+    return;
+  }
+  tourGoTo(i+1);
+}
+function tourPrev(){
+  if(tourState.index>0) tourEnterStep(tourState.index-1);
+}
+function tourSkip(){
+  clearTourPoll();
+  tourState.active=false;
+  state.history=[];
+  toast('Tour skipped — restart anytime from the header.', '🧭');
+  render();
+}
+function tourFinish(){
+  clearTourPoll();
+  tourState.active=false;
+  state.history=[];
+  toast("Tour complete — that's the full CampusOps lifecycle.", '🎉');
+  render();
+}
+function tourKeyHandler(e){
+  if(!tourState.active) return;
+  if(e.key==='ArrowRight'){ e.preventDefault(); tourNext(); }
+  else if(e.key==='ArrowLeft'){ e.preventDefault(); tourPrev(); }
+  else if(e.key==='Escape'){ e.preventDefault(); tourSkip(); }
+}
+
+function renderTourOverlay(){
+  let root = document.getElementById('tourRoot');
+  if(!tourState.active){
+    if(root) root.remove();
+    return;
+  }
+  if(!root){
+    root = document.createElement('div');
+    root.id = 'tourRoot';
+    document.body.appendChild(root);
+  }
+  const step = TOUR_STEPS[tourState.index];
+  const total = TOUR_STEPS.length;
+  const idx = tourState.index;
+  const targetEl = step.selector ? document.querySelector(step.selector) : null;
+  const rect = targetEl ? targetEl.getBoundingClientRect() : null;
+
+  let spotlightHtml = '';
+  let cardStyle = `top:50%;left:50%;transform:translate(-50%,-50%);`;
+
+  if(rect && rect.width>0 && rect.height>0){
+    const pad = 8;
+    const top = Math.max(rect.top-pad, 4);
+    const left = Math.max(rect.left-pad, 4);
+    const w = Math.min(rect.width+pad*2, window.innerWidth-8);
+    const h = rect.height+pad*2;
+    spotlightHtml = `<div class="tour-spotlight" style="top:${top}px;left:${left}px;width:${w}px;height:${h}px;"></div>`;
+
+    const cardW = 360;
+    let cTop = top + h + 14;
+    let cLeft = Math.min(Math.max(left, 16), Math.max(window.innerWidth-cardW-16, 16));
+    if(cTop + 220 > window.innerHeight){ cTop = Math.max(top-14-260, 12); }
+    cardStyle = `top:${cTop}px;left:${cLeft}px;transform:none;`;
+  }
+
+  root.innerHTML = `
+    <div class="tour-overlay" onclick="event.stopPropagation();"></div>
+    ${spotlightHtml}
+    <div class="tour-card" style="${cardStyle}">
+      <div class="tour-card-head">
+        <span class="tour-step-count">Step ${idx+1} of ${total}</span>
+        <button class="tour-close" title="Skip Tour" onclick="tourSkip()">✕</button>
+      </div>
+      <div class="tour-progress"><div class="fill" style="width:${Math.round(((idx+1)/total)*100)}%"></div></div>
+      <h3 class="tour-title">${step.title}</h3>
+      <div class="tour-text">${step.body}</div>
+      <div class="tour-actions">
+        <button class="btn ghost sm" onclick="tourSkip()">Skip Tour</button>
+        <div style="flex:1"></div>
+        ${idx>0 ? `<button class="btn sm" onclick="tourPrev()">← Previous</button>` : ''}
+        ${idx<total-1 ? `<button class="btn primary sm" onclick="tourNext()">Next →</button>` : `<button class="btn primary sm" onclick="tourFinish()">Finish ✓</button>`}
+      </div>
+      <div class="tour-kbd-hint"><kbd>←</kbd> Previous · <kbd>→</kbd> Next · <kbd>Esc</kbd> Skip</div>
+    </div>
+  `;
 }
 
 /* ---------------- TOASTS ---------------- */
@@ -2076,7 +2472,7 @@ function render(){
     <div class="body-wrap">
       <div class="main">${screenFn()}</div>
     </div>
-    ${renderWalkthrough()}
+    ${tourState.active ? '' : renderWalkthrough()}
     ${renderToasts()}
     ${renderModal()}
   `;
@@ -2090,11 +2486,14 @@ function render(){
       }
     }
   }
+
+  renderTourOverlay();
 }
 
 /* initial boot */
 state.modal = {type:'onboard'};
 render();
+document.addEventListener('keydown', tourKeyHandler);
 </script>
 </body>
 </html>
