@@ -1,0 +1,2100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CampusOps — Campus Space Operations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F6F7F9;
+  --surface:#FFFFFF;
+  --border:#E4E7EC;
+  --border-strong:#D0D5DD;
+  --text:#101828;
+  --text-2:#475467;
+  --text-3:#98A2B3;
+  --blue:#2952CC;
+  --blue-dark:#1F3FA3;
+  --blue-light:#EEF2FF;
+  --blue-line:#C7D2FE;
+  --red:#D92D20;
+  --red-light:#FEF3F2;
+  --red-line:#FECDCA;
+  --amber:#B54708;
+  --amber-light:#FFFAEB;
+  --amber-line:#FEDF89;
+  --green:#067647;
+  --green-light:#ECFDF3;
+  --green-line:#ABEFC6;
+  --grey-chip:#F2F4F7;
+  --radius:10px;
+  --shadow-sm:0 1px 2px rgba(16,24,40,.05);
+  --shadow-md:0 4px 12px rgba(16,24,40,.08);
+  --shadow-lg:0 12px 32px rgba(16,24,40,.16);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:14px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.mono{font-family:'JetBrains Mono',monospace;}
+a{color:inherit;text-decoration:none;}
+button{font-family:inherit;cursor:pointer;}
+::selection{background:var(--blue-line);}
+
+#app{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ===== Topbar ===== */
+.topbar{
+  height:56px;flex:0 0 56px;display:flex;align-items:center;gap:20px;
+  padding:0 20px;background:var(--surface);border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:40;
+}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.02em;flex:0 0 auto;}
+.logo .mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--blue),var(--blue-dark));display:flex;align-items:center;justify-content:center;color:#fff;font-size:11px;font-weight:800;}
+.mode-badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:100px;letter-spacing:.03em;text-transform:uppercase;}
+.mode-badge.planning{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-line);}
+.mode-badge.operations{background:var(--green-light);color:var(--green);border:1px solid var(--green-line);}
+
+.topnav{display:flex;align-items:center;gap:2px;flex:1;overflow-x:auto;}
+.topnav button{
+  background:transparent;border:none;color:var(--text-2);font-size:13px;font-weight:600;
+  padding:8px 12px;border-radius:8px;white-space:nowrap;transition:background .12s,color .12s;
+}
+.topnav button:hover{background:var(--grey-chip);color:var(--text);}
+.topnav button.active{background:var(--blue-light);color:var(--blue);}
+
+.search-wrap{position:relative;flex:0 0 260px;}
+.search-wrap input{
+  width:100%;padding:7px 10px 7px 30px;border-radius:8px;border:1px solid var(--border);
+  background:var(--bg);font-size:12.5px;color:var(--text);
+}
+.search-wrap input:focus{outline:2px solid var(--blue-line);background:var(--surface);}
+.search-icon{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:12px;}
+.search-results{
+  position:absolute;top:36px;left:0;right:0;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;box-shadow:var(--shadow-lg);max-height:280px;overflow:auto;z-index:60;
+}
+.search-row{padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--border);}
+.search-row:last-child{border-bottom:none;}
+.search-row:hover{background:var(--blue-light);}
+.search-empty{padding:14px;color:var(--text-3);font-size:12.5px;text-align:center;}
+
+.persona-switcher{position:relative;flex:0 0 auto;}
+.persona-btn{
+  display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);
+  padding:5px 10px 5px 6px;border-radius:100px;font-size:12.5px;font-weight:600;
+}
+.avatar{width:24px;height:24px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;}
+.persona-menu{
+  position:absolute;right:0;top:40px;background:var(--surface);border:1px solid var(--border);
+  border-radius:10px;box-shadow:var(--shadow-lg);width:230px;padding:6px;z-index:60;
+}
+.persona-menu .label{font-size:11px;color:var(--text-3);padding:6px 8px 2px;text-transform:uppercase;letter-spacing:.04em;font-weight:700;}
+.persona-opt{display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;font-size:13px;font-weight:600;}
+.persona-opt:hover{background:var(--grey-chip);}
+.persona-opt.active{background:var(--blue-light);color:var(--blue);}
+
+.bell{position:relative;flex:0 0 auto;width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:15px;}
+.bell .dot{position:absolute;top:-3px;right:-3px;background:var(--red);color:#fff;font-size:9px;font-weight:800;min-width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+
+/* ===== Layout ===== */
+.body-wrap{flex:1;display:flex;min-height:0;}
+.main{flex:1;padding:24px 28px 90px;max-width:1360px;margin:0 auto;width:100%;}
+.crumbs{font-size:12.5px;color:var(--text-3);margin-bottom:8px;font-weight:600;}
+.crumbs span.cur{color:var(--text-2);}
+.crumbs a:hover{color:var(--blue);}
+.page-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:16px;flex-wrap:wrap;}
+.page-title{font-size:22px;font-weight:800;letter-spacing:-.02em;margin:0 0 4px;}
+.page-sub{color:var(--text-2);font-size:13px;margin:0;}
+.btn{
+  border:1px solid var(--border-strong);background:var(--surface);color:var(--text);
+  padding:9px 16px;border-radius:8px;font-size:13px;font-weight:700;display:inline-flex;align-items:center;gap:6px;
+  transition:all .12s;
+}
+.btn:hover{background:var(--grey-chip);}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+.btn.primary:hover{background:var(--blue-dark);}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff;}
+.btn.danger:hover{background:#B42318;}
+.btn.ghost{border-color:transparent;background:transparent;}
+.btn.ghost:hover{background:var(--grey-chip);}
+.btn.sm{padding:6px 11px;font-size:12px;}
+.btn:disabled{opacity:.45;cursor:not-allowed;}
+.btn:disabled:hover{background:var(--surface);}
+
+/* ===== Cards / Grid ===== */
+.grid{display:grid;gap:14px;}
+.grid.cols-4{grid-template-columns:repeat(4,1fr);}
+.grid.cols-3{grid-template-columns:repeat(3,1fr);}
+.grid.cols-2{grid-template-columns:repeat(2,1fr);}
+@media(max-width:1000px){.grid.cols-4{grid-template-columns:repeat(2,1fr);}.grid.cols-3{grid-template-columns:repeat(2,1fr);}}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow-sm);}
+.card-pad{padding:18px;}
+.stat-card{padding:16px 18px;}
+.stat-card .stat-label{font-size:12px;color:var(--text-2);font-weight:600;display:flex;align-items:center;gap:6px;margin-bottom:8px;}
+.stat-card .stat-value{font-size:26px;font-weight:800;letter-spacing:-.02em;}
+.stat-card .stat-value.red{color:var(--red);}
+.stat-card .stat-value.amber{color:var(--amber);}
+.stat-card .stat-value.green{color:var(--green);}
+.stat-card .stat-foot{font-size:11.5px;color:var(--text-3);margin-top:4px;}
+
+.section-title{font-size:14px;font-weight:800;margin:26px 0 12px;display:flex;align-items:center;justify-content:space-between;}
+.section-title .hint{font-size:11.5px;font-weight:600;color:var(--text-3);}
+
+/* building tile */
+.tile{padding:16px;cursor:pointer;transition:box-shadow .12s,border-color .12s;}
+.tile:hover{box-shadow:var(--shadow-md);border-color:var(--border-strong);}
+.tile-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.tile-name{font-weight:700;font-size:14px;}
+.tile-meta{font-size:12px;color:var(--text-2);}
+.occ-bar{height:6px;background:var(--grey-chip);border-radius:100px;overflow:hidden;margin-top:10px;}
+.occ-bar .fill{height:100%;background:var(--blue);border-radius:100px;}
+
+/* chips */
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:100px;white-space:nowrap;}
+.chip.blue{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-line);}
+.chip.red{background:var(--red-light);color:var(--red);border:1px solid var(--red-line);}
+.chip.amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-line);}
+.chip.green{background:var(--green-light);color:var(--green);border:1px solid var(--green-line);}
+.chip.grey{background:var(--grey-chip);color:var(--text-2);border:1px solid var(--border);}
+.dot-ind{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* priority pill */
+.pri{font-size:11px;font-weight:800;padding:3px 8px;border-radius:6px;letter-spacing:.02em;}
+.pri.P0{background:#7A271A;color:#fff;}
+.pri.P1{background:var(--red);color:#fff;}
+.pri.P2{background:var(--amber);color:#fff;}
+.pri.P3{background:#6941C6;color:#fff;}
+.pri.P4{background:var(--text-3);color:#fff;}
+
+/* table */
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);
+  font-weight:700;padding:10px 16px;border-bottom:1px solid var(--border);background:#FAFBFC;
+}
+tbody td{padding:11px 16px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr.clickable{cursor:pointer;transition:background .1s;}
+tbody tr.clickable:hover{background:var(--blue-light);}
+.cell-strong{font-weight:700;}
+.cell-muted{color:var(--text-3);}
+.group-row td{background:#FAFBFC;font-weight:800;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-2);padding:8px 16px;}
+
+/* conflict card list */
+.conflict-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--border);}
+.conflict-item:last-child{border-bottom:none;}
+.conflict-main{flex:1;min-width:0;}
+.conflict-title{font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:8px;margin-bottom:2px;}
+.conflict-sub{color:var(--text-2);font-size:12.5px;}
+
+/* form */
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12.5px;font-weight:700;margin-bottom:6px;color:var(--text-2);}
+.field input[type=text],.field input[type=date],.field input[type=time],.field input[type=number],.field select,.field textarea{
+  width:100%;padding:9px 11px;border:1px solid var(--border-strong);border-radius:8px;font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);
+}
+.field textarea{resize:vertical;min-height:70px;}
+.field input:focus,.field select:focus,.field textarea:focus{outline:2px solid var(--blue-line);border-color:var(--blue);}
+.checkrow{display:flex;gap:18px;}
+.checkitem{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;}
+
+/* stepper */
+.stepper{display:flex;align-items:center;gap:0;margin:14px 0 6px;}
+.stepper .step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;}
+.stepper .step .dotc{width:26px;height:26px;border-radius:50%;background:var(--grey-chip);color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;border:2px solid var(--border);z-index:1;}
+.stepper .step.done .dotc{background:var(--green);border-color:var(--green);color:#fff;}
+.stepper .step.active .dotc{background:var(--blue);border-color:var(--blue);color:#fff;}
+.stepper .step .lbl{font-size:11px;margin-top:6px;color:var(--text-2);font-weight:700;text-align:center;}
+.stepper .step:not(:last-child)::after{content:'';position:absolute;top:13px;left:calc(50% + 16px);right:calc(-50% + 16px);height:2px;background:var(--border);}
+.stepper .step.done:not(:last-child)::after{background:var(--green);}
+
+/* pipeline processing */
+.pipe-item{display:flex;align-items:center;gap:10px;padding:9px 0;font-size:13px;font-weight:600;color:var(--text-3);}
+.pipe-item.done{color:var(--text);}
+.pipe-item .ic{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:10px;}
+.pipe-item.done .ic{background:var(--green);border-color:var(--green);color:#fff;}
+.pipe-item.spin .ic{border-top-color:var(--blue);animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* dropzone */
+.dropzone{
+  border:2px dashed var(--border-strong);border-radius:14px;padding:46px 20px;text-align:center;background:#FAFBFC;
+  transition:border-color .15s,background .15s;
+}
+.dropzone.hover{border-color:var(--blue);background:var(--blue-light);}
+.dropzone .icon{font-size:34px;margin-bottom:10px;}
+
+/* modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(16,24,40,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px;}
+.modal{background:var(--surface);border-radius:14px;width:100%;max-width:480px;box-shadow:var(--shadow-lg);max-height:88vh;overflow:auto;}
+.modal.wide{max-width:640px;}
+.modal-head{padding:18px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.modal-head h3{margin:0;font-size:15px;font-weight:800;}
+.modal-body{padding:20px;}
+.modal-foot{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.close-x{background:none;border:none;font-size:18px;color:var(--text-3);line-height:1;padding:4px;}
+
+.room-suggest{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:10px;margin-bottom:10px;}
+.room-suggest .rname{font-weight:700;font-size:13.5px;}
+.room-suggest .rmeta{font-size:12px;color:var(--text-2);margin-top:2px;}
+
+/* toasts */
+.toast-stack{position:fixed;bottom:20px;right:20px;z-index:200;display:flex;flex-direction:column;gap:8px;width:320px;}
+.toast{background:var(--text);color:#fff;padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);display:flex;gap:10px;align-items:flex-start;animation:toastin .18s ease-out;}
+.toast .ic{flex:0 0 auto;}
+@keyframes toastin{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* walkthrough panel */
+.wt-fab{position:fixed;left:20px;bottom:20px;z-index:90;background:var(--text);color:#fff;border:none;border-radius:100px;padding:11px 16px;font-weight:700;font-size:12.5px;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:8px;}
+.wt-panel{position:fixed;left:20px;bottom:20px;z-index:90;width:300px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-lg);max-height:70vh;display:flex;flex-direction:column;}
+.wt-head{padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.wt-head b{font-size:13px;}
+.wt-progress{height:4px;background:var(--grey-chip);}
+.wt-progress .fill{height:100%;background:var(--blue);}
+.wt-list{overflow:auto;padding:8px;flex:1;}
+.wt-item{display:flex;gap:8px;padding:7px 8px;border-radius:8px;font-size:12px;}
+.wt-item.active{background:var(--blue-light);}
+.wt-item .n{width:18px;height:18px;border-radius:50%;border:2px solid var(--border-strong);flex:0 0 auto;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:var(--text-3);margin-top:1px;}
+.wt-item.done .n{background:var(--green);border-color:var(--green);color:#fff;}
+.wt-item.active .n{border-color:var(--blue);color:var(--blue);}
+.wt-item span.t{color:var(--text-2);font-weight:600;}
+.wt-item.done span.t{color:var(--text-3);text-decoration:line-through;}
+.wt-item.active span.t{color:var(--text);font-weight:700;}
+.wt-foot{padding:10px 14px;border-top:1px solid var(--border);}
+
+/* banner */
+.banner{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.banner.green{background:var(--green-light);color:var(--green);border:1px solid var(--green-line);}
+.banner.amber{background:var(--amber-light);color:var(--amber);border:1px solid var(--amber-line);}
+.banner.red{background:var(--red-light);color:var(--red);border:1px solid var(--red-line);}
+.banner.blue{background:var(--blue-light);color:var(--blue);border:1px solid var(--blue-line);}
+
+.empty{padding:40px 20px;text-align:center;color:var(--text-3);}
+.empty .icon{font-size:28px;margin-bottom:8px;}
+
+.audit-row{display:flex;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.audit-row:last-child{border-bottom:none;}
+.audit-time{color:var(--text-3);white-space:nowrap;flex:0 0 auto;font-family:'JetBrains Mono',monospace;font-size:11px;padding-top:1px;}
+
+.two-col{display:grid;grid-template-columns:1.3fr 1fr;gap:18px;}
+@media(max-width:900px){.two-col{grid-template-columns:1fr;}}
+
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 16px;font-size:13px;}
+.kv .k{color:var(--text-3);font-weight:600;}
+.kv .v{font-weight:700;}
+
+.pill-toggle{display:inline-flex;border:1px solid var(--border-strong);border-radius:100px;padding:2px;background:var(--grey-chip);}
+.pill-toggle button{border:none;background:none;padding:5px 11px;border-radius:100px;font-size:12px;font-weight:700;color:var(--text-2);}
+.pill-toggle button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow-sm);}
+
+.onboard-card{max-width:520px;}
+.onboard-tip{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+.onboard-tip:last-child{border-bottom:none;}
+.onboard-tip .ic{font-size:18px;}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script>
+/* ============================================================
+   CampusOps — Campus Space Operations prototype
+   Single-file interactive prototype implementing the PRD.
+   ============================================================ */
+
+/* ---------------- DATA ---------------- */
+
+const ROOMS = {
+  A101:{id:'A101',name:'Hall A101',building:'eng',group:'Lecture Halls',capacity:120,status:'Occupied',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  A102:{id:'A102',name:'Hall A102',building:'eng',group:'Lecture Halls',capacity:60,status:'Available',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['Projector']},
+  A103:{id:'A103',name:'Hall A103',building:'eng',group:'Lecture Halls',capacity:100,status:'Offline',reason:'Electrical Failure',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  A204:{id:'A204',name:'Hall A204',building:'eng',group:'Lecture Halls',capacity:150,status:'Available',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  LAB1:{id:'LAB1',name:'Lab 1',building:'eng',group:'Labs',capacity:40,status:'Occupied',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['AC']},
+  LAB2:{id:'LAB2',name:'Lab 2',building:'eng',group:'Labs',capacity:40,status:'Maintenance',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:[]},
+  SEM1:{id:'SEM1',name:'Seminar 1',building:'eng',group:'Seminar Rooms',capacity:30,status:'Reserved',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['Projector']},
+  CLAB1:{id:'CLAB1',name:'Computer Lab 1',building:'eng',group:'Computer Labs',capacity:50,status:'Occupied',dept:'Electrical Engineering',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  SHR1:{id:'SHR1',name:'Common Room E1',building:'eng',group:'Shared Spaces',capacity:20,status:'Available',dept:null,ownership:'COMMON',facilities:[]},
+
+  S201:{id:'S201',name:'Hall S201',building:'sci',group:'Lecture Halls',capacity:80,status:'Occupied',dept:'Physics',ownership:'DEPT_OWNED',facilities:['Projector']},
+  S203:{id:'S203',name:'Hall S203',building:'sci',group:'Lecture Halls',capacity:70,status:'Available',dept:'Physics',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  S204:{id:'S204',name:'Hall S204',building:'sci',group:'Lecture Halls',capacity:90,status:'Offline',reason:'Network & AV Outage',dept:'Physics',ownership:'DEPT_OWNED',facilities:['Projector']},
+  PLAB:{id:'PLAB',name:'Physics Lab',building:'sci',group:'Labs',capacity:70,status:'Maintenance',reason:'Scheduled Maintenance',dept:'Physics',ownership:'DEPT_OWNED',facilities:['AC']},
+  BLAB:{id:'BLAB',name:'Lab 3 (Bio)',building:'sci',group:'Labs',capacity:40,status:'Occupied',dept:'Biotechnology',ownership:'DEPT_OWNED',facilities:['AC']},
+
+  B101:{id:'B101',name:'Hall B101',building:'mgmt',group:'Lecture Halls',capacity:160,status:'Available',dept:'Management',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  B102:{id:'B102',name:'Hall B102',building:'mgmt',group:'Lecture Halls',capacity:160,status:'Available',dept:'Management',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  SH1:{id:'SH1',name:'Seminar Hall 1',building:'mgmt',group:'Seminar Rooms',capacity:45,status:'Occupied',dept:'Management',ownership:'DEPT_OWNED',facilities:['Projector']},
+  SH2:{id:'SH2',name:'Seminar Hall 2',building:'mgmt',group:'Seminar Rooms',capacity:80,status:'Available',dept:'Management',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+
+  M101:{id:'M101',name:'Hall M101',building:'mech',group:'Lecture Halls',capacity:90,status:'Available',dept:'Mechanical Engineering',ownership:'DEPT_OWNED',facilities:['Projector','AC']},
+  MLAB1:{id:'MLAB1',name:'Mechanical Lab 1',building:'mech',group:'Labs',capacity:40,status:'Available',dept:'Mechanical Engineering',ownership:'DEPT_OWNED',facilities:['AC']},
+
+  AUD:{id:'AUD',name:'Main Auditorium',building:'common',group:'Common Facilities',capacity:500,status:'Booked',dept:null,ownership:'PREMIUM',facilities:['Projector','AC','Stage','PA System']},
+  SHA:{id:'SHA',name:'Seminar Hall A',building:'common',group:'Common Facilities',capacity:80,status:'Available',dept:null,ownership:'COMMON',facilities:['Projector','AC']},
+  IHUB:{id:'IHUB',name:'Innovation Hub',building:'common',group:'Common Facilities',capacity:60,status:'Occupied',dept:null,ownership:'COMMON',facilities:['Projector','AC']},
+};
+
+const BUILDINGS = [
+  {id:'eng',name:'Engineering Block',status:'operational'},
+  {id:'sci',name:'Science Block',status:'alert'},
+  {id:'mgmt',name:'Management Block',status:'operational'},
+  {id:'mech',name:'Mechanical Engineering Block',status:'operational'},
+  {id:'lib',name:'Central Library',status:'operational',noRooms:true},
+];
+
+/* Ownership badge helper — Section 5 (Ownership, Governance & Priority Hierarchy) */
+function ownershipBadge(r){
+  const map = {
+    DEPT_OWNED:{label:'Dept Owned', cls:'blue'},
+    COMMON:{label:'Common Facility', cls:'grey'},
+    PREMIUM:{label:'Premium Space', cls:'amber'},
+  };
+  const m = map[r.ownership] || map.COMMON;
+  return `<span class="chip ${m.cls}">${m.label}</span>`;
+}
+
+/* Priority hierarchy legend — Section 5 (Priority Hierarchy / Tie-Breakers) */
+const PRIORITY_LEGEND = [
+  {p:'P0', label:'Emergency Ops', desc:'Life-safety, hardware failure cascades, and other emergency operations. Always wins ties.'},
+  {p:'P1', label:'University Critical', desc:'Core academic sessions with no assigned venue — blocks timetable publication.'},
+  {p:'P2', label:'Scheduled Classes', desc:'Regular SIS-driven teaching sessions once allocated.'},
+  {p:'P3', label:'Approved Events', desc:'Ad-hoc faculty bookings and approved events / weekend labs.'},
+  {p:'P4', label:'Student Activities', desc:'Clubs and student-run activities — lowest tie-break priority.'},
+];
+
+function buildingOccupancy(id){
+  const rooms = Object.values(ROOMS).filter(r=>r.building===id);
+  if(!rooms.length) return 40;
+  const occ = rooms.filter(r=>r.status==='Occupied'||r.status==='Reserved'||r.status==='Booked').length;
+  return Math.round((occ/rooms.length)*100);
+}
+function buildingAlert(id){
+  const rooms = Object.values(ROOMS).filter(r=>r.building===id && r.status==='Offline');
+  return rooms.length ? `${rooms[0].name} Offline` : null;
+}
+
+let SESSIONS = [
+  {id:'CS301',course:'CS301',faculty:'Dr Rao',dept:'Electrical Engineering',students:65,venue:'A204',status:'Assigned',day:'Mon',time:'09:00'},
+  {id:'EE401',course:'EE401',faculty:'Dr Shah',dept:'Electrical Engineering',students:142,venue:null,status:'Conflict',day:'Mon',time:'10:00'},
+  {id:'MBA101',course:'MBA101',faculty:'Dr Mehta',dept:'Management',students:28,venue:'AUD',status:'Assigned',flag:'oversized',day:'Mon',time:'11:00'},
+  {id:'ME302',course:'ME302',faculty:'Dr Iyer',dept:'Mechanical Engineering',students:55,venue:'A103',status:'Conflict',day:'Tue',time:'09:00'},
+  {id:'CS205',course:'CS205',faculty:'Dr Nair',dept:'Electrical Engineering',students:90,venue:'A101',status:'Assigned',day:'Tue',time:'10:00'},
+  {id:'BIO110',course:'BIO110',faculty:'Dr Kapoor',dept:'Biotechnology',students:40,venue:'BLAB',status:'Assigned',day:'Tue',time:'13:00'},
+  {id:'EE305',course:'EE305',faculty:'Dr Verma',dept:'Electrical Engineering',students:55,venue:'A103',status:'Assigned',day:'Wed',time:'09:00'},
+  {id:'PHY201',course:'PHY201',faculty:'Dr Das',dept:'Physics',students:60,venue:'PLAB',status:'Assigned',day:'Wed',time:'11:00'},
+  {id:'MGT210',course:'MGT210',faculty:'Dr Bose',dept:'Management',students:45,venue:'SH1',status:'Assigned',day:'Thu',time:'14:00'},
+  {id:'CS410',course:'CS410',faculty:'Dr Rao',dept:'Electrical Engineering',students:30,venue:'S204',status:'Conflict',day:'Thu',time:'09:00'},
+  {id:'ME401',course:'ME401',faculty:'Dr Iyer',dept:'Mechanical Engineering',students:38,venue:'A103',status:'Assigned',day:'Fri',time:'10:00'},
+];
+
+const DEPARTMENTS = ['Electrical Engineering','Mechanical Engineering','Management','Physics','Biotechnology'];
+const DAYS = ['Mon','Tue','Wed','Thu','Fri'];
+const TIME_SLOTS = ['09:00','10:00','11:00','13:00','14:00'];
+
+const TIMETABLE_META = { semester:'Fall 2026', version:3, published:true };
+
+let CONFLICTS = [
+  {id:'c1',priority:'P1',title:'EE401',subtitle:'142 Students · No Suitable Room',type:'no_room',action:'Resolve',status:'open',sessionId:'EE401',origin:'Initial Planning'},
+  {id:'c2',priority:'P1',title:'ME302',subtitle:'Double Booking · Hall A103, Tue 11:00 (clashes with EE305)',type:'double_book',action:'Resolve',status:'open',sessionId:'ME302',origin:'Initial Planning'},
+  {id:'c3',priority:'P2',title:'Hall S204',subtitle:'Offline · Science Block — Network & AV Outage',type:'offline',action:'Review',status:'open',roomId:'S204',origin:'Initial Planning'},
+  {id:'c4',priority:'P3',title:'MBA101',subtitle:'Oversized Venue · Main Auditorium assigned for 28 students',type:'oversized',action:'Optimize',status:'open',sessionId:'MBA101',origin:'Initial Planning'},
+];
+
+const FACULTY_HOME_DEPT = 'Mechanical Engineering'; // demo faculty persona's home department
+const HOD_DEPT = 'Mechanical Engineering';           // demo HoD persona's department
+
+let REQUESTS = [
+  // Cross-dept: Dr Iyer (Mechanical) requesting Management's Hall B101 — awaiting Home HoD recommendation
+  {id:'r1',course:'ME302 (Weekend Lab)',faculty:'Dr Iyer',dept:'Mechanical Engineering',date:'2026-08-08',time:'10:00',strength:35,facilities:['Projector'],roomId:'B101',status:'pending_recommendation',stage:1,crossDept:true,homeDept:'Mechanical Engineering',owningDept:'Management',flowType:'cross'},
+  // Cross-dept: Dr Shah (Electrical Engineering) requesting Mechanical's Hall M101 — already recommended, awaiting Owning HoD (Mechanical) final approval
+  {id:'r2',course:'EE499 (Guest Lecture)',faculty:'Dr Shah',dept:'Electrical Engineering',date:'2026-08-10',time:'11:00',strength:80,facilities:['Projector'],roomId:'M101',status:'pending_owning_hod',stage:2,crossDept:true,homeDept:'Electrical Engineering',owningDept:'Mechanical Engineering',flowType:'cross'},
+  // Same-dept, off-hours: Dr Iyer requesting her own department's Mechanical Lab 1 at a weekend/off-hours slot — needs HoD approval
+  {id:'r3',course:'ME210 (Weekend Make-up Lab)',faculty:'Dr Iyer',dept:'Mechanical Engineering',date:'2026-08-08',time:'19:00',strength:32,facilities:['AC'],roomId:'MLAB1',status:'pending_dept',stage:1,crossDept:false,flowType:'offhours',offHours:true},
+];
+
+let AUDIT_LOG = [];
+function logAudit(text){
+  AUDIT_LOG.unshift({time:new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),text});
+}
+
+/* ---------------- STATE ---------------- */
+
+const state = {
+  mode:'planning',          // planning | operations
+  screen:'import',          // current screen id
+  persona:'registrar',      // registrar | hod | faculty
+  timetableStatus:'not_imported', // not_imported | importing | draft | published
+  importStep:-1,
+  focusBuildingId:null,
+  focusRoomId:null,
+  focusConflictId:null,
+  searchOpen:false,
+  searchQuery:'',
+  personaMenuOpen:false,
+  modal:null,               // {type:'assist', conflictId} | {type:'forceCancel'} | {type:'onboard'}
+  wtOpen:false,
+  wtCollapsed:false,
+  forceCancelReason:'',
+  forceCancelStage:0,       // 0 idle, 1 reason entry, 2 running, 3 done
+  forceCancelPipe:0,
+  proxyOnLeave:false,
+  proxyTeacher:'Prof. Sameer Kulkarni',
+  facultyDraft:{date:'2026-08-06',time:'14:00',strength:40,projector:true,ac:false,roomId:null},
+  toasts:[],
+  seenOnboard:false,
+  mtView:'weekly',          // weekly | daily
+  mtDay:'Mon',
+  mtFilters:{dept:'', building:'', room:'', faculty:'', course:''},
+  midUpdateStatus:'idle',   // idle | running | done
+  midUpdateStep:-1,
+  facultyPipeStage:0,       // 0 idle, 1 running, 2 done (own-dept auto validation)
+  facultyPipeStep:-1,
+};
+
+const P1_CONFLICT_IDS = ['c1','c2'];
+
+const WALKTHROUGH = [
+  {k:'imported', t:'Import SIS Schedule'},
+  {k:'generated', t:'Generate Teaching Space Timetable'},
+  {k:'reviewedMaster', t:'Review University Master Timetable'},
+  {k:'resolvedConflict', t:'Resolve P1 Conflicts'},
+  {k:'published', t:'Publish Timetable'},
+  {k:'viewedDashboard', t:'Registrar Dashboard'},
+  {k:'openedBuilding', t:'Building Operations'},
+  {k:'openedRoom', t:'Room Operations'},
+  {k:'switchedFaculty', t:'Switch to Faculty'},
+  {k:'submittedReq', t:'Faculty submits room request'},
+  {k:'autoApproved', t:'Auto approval (same department)'},
+  {k:'switchedHod', t:'Switch to HoD'},
+  {k:'crossApproved', t:'Cross Department approval'},
+  {k:'backToRegistrar', t:'Return to Registrar'},
+  {k:'forceCancel', t:'Registrar Force Cancel'},
+  {k:'midSemesterStarted', t:'Import Updated SIS Schedule'},
+  {k:'incrementalValidated', t:'Incremental Validation'},
+  {k:'viewedUpdatedMaster', t:'Updated Master Timetable'},
+];
+const wtFlags = {};
+
+function markWt(k){
+  if(!wtFlags[k]){ wtFlags[k]=true; }
+}
+function wtCurrentIndex(){
+  for(let i=0;i<WALKTHROUGH.length;i++){ if(!wtFlags[WALKTHROUGH[i].k]) return i; }
+  return WALKTHROUGH.length-1;
+}
+
+function toast(msg,icon){
+  const id = Math.random().toString(36).slice(2);
+  state.toasts.push({id,msg,icon:icon||'✓'});
+  render();
+  setTimeout(()=>{ state.toasts = state.toasts.filter(t=>t.id!==id); render(); }, 3600);
+}
+
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ---------------- NAV / ROUTING ---------------- */
+
+function go(screen, extra){
+  state.screen = screen;
+  state.searchOpen=false; state.personaMenuOpen=false;
+  if(extra) Object.assign(state, extra);
+  window.scrollTo(0,0);
+  render();
+}
+function setPersona(p){
+  state.persona = p;
+  state.personaMenuOpen=false;
+  if(p==='hod'){ markWt('switchedHod'); go('hodDashboard'); return; }
+  if(p==='faculty'){ markWt('switchedFaculty'); go('facultyWorkspace'); return; }
+  if(p==='registrar'){ markWt('backToRegistrar'); go(state.mode==='planning'?'import':'registrarDashboard'); return; }
+  render();
+}
+
+/* ---------------- TOPBAR ---------------- */
+
+function personaLabel(p){
+  return {registrar:'Registrar', hod:'Dept. Head (HoD)', faculty:'Faculty'}[p];
+}
+function personaSub(p){
+  return {registrar:'Priya Sharma · Global Approver', hod:'Dr. Arvind Menon · Mech. Engg.', faculty:'Dr. Priya Iyer · Mech. Engg.'}[p];
+}
+function personaInitials(p){
+  return {registrar:'PS', hod:'AM', faculty:'PI'}[p];
+}
+
+function renderTopnav(){
+  if(state.persona==='registrar'){
+    const items = [
+      {id:'registrarDashboard', label:'Dashboard', mode:'operations'},
+      {id:'import', label:'Planning', mode:'planning'},
+      {id:'registrarDashboard', label:'Operations', mode:'operations', key:'operations'},
+      {id:'masterTimetable', label:'Master Timetable'},
+      {id:'buildings', label:'Buildings'},
+      {id:'conflictInbox', label:'Conflict Inbox'},
+      {id:'approvals', label:'Approvals'},
+      {id:'reports', label:'Reports'},
+    ];
+    return items.map(it=>{
+      const activeKey = it.key || it.id;
+      const isActive = (it.key==='operations') ? (state.mode==='operations' && ['registrarDashboard','buildingOps','roomOps','emergencyOverride'].includes(state.screen))
+        : (it.id==='import') ? (state.mode==='planning' && state.screen!=='masterTimetable')
+        : state.screen===it.id;
+      return `<button class="${isActive?'active':''}" onclick="handleTopnav('${it.id}','${it.mode||''}')">${it.label}</button>`;
+    }).join('');
+  }
+  if(state.persona==='hod'){
+    return `
+      <button class="${state.screen==='hodDashboard'?'active':''}" onclick="go('hodDashboard')">Department Dashboard</button>
+      <button class="${state.screen==='approvals'?'active':''}" onclick="go('approvals')">Approvals</button>
+    `;
+  }
+  return `
+    <button class="${state.screen==='facultyWorkspace'?'active':''}" onclick="go('facultyWorkspace')">My Classes</button>
+    <button class="${state.screen==='facultyRequest'?'active':''}" onclick="go('facultyRequest')">Request Room</button>
+  `;
+}
+function handleTopnav(id, mode){
+  if(mode) state.mode = mode;
+  if(id==='registrarDashboard' && state.mode==='operations'){ markWt('viewedDashboard'); }
+  if(id==='masterTimetable'){ markWt('reviewedMaster'); if(state.midUpdateStatus==='done') markWt('viewedUpdatedMaster'); }
+  go(id);
+}
+
+function renderSearch(){
+  if(state.persona!=='registrar') return '';
+  const q = state.searchQuery.trim().toLowerCase();
+  let results = [];
+  if(q){
+    Object.values(ROOMS).forEach(r=>{ if(r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)) results.push({type:'Venue',label:r.name,go:()=>go('roomOps',{focusRoomId:r.id,focusBuildingId:r.building,mode:'operations'})}); });
+    SESSIONS.forEach(s=>{ if(s.course.toLowerCase().includes(q)||s.faculty.toLowerCase().includes(q)) results.push({type:'Course',label:`${s.course} — ${s.faculty}`,go:()=>go(state.mode==='planning'?'timetable':'conflictInbox')}); });
+    BUILDINGS.forEach(b=>{ if(b.name.toLowerCase().includes(q)) results.push({type:'Building',label:b.name,go:()=>go('buildingOps',{focusBuildingId:b.id,mode:'operations'})}); });
+    results = results.slice(0,7);
+  }
+  return `
+  <div class="search-wrap">
+    <span class="search-icon">⌕</span>
+    <input type="text" id="searchInput" placeholder="Search course, faculty, room, dept…" value="${esc(state.searchQuery)}"
+      oninput="state.searchQuery=this.value; state.searchOpen=true; render();"
+      onfocus="state.searchOpen=true; render();"
+      onblur="setTimeout(()=>{state.searchOpen=false; render();},150)" />
+    ${state.searchOpen && q ? `
+    <div class="search-results">
+      ${results.length? results.map((r,i)=>`
+        <div class="search-row" onmousedown="searchGo(${i})">
+          <span>${esc(r.label)}</span><span class="chip grey">${r.type}</span>
+        </div>`).join('') : `<div class="search-empty">No matches across courses, faculty, rooms or buildings.</div>`}
+    </div>` : ''}
+  </div>`;
+}
+let _lastSearchResults = [];
+function searchGo(i){ /* recomputed on render via closures; simplest: just rerun query */
+  const q = state.searchQuery.trim().toLowerCase();
+  let results = [];
+  Object.values(ROOMS).forEach(r=>{ if(r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)) results.push(()=>go('roomOps',{focusRoomId:r.id,focusBuildingId:r.building,mode:'operations'})); });
+  SESSIONS.forEach(s=>{ if(s.course.toLowerCase().includes(q)||s.faculty.toLowerCase().includes(q)) results.push(()=>go(state.mode==='planning'?'timetable':'conflictInbox')); });
+  BUILDINGS.forEach(b=>{ if(b.name.toLowerCase().includes(q)) results.push(()=>go('buildingOps',{focusBuildingId:b.id,mode:'operations'})); });
+  if(results[i]) results[i]();
+  state.searchQuery=''; state.searchOpen=false;
+}
+
+function timetableStatusBadge(){
+  const map = {
+    not_imported:{label:'Not Imported', cls:'grey'},
+    importing:{label:'Importing…', cls:'grey'},
+    draft:{label:'Draft', cls:'amber'},
+    published:{label:'Published', cls:'green'},
+    archived:{label:'Archived', cls:'grey'},
+  };
+  const s = map[state.timetableStatus] || map.not_imported;
+  return `<span class="chip ${s.cls}" title="Timetable Status" style="flex:0 0 auto;"><span class="dot-ind"></span> ${s.label}</span>`;
+}
+
+function renderTopbar(){
+  const openConflicts = CONFLICTS.filter(c=>c.status==='open').length;
+  return `
+  <div class="topbar">
+    <div class="logo"><span class="mark">CO</span> CampusOps <span class="mode-badge ${state.mode}">${state.mode}</span></div>
+    ${timetableStatusBadge()}
+    <div class="topnav">${renderTopnav()}</div>
+    ${renderSearch()}
+    <button class="btn ghost sm" title="Help" onclick="state.modal={type:'help'}; render();">❔ Help</button>
+    <button class="btn ghost sm" title="Report an issue" onclick="state.modal={type:'report'}; render();">🚩 Report</button>
+    <button class="bell" title="Notifications" onclick="go('auditView')">🔔${openConflicts?`<span class="dot">${openConflicts}</span>`:''}</button>
+    <div class="persona-switcher">
+      <button class="persona-btn" onclick="state.personaMenuOpen=!state.personaMenuOpen; render();">
+        <span class="avatar">${personaInitials(state.persona)}</span>
+        <span>${personaLabel(state.persona)}</span> ▾
+      </button>
+      ${state.personaMenuOpen?`
+      <div class="persona-menu">
+        <div class="label">Viewing as (demo)</div>
+        <div class="persona-opt ${state.persona==='registrar'?'active':''}" onclick="setPersona('registrar')">🎓 Registrar / Dean</div>
+        <div class="persona-opt ${state.persona==='hod'?'active':''}" onclick="setPersona('hod')">🏢 Dept. Head (HoD)</div>
+        <div class="persona-opt ${state.persona==='faculty'?'active':''}" onclick="setPersona('faculty')">📚 Faculty</div>
+      </div>`:''}
+    </div>
+  </div>`;
+}
+
+/* ---------------- PLANNING: SCREEN 1 IMPORT ---------------- */
+
+const PIPE_STEPS = ['Reading Academic Sessions…','Validating Data','Mapping Buildings','Locking Hardware Labs','Assigning Department Rooms','Assigning Common Facilities','Detecting Conflicts'];
+
+function startImport(){
+  if(state.timetableStatus!=='not_imported') return;
+  state.timetableStatus='importing';
+  state.importStep=0;
+  render();
+  runImportStep();
+}
+function runImportStep(){
+  setTimeout(()=>{
+    state.importStep++;
+    if(state.importStep>=PIPE_STEPS.length){
+      state.timetableStatus='draft';
+      markWt('imported'); markWt('generated');
+      render();
+      return;
+    }
+    render();
+    runImportStep();
+  }, 480);
+}
+
+function screenImport(){
+  const status = state.timetableStatus;
+  return `
+  <div class="crumbs"><span class="cur">Planning · Academic Timetable Import</span></div>
+  <div class="page-head">
+    <div><h1 class="page-title">Academic Timetable Import</h1><p class="page-sub">Generate the first draft of the campus teaching-space timetable from the latest SIS export.</p></div>
+  </div>
+
+  ${status==='not_imported' ? `
+  <div class="card card-pad" style="max-width:640px">
+    <div class="dropzone" id="dz" ondragover="event.preventDefault(); this.classList.add('hover')" ondragleave="this.classList.remove('hover')" ondrop="event.preventDefault(); this.classList.remove('hover'); startImport();">
+      <div class="icon">⇧</div>
+      <div style="font-weight:800;font-size:15px;margin-bottom:4px;">Drop CSV Here</div>
+      <div style="color:var(--text-3);font-size:12.5px;margin-bottom:14px;">SIS academic block export (.csv) — course, instructor, dept, day/time, enrollment</div>
+      <button class="btn ghost sm" onclick="document.getElementById('fileHint').style.display='block'">or choose file</button>
+      <div id="fileHint" style="display:none;font-size:11.5px;color:var(--text-3);margin-top:8px;">sis_export_fall2026.csv</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0;">
+      <div style="flex:1;height:1px;background:var(--border)"></div><span style="font-size:11.5px;color:var(--text-3);font-weight:700;">OR</span><div style="flex:1;height:1px;background:var(--border)"></div>
+    </div>
+    <button class="btn primary" style="width:100%;justify-content:center" onclick="startImport()">⟳ Sync from SIS</button>
+  </div>` : ''}
+
+  ${status==='importing' ? `
+  <div class="card card-pad" style="max-width:520px">
+    <div style="font-weight:800;font-size:14px;margin-bottom:8px;">Processing sis_export_fall2026.csv</div>
+    ${PIPE_STEPS.map((s,i)=>`
+      <div class="pipe-item ${i<state.importStep?'done':''} ${i===state.importStep?'spin':''}">
+        <span class="ic">${i<state.importStep?'✓':''}</span> ${s}
+      </div>`).join('')}
+  </div>` : ''}
+
+  ${status==='draft' || status==='published' || status==='archived' ? `
+  <div class="grid cols-4" style="margin-bottom:22px;">
+    <div class="card stat-card"><div class="stat-label">Sessions Imported</div><div class="stat-value">2,987</div></div>
+    <div class="card stat-card"><div class="stat-label">Automatically Allocated</div><div class="stat-value green">2,798</div></div>
+    <div class="card stat-card"><div class="stat-label">Require Manual Review</div><div class="stat-value amber">189</div><div class="stat-foot">Showing ${CONFLICTS.length} representative items in this walkthrough</div></div>
+    <div class="card stat-card"><div class="stat-label">Draft Version</div><div class="stat-value" style="font-size:18px;">${status==='archived'?'Archived 🗄':status==='published'?'Published ✓':'v1 Created'}</div></div>
+  </div>
+  <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:2px;">${status==='archived'?'Timetable archived — read-only.':status==='published'? 'Timetable is live to campus.' : 'Generation Summary ready for review.'}</div>
+      <div style="color:var(--text-2);font-size:12.5px;">${remainingP1()>0 ? `${remainingP1()} unresolved P1 conflict${remainingP1()>1?'s':''} block publication.` : 'All P1 conflicts resolved — ready to publish.'}</div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="go('timetable')">View Timetable</button>
+      <button class="btn" onclick="markWt('reviewedMaster'); go('masterTimetable')">Review University Master Timetable</button>
+      ${status==='draft' ? `<button class="btn primary" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : status==='published' ? `<span class="chip green">Published</span><button class="btn ghost sm" onclick="archiveTimetable()">🗄 Archive Timetable</button>` : `<span class="chip grey">Archived</span>`}
+    </div>
+  </div>
+  ${status==='archived' ? `<div class="banner amber" style="margin-top:16px;">🗄 This timetable is archived and read-only (Draft → Published → Archived).</div>` : ''}
+
+  ${status==='published' ? `
+  <div class="section-title">Mid-Semester Update</div>
+  <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div style="font-weight:800;font-size:14px;margin-bottom:2px;">Import Updated SIS Schedule</div>
+      <div style="color:var(--text-2);font-size:12.5px;">Runs incremental validation — only affected allocations require review. Existing allocations remain untouched.</div>
+    </div>
+    <button class="btn primary" onclick="startMidSemesterUpdate()">Import Updated SIS Schedule</button>
+  </div>
+  ${renderMidUpdatePipeline()}
+  ` : ''}
+  ` : ''}
+  `;
+}
+
+/* ---------------- MID-SEMESTER TIMETABLE UPDATE ---------------- */
+
+const MID_UPDATE_STEPS = ['Performing Incremental Validation…','Checking Capacity Changes','Checking Cancelled Courses','Checking New Courses','Checking Venue Availability'];
+
+function startMidSemesterUpdate(){
+  if(state.midUpdateStatus==='running') return;
+  state.midUpdateStatus='running';
+  state.midUpdateStep=0;
+  render();
+  runMidUpdateStep();
+}
+function runMidUpdateStep(){
+  setTimeout(()=>{
+    state.midUpdateStep++;
+    if(state.midUpdateStep>=MID_UPDATE_STEPS.length){
+      state.midUpdateStatus='done';
+      TIMETABLE_META.version++;
+      // Only affected sessions are touched — simulate two affected allocations
+      const s1 = SESSIONS.find(s=>s.id==='CS205');
+      if(s1){ s1.status='Conflict'; s1.venue=null; }
+      CONFLICTS.push({id:'mc'+Math.random().toString(36).slice(2,6),priority:'P1',title:'CS205',subtitle:'Venue Capacity Reduced · Hall A101 downrated below enrollment','type':'no_room',action:'Resolve',status:'open',sessionId:'CS205',origin:'Mid Semester Update'});
+      const s2 = SESSIONS.find(s=>s.id==='MGT210');
+      if(s2){ CONFLICTS.push({id:'mc'+Math.random().toString(36).slice(2,6),priority:'P2',title:'MGT210',subtitle:'New Section Added · Needs venue confirmation',type:'offline',action:'Review',status:'open',sessionId:'MGT210',roomId:s2.venue,origin:'Mid Semester Update'}); }
+      logAudit(`Updated SIS schedule imported — incremental validation complete. Version ${TIMETABLE_META.version} created.`);
+      toast('Incremental validation complete — only affected sessions flagged for review.', '🔄');
+      markWt('incrementalValidated');
+      render();
+      return;
+    }
+    render();
+    runMidUpdateStep();
+  }, 480);
+}
+function renderMidUpdatePipeline(){
+  if(state.midUpdateStatus==='idle') return '';
+  return `
+  <div class="card card-pad" style="margin-top:14px;max-width:480px;">
+    <div style="font-weight:800;font-size:13px;margin-bottom:8px;">${state.midUpdateStatus==='done'?'Incremental Validation Complete':'Processing sis_export_fall2026_update.csv'}</div>
+    ${MID_UPDATE_STEPS.map((s,i)=>`
+      <div class="pipe-item ${i<state.midUpdateStep || state.midUpdateStatus==='done'?'done':''} ${i===state.midUpdateStep && state.midUpdateStatus==='running'?'spin':''}">
+        <span class="ic">${i<state.midUpdateStep || state.midUpdateStatus==='done'?'✓':''}</span> ${s}
+      </div>`).join('')}
+    ${state.midUpdateStatus==='done' ? `
+      <div class="banner blue" style="margin-top:12px;">Only affected sessions appear in the Conflict Inbox. Existing allocations remain untouched.</div>
+      <div style="display:flex;gap:8px;margin-top:4px;">
+        <button class="btn sm" onclick="go('conflictInbox')">View Conflict Inbox</button>
+        <button class="btn sm" onclick="markWt('viewedUpdatedMaster'); go('masterTimetable')">Updated Master Timetable</button>
+      </div>
+    ` : ''}
+  </div>`;
+}
+function remainingP1(){ return CONFLICTS.filter(c=>c.priority==='P1' && c.status==='open').length; }
+
+function publishTimetable(){
+  if(remainingP1()>0) return;
+  state.timetableStatus='published';
+  markWt('published');
+  logAudit('Timetable published to campus by Registrar.');
+  toast('Timetable published — now live to campus.', '📣');
+  state.mode='operations';
+  markWt('enteredOps'); markWt('viewedDashboard');
+  go('registrarDashboard');
+}
+function archiveTimetable(){
+  if(state.timetableStatus!=='published') return;
+  state.timetableStatus='archived';
+  logAudit('Timetable archived by Registrar — now read-only.');
+  toast('Timetable archived — now read-only.', '🗄');
+  render();
+}
+
+/* ---------------- PLANNING: SCREEN 2 TIMETABLE ---------------- */
+
+function roomLabel(venueId){ return venueId ? ROOMS[venueId].name : '—'; }
+
+function screenTimetable(){
+  return `
+  <div class="crumbs"><a onclick="go('import')">Planning</a> / <span class="cur">Teaching Space Timetable</span></div>
+  <div class="page-head">
+    <div><h1 class="page-title">Teaching Space Timetable</h1><p class="page-sub">Draft allocation — every academic session mapped to a physical venue.</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="markWt('reviewedInbox'); go('conflictInbox')">Conflict Inbox (${CONFLICTS.filter(c=>c.status==='open').length})</button>
+      ${state.timetableStatus==='draft' ? `<button class="btn primary" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : `<span class="chip green" style="align-self:center;">Published</span>`}
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Course</th><th>Faculty</th><th>Students</th><th>Assigned Venue</th><th>Status</th></tr></thead>
+      <tbody>
+        ${SESSIONS.map(s=>`
+        <tr class="clickable" onclick="${s.status==='Conflict' ? `openTimetableRow('${s.id}')` : ''}">
+          <td class="cell-strong mono">${s.course}</td>
+          <td>${s.faculty}</td>
+          <td>${s.students}</td>
+          <td>${s.venue ? roomLabel(s.venue) : '<span class="cell-muted">Unassigned</span>'}</td>
+          <td>${s.status==='Assigned' ? (s.flag==='oversized'?`<span class="chip amber">Assigned ⚠ Oversized</span>`:`<span class="chip green">Assigned</span>`) : `<span class="chip red">Conflict</span>`}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+  `;
+}
+function openTimetableRow(sessionId){
+  const c = CONFLICTS.find(c=>c.sessionId===sessionId && c.status==='open');
+  markWt('reviewedInbox');
+  go('conflictInbox', {focusConflictId: c?c.id:null});
+}
+
+/* ---------------- UNIVERSITY MASTER TIMETABLE (NEW SCREEN) ---------------- */
+
+function mtFilteredSessions(){
+  const f = state.mtFilters;
+  return SESSIONS.filter(s=>{
+    const room = s.venue ? ROOMS[s.venue] : null;
+    if(f.dept && s.dept!==f.dept) return false;
+    if(f.building && (!room || room.building!==f.building)) return false;
+    if(f.room && s.venue!==f.room) return false;
+    if(f.faculty && s.faculty!==f.faculty) return false;
+    if(f.course && !s.course.toLowerCase().includes(f.course.toLowerCase())) return false;
+    return true;
+  });
+}
+
+function mtBlockChip(s){
+  const room = s.venue ? ROOMS[s.venue] : null;
+  const statusCls = s.status==='Conflict' ? 'red' : (s.flag==='oversized' ? 'amber' : 'green');
+  return `
+  <div class="card card-pad mt-block" style="cursor:pointer;padding:10px 12px;margin-bottom:6px;border-left:3px solid var(--${statusCls==='red'?'red':statusCls==='amber'?'amber':'green'});" onclick="${room?`go('roomOps',{focusRoomId:'${room.id}',focusBuildingId:'${room.building}'})`:`toast('No room assigned yet — resolve in Conflict Inbox.','⚠')`}">
+    <div style="font-weight:800;font-size:12.5px;">${s.course}</div>
+    <div style="font-size:11.5px;color:var(--text-2);margin-top:2px;">${s.faculty} · ${room?room.name:'Unassigned'}${room?' · '+(BUILDINGS.find(b=>b.id===room.building)?.name||''):''}</div>
+    <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Capacity ${room?room.capacity:'—'} · ${s.students} students</div>
+    <div style="margin-top:6px;"><span class="chip ${statusCls}">${s.status==='Conflict'?'Conflict':(s.flag==='oversized'?'Oversized':'Assigned')}</span></div>
+  </div>`;
+}
+
+function screenMasterTimetable(){
+  const canEdit = state.persona==='registrar';
+  const sessions = mtFilteredSessions();
+  const days = state.mtView==='daily' ? [state.mtDay] : DAYS;
+  const f = state.mtFilters;
+  return `
+  <div class="crumbs"><a onclick="go(state.mode==='planning'?'import':'registrarDashboard')">${state.mode==='planning'?'Planning':'Operations'}</a> / <span class="cur">University Master Timetable</span></div>
+  <div class="page-head">
+    <div><h1 class="page-title">University Master Timetable</h1><p class="page-sub">Semester ${TIMETABLE_META.semester} · Version ${TIMETABLE_META.version} · ${TIMETABLE_META.published?'Published':'Draft'}</p></div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <div class="pill-toggle">
+        <button class="${state.mtView==='weekly'?'on':''}" onclick="state.mtView='weekly'; render();">Weekly</button>
+        <button class="${state.mtView==='daily'?'on':''}" onclick="state.mtView='daily'; render();">Daily</button>
+      </div>
+      ${canEdit?`<button class="btn primary sm" onclick="toast('Click a timetable block, then use Edit Allocation on the room page.','ℹ')">Edit Allocation</button>`:''}
+      ${state.mode==='planning' ? `
+        <button class="btn sm" onclick="go('conflictInbox')">Conflict Inbox (${CONFLICTS.filter(c=>c.status==='open').length})</button>
+        <button class="btn primary sm" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>
+      ` : ''}
+    </div>
+  </div>
+
+  <div class="card card-pad" style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+    <div class="field" style="margin:0;min-width:170px;"><label>Department</label>
+      <select onchange="state.mtFilters.dept=this.value; render();">
+        <option value="">All Departments</option>
+        ${DEPARTMENTS.map(d=>`<option value="${d}" ${f.dept===d?'selected':''}>${d}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" style="margin:0;min-width:170px;"><label>Building</label>
+      <select onchange="state.mtFilters.building=this.value; render();">
+        <option value="">All Buildings</option>
+        ${BUILDINGS.filter(b=>!b.noRooms).map(b=>`<option value="${b.id}" ${f.building===b.id?'selected':''}>${b.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" style="margin:0;min-width:170px;"><label>Room</label>
+      <select onchange="state.mtFilters.room=this.value; render();">
+        <option value="">All Rooms</option>
+        ${Object.values(ROOMS).map(r=>`<option value="${r.id}" ${f.room===r.id?'selected':''}>${r.name}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" style="margin:0;min-width:170px;"><label>Faculty</label>
+      <select onchange="state.mtFilters.faculty=this.value; render();">
+        <option value="">All Faculty</option>
+        ${[...new Set(SESSIONS.map(s=>s.faculty))].map(fn=>`<option value="${fn}" ${f.faculty===fn?'selected':''}>${fn}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field" style="margin:0;min-width:170px;"><label>Course</label>
+      <input type="text" placeholder="Search course…" value="${esc(f.course)}" oninput="state.mtFilters.course=this.value; render();" />
+    </div>
+    ${(f.dept||f.building||f.room||f.faculty||f.course)?`<button class="btn ghost sm" onclick="state.mtFilters={dept:'',building:'',room:'',faculty:'',course:''}; render();">Clear filters</button>`:''}
+  </div>
+
+  <div class="grid" style="grid-template-columns:repeat(${days.length},1fr);gap:14px;">
+    ${days.map(day=>`
+      <div>
+        <div class="section-title" style="margin-top:0;">${day==='Mon'?'Monday':day==='Tue'?'Tuesday':day==='Wed'?'Wednesday':day==='Thu'?'Thursday':'Friday'}</div>
+        ${sessions.filter(s=>s.day===day).length ? sessions.filter(s=>s.day===day).sort((a,b)=>a.time.localeCompare(b.time)).map(mtBlockChip).join('') : `<div class="empty" style="padding:16px;font-size:12px;">No sessions match filters.</div>`}
+      </div>`).join('')}
+  </div>
+  <div style="font-size:11.5px;color:var(--text-3);margin-top:16px;">Clicking any block opens Room Operations for that venue. Editing an allocation changes the venue only — course timings remain read-only.</div>
+  `;
+}
+
+/* ---------------- PLANNING: SCREEN 3 CONFLICT INBOX ---------------- */
+
+function screenConflictInbox(){
+  const open = CONFLICTS.filter(c=>c.status==='open');
+  const resolved = CONFLICTS.filter(c=>c.status!=='open');
+  return `
+  <div class="crumbs"><a onclick="go(state.mode==='planning'?'import':'registrarDashboard')">${state.mode==='planning'?'Planning':'Operations'}</a> / <span class="cur">Conflict Inbox</span></div>
+  <div class="page-head">
+    <div><h1 class="page-title">Conflict Inbox</h1><p class="page-sub">Every allocation failure surfaces here — nothing is silently resolved.</p></div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn ghost sm" onclick="state.modal={type:'priorityLegend'}; render();">ⓘ Priority Legend</button>
+      ${state.mode==='planning' ? `<button class="btn primary" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>` : ''}
+    </div>
+  </div>
+  <div class="banner ${remainingP1()>0?'amber':'green'}">
+    ${remainingP1()>0 ? `⚠ ${remainingP1()} P1 conflict${remainingP1()>1?'s':''} must be resolved before the timetable can be published.` : '✓ All P1 conflicts resolved.'}
+  </div>
+  <div class="table-wrap" style="margin-bottom:10px;">
+    ${open.length ? open.map(c=>`
+      <div class="conflict-item" style="${state.focusConflictId===c.id?'background:var(--blue-light)':''}">
+        <span class="pri ${c.priority}">${c.priority}</span>
+        <div class="conflict-main">
+          <div class="conflict-title">${esc(c.title)} <span class="chip ${c.origin==='Mid Semester Update'?'amber':'grey'}">${c.origin||'Initial Planning'}</span></div>
+          <div class="conflict-sub">${esc(c.subtitle)}</div>
+        </div>
+        <button class="btn sm ${c.priority==='P1'?'primary':''}" onclick="openConflictAction('${c.id}')">${c.action}</button>
+      </div>`).join('') : `<div class="empty"><div class="icon">✓</div>All conflicts resolved.</div>`}
+  </div>
+  <div style="font-size:11.5px;color:var(--text-3);margin-bottom:20px;">Showing ${open.length+resolved.length} of 189 flagged items for this walkthrough dataset — sorted P1 → nearest upcoming class → largest student count.</div>
+
+  ${resolved.length? `
+  <div class="section-title">Resolved this session</div>
+  <div class="table-wrap">
+    ${resolved.map(c=>`
+      <div class="conflict-item">
+        <span class="pri ${c.priority}" style="opacity:.5">${c.priority}</span>
+        <div class="conflict-main"><div class="conflict-title">${esc(c.title)}</div><div class="conflict-sub">${esc(c.subtitle)}</div></div>
+        <span class="chip green">✓ ${c.status==='escalated'?'Escalated':'Resolved'}</span>
+      </div>`).join('')}
+  </div>` : ''}
+  `;
+}
+
+function openConflictAction(conflictId){
+  const c = CONFLICTS.find(x=>x.id===conflictId);
+  if(!c) return;
+  if(c.type==='offline'){ go('roomOps',{focusRoomId:c.roomId, focusBuildingId:ROOMS[c.roomId].building}); return; }
+  state.modal = {type:'assist', conflictId};
+  render();
+}
+
+/* ---------------- SCREEN 4: MANUAL ALLOCATION ASSISTANT (modal) ---------------- */
+
+function suggestedRoomsFor(conflict){
+  const s = conflict.sessionId ? SESSIONS.find(s=>s.id===conflict.sessionId) : null;
+  const need = s ? s.students : 0;
+  if(conflict.type==='oversized'){
+    return [{id:'SH2', reason:`Right-sized for ${need} students`}];
+  }
+  return Object.values(ROOMS).filter(r=>r.status==='Available' && r.capacity>=need && r.id!=='AUD').sort((a,b)=>a.capacity-b.capacity).slice(0,2).map(r=>({id:r.id}));
+}
+
+function renderModal(){
+  if(!state.modal) return '';
+  if(state.modal.type==='assist'){
+    const c = CONFLICTS.find(x=>x.id===state.modal.conflictId);
+    if(!c) { state.modal=null; return ''; }
+    const s = c.sessionId ? SESSIONS.find(s=>s.id===c.sessionId) : null;
+    const suggestions = suggestedRoomsFor(c);
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Manual Allocation Assistant</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="conflict-title" style="margin-bottom:2px;">${esc(c.title)} <span class="pri ${c.priority}">${c.priority}</span></div>
+          <div class="conflict-sub" style="margin-bottom:16px;">${esc(c.subtitle)}</div>
+          <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin-bottom:10px;">Suggested Rooms — pre-filtered for eligibility</div>
+          ${suggestions.map(sg=>{
+            const r = ROOMS[sg.id];
+            return `<div class="room-suggest">
+              <div><div class="rname">${r.name}</div><div class="rmeta">Capacity ${r.capacity} · ${sg.reason || 'Available'} ${r.facilities.length?'· '+r.facilities.join(', '):''}</div></div>
+              <button class="btn sm primary" onclick="assignRoom('${c.id}','${r.id}')">Assign</button>
+            </div>`;
+          }).join('')}
+          ${!suggestions.length? `<div class="empty" style="padding:20px 0;">No eligible rooms found automatically.</div>`:''}
+        </div>
+        <div class="modal-foot">
+          <span style="flex:1;font-size:12px;color:var(--text-3);">No fit? Escalate for registrar review.</span>
+          <button class="btn danger" onclick="escalateConflict('${c.id}')">No Suitable Room · Escalate</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='onboard'){
+    return renderOnboardModal();
+  }
+  if(state.modal.type==='editAlloc'){
+    const m = state.modal;
+    const session = SESSIONS.find(s=>s.id===m.sessionId);
+    if(!session){ state.modal=null; return ''; }
+    const currentRoom = ROOMS[session.venue];
+    const options = editAllocOptions(session);
+    const pipeSteps = ['Validation','Conflict Check','Save'];
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this && '${m.stage}'!=='validating'){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Edit Allocation</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="conflict-title" style="margin-bottom:2px;">${esc(session.course)}</div>
+          <div class="conflict-sub" style="margin-bottom:16px;">Current venue: ${currentRoom?currentRoom.name:'—'} · Course timings are read-only — only the venue can change.</div>
+
+          ${m.stage==='pick' ? `
+            <div class="field"><label>New Venue</label>
+              <select onchange="state.modal.targetRoomId=this.value; render();">
+                <option value="">Select a room…</option>
+                ${options.map(r=>`<option value="${r.id}" ${m.targetRoomId===r.id?'selected':''}>${r.name} (Capacity ${r.capacity})</option>`).join('')}
+              </select>
+            </div>
+          ` : `
+            <div style="margin-top:6px;">
+              ${pipeSteps.map((s,i)=>`
+                <div class="pipe-item ${i<m.pipe || m.stage==='done' || m.stage==='failed'?'done':''} ${i===m.pipe && m.stage==='validating'?'spin':''}">
+                  <span class="ic">${i<m.pipe || m.stage==='done' || m.stage==='failed'?'✓':''}</span> ${s}
+                </div>`).join('')}
+            </div>
+            ${m.stage==='done'?`<div class="banner green" style="margin-top:12px;">✓ Master Timetable Updated — venue changed to ${ROOMS[m.targetRoomId].name}.</div>`:''}
+            ${m.stage==='failed'?`<div class="banner red" style="margin-top:12px;">✕ Conflict check failed — session routed to the Conflict Inbox for manual resolution.</div>`:''}
+          `}
+        </div>
+        <div class="modal-foot">
+          ${m.stage==='pick' ? `
+            <button class="btn ghost" onclick="state.modal=null; render();">Cancel</button>
+            <button class="btn primary" ${!m.targetRoomId?'disabled':''} onclick="runEditAllocation()">Run Validation</button>
+          ` : (m.stage==='done'||m.stage==='failed') ? `
+            <button class="btn primary" onclick="state.modal=null; render();">Close</button>
+          ` : `<span style="font-size:12px;color:var(--text-3);">Running…</span>`}
+        </div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='reject'){
+    const r = REQUESTS.find(x=>x.id===state.modal.requestId);
+    if(!r){ state.modal=null; return ''; }
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Reject Request</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="conflict-title" style="margin-bottom:2px;">${esc(r.course)}</div>
+          <div class="conflict-sub" style="margin-bottom:16px;">${r.faculty} · ${r.date} ${r.time}</div>
+          <div class="field">
+            <label>Reason (required — BR1 Mandatory Reasoning)</label>
+            <textarea id="rejectReasonInput" placeholder="e.g. Room already booked for a P1 session at this time."></textarea>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-3);">This reason will be shown to ${r.faculty}, who can then request another room.</div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" onclick="state.modal=null; render();">Cancel</button>
+          <button class="btn danger" onclick="submitRejection('${r.id}')">Reject Request</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='priorityLegend'){
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Priority Rules</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          ${PRIORITY_LEGEND.map(p=>`
+            <div class="onboard-tip"><span class="pri ${p.p}" style="flex:0 0 auto;">${p.p}</span><div><b>${p.label}</b><div style="color:var(--text-2);font-size:12px;margin-top:2px;">${p.desc}</div></div></div>
+          `).join('')}
+          <div style="font-size:11.5px;color:var(--text-3);margin-top:10px;">Equal priority favors the existing booking unless overridden.</div>
+        </div>
+        <div class="modal-foot"><button class="btn primary" onclick="state.modal=null; render();">Got it</button></div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='help'){
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Help & Guidance</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <p style="color:var(--text-2);font-size:13px;margin-top:0;">CampusOps manages <b>where</b> classes happen. Your SIS remains the source of truth for <b>when</b> and <b>who</b>.</p>
+          <div class="onboard-tip"><span class="ic">🎓</span><div><b>Registrar</b> — imports the timetable, resolves conflicts, publishes/archives, and holds override authority.</div></div>
+          <div class="onboard-tip"><span class="ic">🏢</span><div><b>HoD</b> — handles only cross-department recommendations/approvals, weekend & off-hours requests, and department conflicts. Own-department, business-hours requests are auto-approved by the system.</div></div>
+          <div class="onboard-tip"><span class="ic">📚</span><div><b>Faculty</b> — requests alternate rooms by selecting one from the eligible list. Own-department requests are auto-validated; cross-department and common-facility requests route for approval.</div></div>
+          <div class="onboard-tip"><span class="ic">🧭</span><div>Use the <b>Guided Walkthrough</b> panel (bottom-left) to follow the full operational lifecycle.</div></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" onclick="state.modal=null; state.wtOpen=true; render();">Open Walkthrough</button>
+          <button class="btn primary" onclick="state.modal=null; render();">Close</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='report'){
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Report an Issue</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="field">
+            <label>What went wrong, or what could be better?</label>
+            <textarea id="reportText" placeholder="Describe the issue or suggestion…"></textarea>
+          </div>
+          <div style="font-size:11.5px;color:var(--text-3);">Logged to the audit trail for this prototype session.</div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" onclick="state.modal=null; render();">Cancel</button>
+          <button class="btn primary" onclick="submitReport()">Submit Report</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  return '';
+}
+function submitReport(){
+  const ta = document.getElementById('reportText');
+  const val = ta ? ta.value.trim() : '';
+  if(!val){ toast('Please describe the issue before submitting.', '⚠'); return; }
+  logAudit(`Issue reported by ${personaLabel(state.persona)}: "${val}"`);
+  toast('Thanks — your report has been logged for the team.', '🚩');
+  state.modal=null;
+  render();
+}
+
+function assignRoom(conflictId, roomId){
+  const c = CONFLICTS.find(x=>x.id===conflictId);
+  const room = ROOMS[roomId];
+  if(c.sessionId){
+    const s = SESSIONS.find(s=>s.id===c.sessionId);
+    if(s){ s.venue = roomId; s.status='Assigned'; delete s.flag; }
+  }
+  c.status='resolved';
+  logAudit(`${c.title} assigned to ${room.name} (Manual Allocation Assistant).`);
+  toast(`${c.title} assigned to ${room.name}.`, '✓');
+  markWt('resolvedConflict');
+  state.modal = null;
+  render();
+}
+function escalateConflict(conflictId){
+  const c = CONFLICTS.find(x=>x.id===conflictId);
+  c.status='escalated';
+  logAudit(`${c.title} escalated to Registrar — no suitable room found.`);
+  toast(`${c.title} escalated to Registrar.`, '⚑');
+  state.modal = null;
+  render();
+}
+
+/* ---------------- MASTER TIMETABLE EDIT ALLOCATION (Section 12) ---------------- */
+
+function openEditAllocation(roomId){
+  const session = SESSIONS.find(s=>s.venue===roomId);
+  if(!session){ toast('No allocation to edit in this room.', 'ℹ'); return; }
+  state.modal = {type:'editAlloc', sessionId:session.id, roomId, targetRoomId:'', stage:'pick'};
+  render();
+}
+
+function editAllocOptions(session){
+  return Object.values(ROOMS).filter(r=>r.status==='Available' && r.capacity>=session.students && r.id!==session.venue);
+}
+
+function runEditAllocation(){
+  const m = state.modal;
+  const session = SESSIONS.find(s=>s.id===m.sessionId);
+  const targetRoom = ROOMS[m.targetRoomId];
+  if(!session || !targetRoom) return;
+  m.stage='validating'; m.pipe=0;
+  render();
+  const steps=3; // Validation -> Conflict Check -> Save
+  const tick=()=>{
+    setTimeout(()=>{
+      m.pipe++;
+      if(m.pipe>=steps){
+        const success = targetRoom.status==='Available';
+        if(success){
+          const oldRoomId = session.venue;
+          if(oldRoomId && ROOMS[oldRoomId]) ROOMS[oldRoomId].status='Available';
+          session.venue = targetRoom.id;
+          targetRoom.status='Occupied';
+          logAudit(`${session.course} allocation edited — venue changed to ${targetRoom.name}. Course timings unchanged.`);
+          toast('Master Timetable Updated — allocation saved.', '✓');
+          m.stage='done';
+        } else {
+          CONFLICTS.push({id:'ec'+Math.random().toString(36).slice(2,6),priority:'P2',title:session.course,subtitle:`Venue Change Failed Validation · ${targetRoom.name} unavailable`,type:'no_room',action:'Resolve',status:'open',sessionId:session.id,origin:'Initial Planning'});
+          logAudit(`${session.course} venue-change failed validation — routed to Conflict Inbox.`);
+          toast('Validation failed — session routed to Conflict Inbox.', '⚠');
+          m.stage='failed';
+        }
+        render();
+        return;
+      }
+      render();
+      tick();
+    }, 500);
+  };
+  tick();
+}
+
+/* ---------------- OPERATIONS: SCREEN 5 REGISTRAR DASHBOARD ---------------- */
+
+function offlineRoomCount(){ return Object.values(ROOMS).filter(r=>r.status==='Offline'||r.status==='Maintenance').length; }
+function activeSpaceCount(){ return Object.values(ROOMS).length - offlineRoomCount(); }
+
+function screenRegistrarDashboard(){
+  const openConflicts = CONFLICTS.filter(c=>c.status==='open');
+  return `
+  <div class="crumbs"><span class="cur">Operations · Registrar Command Centre</span></div>
+  <div class="page-head">
+    <div><h1 class="page-title">Registrar Command Centre</h1><p class="page-sub">Live campus-wide operational status.</p></div>
+    <button class="btn" onclick="go('emergencyOverride')">⚡ Emergency Override</button>
+  </div>
+
+  <div class="grid cols-4">
+    <div class="card stat-card"><div class="stat-label">Rooms Offline</div><div class="stat-value red">${offlineRoomCount()}</div><div class="stat-foot">Across all buildings</div></div>
+    <div class="card stat-card"><div class="stat-label">Critical Conflicts</div><div class="stat-value ${openConflicts.filter(c=>c.priority==='P1').length?'red':'green'}">${openConflicts.filter(c=>c.priority==='P1').length}</div><div class="stat-foot">P1 priority, open</div></div>
+    <div class="card stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value amber">${REQUESTS.filter(r=>r.status!=='approved'&&r.status!=='room_assigned').length}</div><div class="stat-foot">Awaiting approval</div></div>
+    <div class="card stat-card"><div class="stat-label">Active Teaching Spaces</div><div class="stat-value green">${activeSpaceCount()}/${Object.values(ROOMS).length}</div><div class="stat-foot">Currently operational</div></div>
+  </div>
+
+  <div class="section-title">Current Master Timetable</div>
+  <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div class="kv" style="grid-template-columns:auto auto auto;gap:6px 28px;">
+      <div><div class="k">Semester</div><div class="v">${TIMETABLE_META.semester}</div></div>
+      <div><div class="k">Version</div><div class="v">Version ${TIMETABLE_META.version}</div></div>
+      <div><div class="k">Status</div><div class="v"><span class="chip ${TIMETABLE_META.published?'green':'amber'}">${TIMETABLE_META.published?'Published':'Draft'}</span></div></div>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn" onclick="go('masterTimetable')">View Master Timetable</button>
+      <button class="btn primary" onclick="markWt('midSemesterStarted'); go('import'); startMidSemesterUpdate();">Import Updated SIS Schedule</button>
+    </div>
+  </div>
+
+  <div class="section-title">Campus Overview</div>
+  <div class="grid cols-4">
+    ${BUILDINGS.map(b=>{
+      const occ = buildingOccupancy(b.id);
+      const alert = buildingAlert(b.id);
+      return `<div class="card tile" onclick="${b.noRooms?'':`go('buildingOps',{focusBuildingId:'${b.id}'}); markWt('openedBuilding');`}">
+        <div class="tile-top"><span class="tile-name">${b.name}</span>${alert?`<span class="chip red">⚠</span>`:''}</div>
+        <div class="tile-meta">${alert ? alert : (b.noRooms?'Operational':occ+'% Occupied')}</div>
+        ${!b.noRooms?`<div class="occ-bar"><div class="fill" style="width:${occ}%"></div></div>`:''}
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="section-title">Common Facilities</div>
+  <div class="grid cols-3">
+    ${['AUD','SHA','IHUB'].map(id=>{
+      const r = ROOMS[id];
+      const chipClass = r.status==='Available'?'green':r.status==='Booked'?'blue':'amber';
+      return `<div class="card tile" onclick="go('roomOps',{focusRoomId:'${id}',focusBuildingId:'common'})">
+        <div class="tile-top"><span class="tile-name">${r.name}</span><span class="chip ${chipClass}">${r.status}</span></div>
+        <div class="tile-meta" style="display:flex;align-items:center;justify-content:space-between;gap:6px;">Capacity ${r.capacity} ${ownershipBadge(r)}</div>
+      </div>`;
+    }).join('')}
+  </div>
+
+  <div class="section-title">Operational Alerts</div>
+  <div class="table-wrap">
+    <div class="conflict-item">
+      <span class="chip red">⚡</span>
+      <div class="conflict-main"><div class="conflict-title">Electrical Failure</div><div class="conflict-sub">Hall A103 — Engineering Block</div></div>
+      <button class="btn sm" onclick="go('roomOps',{focusRoomId:'A103',focusBuildingId:'eng'})">Open Room</button>
+    </div>
+    <div class="conflict-item">
+      <span class="chip amber">🏛</span>
+      <div class="conflict-main"><div class="conflict-title">Placement Drive</div><div class="conflict-sub">Auditorium required — 3:00 PM today</div></div>
+      <button class="btn sm danger" onclick="go('emergencyOverride')">Override</button>
+    </div>
+    <div class="conflict-item">
+      <span class="chip grey">🛠</span>
+      <div class="conflict-main"><div class="conflict-title">Maintenance Scheduled</div><div class="conflict-sub">Physics Lab — Science Block</div></div>
+      <button class="btn sm" onclick="go('roomOps',{focusRoomId:'PLAB',focusBuildingId:'sci'})">Open Room</button>
+    </div>
+  </div>
+
+  <div class="section-title">Conflict Inbox <span class="hint">${openConflicts.length} open · <a onclick="state.modal={type:'priorityLegend'}; render();" style="cursor:pointer;color:var(--blue);">ⓘ Priority Legend</a></span></div>
+  <div class="table-wrap">
+    ${openConflicts.length? openConflicts.slice(0,3).map(c=>`
+      <div class="conflict-item">
+        <span class="pri ${c.priority}">${c.priority}</span>
+        <div class="conflict-main"><div class="conflict-title">${esc(c.title)}</div><div class="conflict-sub">${esc(c.subtitle)}</div></div>
+        <button class="btn sm" onclick="openConflictAction('${c.id}')">${c.action}</button>
+      </div>`).join('') : `<div class="empty"><div class="icon">✓</div>Inbox clear.</div>`}
+  </div>
+  <div style="text-align:right;margin-top:8px;"><button class="btn ghost sm" onclick="go('conflictInbox')">View full inbox →</button></div>
+  `;
+}
+
+/* ---------------- SCREEN 6: BUILDING OPERATIONS ---------------- */
+
+function screenBuildingOps(){
+  const b = BUILDINGS.find(x=>x.id===state.focusBuildingId) || BUILDINGS[0];
+  const rooms = Object.values(ROOMS).filter(r=>r.building===b.id);
+  const groups = [...new Set(rooms.map(r=>r.group))];
+  return `
+  <div class="crumbs"><a onclick="go('registrarDashboard')">Operations</a> / <a onclick="go('buildings')">Buildings</a> / <span class="cur">${b.name}</span></div>
+  <div class="page-head">
+    <div><h1 class="page-title">${b.name}</h1><p class="page-sub">Facilities operations console — ${rooms.length} teaching spaces.</p></div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Room</th><th>Room Status</th><th>Ownership</th><th>Current Allocation</th><th>Actions</th></tr></thead>
+      <tbody>
+        ${groups.map(g=>`
+          <tr class="group-row"><td colspan="5">${g}</td></tr>
+          ${rooms.filter(r=>r.group===g).map(r=>{
+            const session = SESSIONS.find(s=>s.venue===r.id);
+            return `
+          <tr>
+            <td class="cell-strong">${r.name}</td>
+            <td>${statusChip(r.status)}</td>
+            <td>${ownershipBadge(r)}</td>
+            <td>${session ? `${session.course} · ${session.faculty}` : (r.allocatedTo ? esc(r.allocatedTo) : '<span class="cell-muted">Unallocated</span>')}</td>
+            <td style="display:flex;gap:6px;">
+              <button class="btn sm ghost" onclick="go('masterTimetable',{mtFilters:{dept:'',building:'',room:'${r.id}',faculty:'',course:''}})">View Timetable</button>
+              <button class="btn sm" onclick="go('roomOps',{focusRoomId:'${r.id}',focusBuildingId:'${b.id}'}); markWt('openedRoom');">Open Room</button>
+            </td>
+          </tr>`;}).join('')}
+        `).join('')}
+      </tbody>
+    </table>
+  </div>
+  `;
+}
+function statusChip(status){
+  const map = {Occupied:'blue',Available:'green',Offline:'red',Maintenance:'amber',Reserved:'amber',Booked:'blue'};
+  return `<span class="chip ${map[status]||'grey'}">${status}</span>`;
+}
+
+function screenBuildings(){
+  return `
+  <div class="crumbs"><a onclick="go('registrarDashboard')">Operations</a> / <span class="cur">Buildings</span></div>
+  <div class="page-head"><div><h1 class="page-title">Buildings & Facilities</h1><p class="page-sub">Campus-wide directory of teaching spaces.</p></div></div>
+  <div class="grid cols-4">
+    ${BUILDINGS.map(b=>{
+      const occ = buildingOccupancy(b.id); const alert = buildingAlert(b.id);
+      return `<div class="card tile" onclick="${b.noRooms?'':`go('buildingOps',{focusBuildingId:'${b.id}'})`}">
+        <div class="tile-top"><span class="tile-name">${b.name}</span>${alert?'<span class="chip red">⚠</span>':''}</div>
+        <div class="tile-meta">${alert?alert:(b.noRooms?'Operational':occ+'% Occupied')}</div>
+      </div>`;
+    }).join('')}
+    ${['AUD','SHA','IHUB'].map(id=>{
+      const r=ROOMS[id]; const chipClass = r.status==='Available'?'green':r.status==='Booked'?'blue':'amber';
+      return `<div class="card tile" onclick="go('roomOps',{focusRoomId:'${id}',focusBuildingId:'common'})">
+        <div class="tile-top"><span class="tile-name">${r.name}</span><span class="chip ${chipClass}">${r.status}</span></div>
+        <div class="tile-meta" style="display:flex;align-items:center;justify-content:space-between;gap:6px;">Capacity ${r.capacity} ${ownershipBadge(r)}</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+/* ---------------- SCREEN 7: ROOM OPERATIONS ---------------- */
+
+function affectedClassesFor(roomId){
+  return SESSIONS.filter(s=>s.venue===roomId && (ROOMS[roomId].status==='Offline'||ROOMS[roomId].status==='Maintenance'));
+}
+
+function screenRoomOps(){
+  const r = ROOMS[state.focusRoomId] || ROOMS.A103;
+  const affected = affectedClassesFor(r.id);
+  const suggestions = Object.values(ROOMS).filter(x=>x.status==='Available' && x.id!==r.id).slice(0,2);
+  return `
+  <div class="crumbs"><a onclick="go('registrarDashboard')">Operations</a> / <a onclick="go('buildingOps',{focusBuildingId:'${r.building}'})">${BUILDINGS.find(b=>b.id===r.building)?BUILDINGS.find(b=>b.id===r.building).name:'Common Facilities'}</a> / <span class="cur">${r.name}</span></div>
+  <div class="page-head"><div><h1 class="page-title">${r.name}</h1><p class="page-sub">${r.ownership==='COMMON'?'Common Facility':r.ownership==='PREMIUM'?'Premium Space':'Department-owned teaching space'}</p></div><div style="display:flex;gap:8px;align-items:center;">${ownershipBadge(r)}${statusChip(r.status)}<button class="btn sm" onclick="go('masterTimetable',{mtFilters:{...state.mtFilters, room:'${r.id}'}})">View in Master Timetable</button>${state.persona==='registrar'?`<button class="btn sm primary" onclick="openEditAllocation('${r.id}')">Edit Allocation</button>`:''}</div></div>
+
+  ${(r.status==='Offline'||r.status==='Maintenance') ? `<div class="banner red">⚠ This room was marked <b>&nbsp;${r.status==='Offline'?'Offline_Maintenance':'Maintenance'}&nbsp;</b> — all future bookings were automatically cancelled and routed here for reallocation (BR2 · Hardware Failure Cascade).</div>` : ''}
+  ${r.status==='Reserved' && r.allocatedTo ? `<div class="banner blue">🔒 Locked for ${esc(r.allocatedTo)} — ${esc(r.allocatedCourse||'ad-hoc booking')}.</div>` : ''}
+
+  <div class="two-col">
+    <div>
+      <div class="card card-pad" style="margin-bottom:16px;">
+        <div class="kv">
+          <div class="k">Ownership</div><div class="v">${ownershipBadge(r)}</div>
+          <div class="k">Department</div><div class="v">${r.dept || 'Common Facility'}</div>
+          <div class="k">Capacity</div><div class="v">${r.capacity}</div>
+          <div class="k">Status</div><div class="v">${r.status}</div>
+          ${r.reason?`<div class="k">Reason</div><div class="v">${r.reason}</div>`:''}
+          ${r.allocatedTo?`<div class="k">Locked For</div><div class="v">${esc(r.allocatedTo)}</div>`:''}
+          <div class="k">Facilities</div><div class="v">${r.facilities.length?r.facilities.join(', '):'—'}</div>
+        </div>
+      </div>
+
+      <div class="section-title" style="margin-top:0;">Affected Classes</div>
+      <div class="table-wrap">
+        ${affected.length ? affected.map(s=>`
+          <div class="conflict-item">
+            <div class="conflict-main"><div class="conflict-title">${s.course}</div><div class="conflict-sub">${s.faculty} · was scheduled here</div></div>
+            <span class="chip red">Action Required</span>
+          </div>`).join('') : `<div class="empty" style="padding:24px;">No classes currently affected.</div>`}
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title" style="margin-top:0;">Suggested Alternatives</div>
+      <div class="table-wrap card-pad" style="padding:14px;">
+        ${suggestions.map(s=>`
+          <div class="room-suggest">
+            <div><div class="rname">${s.name}</div><div class="rmeta">Capacity ${s.capacity} · Available</div></div>
+            <button class="btn sm primary" onclick="reassignFrom('${r.id}','${s.id}')" ${!affected.length?'disabled':''}>Assign</button>
+          </div>`).join('')}
+        <button class="btn sm" style="width:100%;justify-content:center;margin-top:4px;" onclick="toast('No suitable venue — escalated to Registrar.','⚑')" ${!affected.length?'disabled':''}>No Suitable Venue · Escalate</button>
+      </div>
+    </div>
+  </div>
+  `;
+}
+
+function reassignFrom(fromRoomId, toRoomId){
+  const affected = affectedClassesFor(fromRoomId);
+  if(!affected.length) return;
+  const s = affected[0];
+  s.venue = toRoomId; s.status='Assigned';
+  logAudit(`${s.course} reassigned from ${ROOMS[fromRoomId].name} to ${ROOMS[toRoomId].name}. Faculty notified.`);
+  toast(`${s.course} reassigned to ${ROOMS[toRoomId].name}. Faculty notified.`, '✓');
+  markWt('reassigned');
+  render();
+}
+
+/* ---------------- SCREEN 8: DEPARTMENT DASHBOARD (HoD) ---------------- */
+
+function screenHodDashboard(){
+  const dept = HOD_DEPT;
+  const offHoursPending = REQUESTS.filter(r=>r.status==='pending_dept' && r.flowType==='offhours' && r.dept===dept);
+  const recommendPending = REQUESTS.filter(r=>r.status==='pending_recommendation' && r.homeDept===dept);
+  const ownershipPending = REQUESTS.filter(r=>r.status==='pending_owning_hod' && r.owningDept===dept);
+  const deptConflicts = CONFLICTS.filter(c=>c.status==='open' && c.sessionId && SESSIONS.find(s=>s.id===c.sessionId)?.dept===dept);
+  const totalPending = offHoursPending.length + recommendPending.length + ownershipPending.length;
+  return `
+  <div class="crumbs"><span class="cur">Department Dashboard · ${dept}</span></div>
+  <div class="page-head"><div><h1 class="page-title">Department Dashboard</h1><p class="page-sub">${dept} — departmental spaces and approvals only.</p></div></div>
+
+  <div class="grid cols-4">
+    <div class="card stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value amber">${totalPending}</div></div>
+    <div class="card stat-card"><div class="stat-label">Labs Occupied</div><div class="stat-value">2/2</div></div>
+    <div class="card stat-card"><div class="stat-label">Offline Rooms</div><div class="stat-value red">1</div><div class="stat-foot">Hall A103</div></div>
+    <div class="card stat-card"><div class="stat-label">Weekend Requests</div><div class="stat-value">${REQUESTS.filter(r=>r.course.includes('Weekend')).length}</div></div>
+  </div>
+
+  <div class="section-title">Today's Schedule</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Course</th><th>Faculty</th><th>Venue</th><th>Status</th></tr></thead>
+      <tbody>
+        ${SESSIONS.filter(s=>s.faculty==='Dr Iyer').map(s=>`
+        <tr><td class="cell-strong mono">${s.course}</td><td>${s.faculty}</td><td>${roomLabel(s.venue)}</td><td>${s.status==='Assigned'?statusChip(ROOMS[s.venue]?.status==='Offline'?'Offline':'Occupied'):`<span class="chip red">Conflict</span>`}</td></tr>`).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="banner blue" style="margin-top:6px;">Own-department requests during business hours are auto-validated by the system and do not require HoD approval.</div>
+
+  <div class="section-title">Department Conflicts <span class="hint">Open conflicts affecting ${dept} sessions</span></div>
+  <div class="table-wrap">
+    ${deptConflicts.length? deptConflicts.map(c=>`
+      <div class="conflict-item">
+        <span class="pri ${c.priority}">${c.priority}</span>
+        <div class="conflict-main"><div class="conflict-title">${esc(c.title)}</div><div class="conflict-sub">${esc(c.subtitle)}</div></div>
+        <button class="btn sm" onclick="go('conflictInbox',{focusConflictId:'${c.id}'})">View in Inbox</button>
+      </div>`).join('') : `<div class="empty" style="padding:24px;">No open conflicts in ${dept}.</div>`}
+  </div>
+
+  <div class="section-title">Weekend / Off-Hours Approvals <span class="hint">Requests for ${dept}'s own rooms outside standard hours</span></div>
+  <div class="table-wrap">
+    ${offHoursPending.length? offHoursPending.map(r=>`
+      <div class="conflict-item">
+        <div class="conflict-main">
+          <div class="conflict-title">${esc(r.course)} ${ROOMS[r.roomId]?ownershipBadge(ROOMS[r.roomId]):''} <span class="chip amber">Off-Hours</span></div>
+          <div class="conflict-sub">${r.faculty} · Requesting ${ROOMS[r.roomId]?ROOMS[r.roomId].name:'—'} · ${r.date} ${r.time} · ${r.strength} students ${r.facilities.length?'· '+r.facilities.join(', '):''}</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn sm danger" onclick="rejectRequestPrompt('${r.id}')">Reject</button>
+          <button class="btn sm primary" onclick="approveRequest('${r.id}')">Approve</button>
+        </div>
+      </div>`).join('') : `<div class="empty" style="padding:24px;">No weekend/off-hours approvals pending.</div>`}
+  </div>
+
+  <div class="section-title">Pending Ownership Approvals <span class="hint">Other departments' faculty requesting ${dept}'s rooms — final approval</span></div>
+  <div class="table-wrap">
+    ${ownershipPending.length? ownershipPending.map(r=>{
+      const room = ROOMS[r.roomId];
+      return `
+      <div class="conflict-item">
+        <div class="conflict-main"><div class="conflict-title">${esc(r.course)} ${room?ownershipBadge(room):''}</div><div class="conflict-sub">${r.faculty} · ${r.dept} · Requesting ${room?room.name:'—'} · recommended by Home HoD · ${r.date} ${r.time}</div></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn sm danger" onclick="rejectRequestPrompt('${r.id}')">Reject</button>
+          <button class="btn sm primary" onclick="approveOwningHod('${r.id}')">Approve</button>
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty" style="padding:24px;">No ownership approvals pending.</div>`}
+  </div>
+
+  <div class="section-title">Awaiting Your Recommendation <span class="hint">Your faculty requesting another department's rooms</span></div>
+  <div class="table-wrap">
+    ${recommendPending.length? recommendPending.map(r=>{
+      const room = ROOMS[r.roomId];
+      const nextLabel = r.crossDept ? `Recommend to ${r.owningDept} HoD` : 'Recommend to Registrar';
+      return `
+      <div class="conflict-item">
+        <div class="conflict-main">
+          <div class="conflict-title">${esc(r.course)} ${room?ownershipBadge(room):''}</div>
+          <div class="conflict-sub">${r.faculty} · Requesting ${room?room.name:'—'} ${r.crossDept?`(owned by ${r.owningDept})`:''} · ${r.date} ${r.time} · ${r.strength} students</div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn sm danger" onclick="rejectRequestPrompt('${r.id}')">Reject</button>
+          <button class="btn sm primary" onclick="recommendToNextStage('${r.id}')">${nextLabel}</button>
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty" style="padding:24px;">Nothing awaiting recommendation.</div>`}
+  </div>
+
+  <div class="section-title">Proxy Delegation</div>
+  <div class="card card-pad" style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;">
+    <div>
+      <div style="font-weight:700;font-size:13px;margin-bottom:2px;">Mark on Leave</div>
+      <div style="color:var(--text-2);font-size:12px;">Pending approvals auto-route to your delegated proxy while you're away.</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <select onchange="state.proxyTeacher=this.value; render();" style="padding:7px 10px;border-radius:8px;border:1px solid var(--border-strong);font-size:12.5px;">
+        <option ${state.proxyTeacher==='Prof. Sameer Kulkarni'?'selected':''}>Prof. Sameer Kulkarni</option>
+        <option ${state.proxyTeacher==='Prof. Leela Nair'?'selected':''}>Prof. Leela Nair</option>
+      </select>
+      <div class="pill-toggle">
+        <button class="${!state.proxyOnLeave?'on':''}" onclick="state.proxyOnLeave=false; render();">Off</button>
+        <button class="${state.proxyOnLeave?'on':''}" onclick="state.proxyOnLeave=true; toast('Approvals now routing to '+state.proxyTeacher+'.','↪'); render();">On</button>
+      </div>
+    </div>
+  </div>
+  ${state.proxyOnLeave?`<div class="banner blue" style="margin-top:14px;">↪ Marked on leave — approvals are routing to ${state.proxyTeacher}.</div>`:''}
+  `;
+}
+
+/* ---- Shared approval engine ----
+   Fixes the approval bug: on final approval the selected room is immediately
+   locked, the faculty schedule (SESSIONS) is updated, the request is removed
+   from every pending queue (via status change), and the same venue is then
+   read from ROOMS/REQUESTS/SESSIONS consistently by every dashboard. */
+function lockRoomAndAssign(r, room, approverLabel){
+  room.status='Reserved';
+  room.allocatedTo=r.faculty;
+  room.allocatedCourse=r.course;
+  r.status='room_assigned';
+  r.stage=4;
+  r.roomId=room.id;
+  r.venue=room.name;
+
+  let session = SESSIONS.find(s=>s.id===r.id);
+  if(session){ session.venue=room.id; session.status='Assigned'; }
+  else { SESSIONS.push({id:r.id, course:r.course, faculty:r.faculty, students:r.strength, venue:room.id, status:'Assigned'}); }
+
+  logAudit(`${r.course} approved by ${approverLabel}. ${room.name} locked and assigned to ${r.faculty}.`);
+  toast(`Approved — ${room.name} locked for ${r.faculty}.`, '✓');
+  markWt('approvedReq');
+  render();
+}
+
+function roomStillAvailable(r){
+  const room = ROOMS[r.roomId];
+  return room && room.status==='Available';
+}
+function autoRejectUnavailable(r){
+  r.status='rejected';
+  r.rejectReason=`${ROOMS[r.roomId]?ROOMS[r.roomId].name:'The selected room'} is no longer available — it was booked by another confirmed request.`;
+  logAudit(`${r.course} auto-rejected — selected room no longer available.`);
+  toast('Room is no longer available — request auto-rejected. Faculty notified.', '⚠');
+  render();
+}
+
+// Direct approval — request for the HoD's own department room
+function approveRequest(id){
+  const r = REQUESTS.find(x=>x.id===id);
+  if(!r || r.status!=='pending_dept') return;
+  if(!roomStillAvailable(r)){ autoRejectUnavailable(r); return; }
+  lockRoomAndAssign(r, ROOMS[r.roomId], 'HoD (Off-Hours/Weekend)');
+}
+
+// Owning-department HoD final approval for a cross-department request
+function approveOwningHod(id){
+  const r = REQUESTS.find(x=>x.id===id);
+  if(!r || r.status!=='pending_owning_hod') return;
+  if(!roomStillAvailable(r)){ autoRejectUnavailable(r); return; }
+  lockRoomAndAssign(r, ROOMS[r.roomId], `${r.owningDept} HoD`);
+  toast(`Approved — ${r.venue} locked. ${r.faculty} notified.`, '✓');
+  markWt('crossApproved');
+}
+
+// Registrar Level-2 approval for Common / Premium spaces
+function approveGlobal(id){
+  const r = REQUESTS.find(x=>x.id===id);
+  if(!r || r.status!=='pending_global') return;
+  if(!roomStillAvailable(r)){ autoRejectUnavailable(r); return; }
+  lockRoomAndAssign(r, ROOMS[r.roomId], 'Registrar (Level 2)');
+}
+
+// Home HoD recommendation step — routes to the Owning HoD (cross-dept) or Registrar (common/premium)
+function recommendToNextStage(id){
+  const r = REQUESTS.find(x=>x.id===id);
+  if(!r) return;
+  if(r.crossDept){
+    r.status='pending_owning_hod'; r.stage=2;
+    logAudit(`${r.course} recommended by Home HoD to ${r.owningDept} HoD for final approval.`);
+    toast(`Recommended to ${r.owningDept} HoD for approval.`, '↪');
+  } else {
+    r.status='pending_global'; r.stage=2;
+    const label = ROOMS[r.roomId] && ROOMS[r.roomId].ownership==='PREMIUM' ? 'Premium Space' : 'Common Facility';
+    logAudit(`${r.course} recommended to Registrar for a ${label} (Level 2 approval).`);
+    toast('Recommended to Registrar for Level 2 approval.', '↪');
+  }
+  render();
+}
+
+/* Backwards-compatible alias */
+function recommendCommon(id){ recommendToNextStage(id); }
+
+// Rejection now requires a mandatory reason (BR1) and is shown to faculty
+function rejectRequestPrompt(id){
+  state.modal = {type:'reject', requestId:id, reasonText:''};
+  render();
+}
+function submitRejection(id){
+  const ta = document.getElementById('rejectReasonInput');
+  const reason = ta ? ta.value.trim() : '';
+  if(!reason){ toast('A reason is required to reject a request (BR1 — Mandatory Reasoning).', '⚠'); return; }
+  const r = REQUESTS.find(x=>x.id===id);
+  if(!r) return;
+  r.status='rejected';
+  r.rejectReason=reason;
+  logAudit(`${r.course} rejected. Reason: "${reason}"`);
+  toast('Request rejected — faculty notified with reason.', '✕');
+  state.modal=null;
+  render();
+}
+function dismissAndRequestAnother(id){
+  REQUESTS = REQUESTS.filter(x=>x.id!==id);
+  state.facultyDraft = {date:'2026-08-06',time:'14:00',strength:40,projector:true,ac:false,roomId:null};
+  go('facultyRequest');
+}
+
+/* ---------------- SCREEN 9: FACULTY WORKSPACE ---------------- */
+
+function screenFacultyWorkspace(){
+  const myClasses = SESSIONS.filter(s=>s.faculty==='Dr Iyer');
+  const myRequests = REQUESTS.filter(r=>r.faculty==='Dr Iyer');
+  return `
+  <div class="crumbs"><span class="cur">Faculty Workspace</span></div>
+  <div class="page-head"><div><h1 class="page-title">My Classes</h1><p class="page-sub">Dr. Priya Iyer · Mechanical Engineering</p></div><button class="btn primary" onclick="go('facultyRequest')">Request Alternate Room</button></div>
+
+  <div class="table-wrap" style="margin-bottom:24px;">
+    <table>
+      <thead><tr><th>Course</th><th>Venue</th><th>Status</th></tr></thead>
+      <tbody>
+        ${myClasses.map(s=>{
+          const room = s.venue ? ROOMS[s.venue] : null;
+          const offline = room && (room.status==='Offline'||room.status==='Maintenance');
+          return `<tr><td class="cell-strong mono">${s.course}</td><td>${roomLabel(s.venue)}</td><td>${offline?'<span class="chip red">Room Offline · Awaiting Reassignment</span>':'<span class="chip green">Confirmed</span>'}</td></tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  </div>
+
+  ${myRequests.some(r=>r.status==='room_assigned'||r.status==='rejected') ? `
+  <div class="section-title" style="margin-top:0;">Notifications</div>
+  <div class="grid cols-2" style="margin-bottom:24px;">
+    ${myRequests.filter(r=>r.status==='room_assigned').slice(-1).map(r=>`
+      <div class="card card-pad">
+        <div class="banner green" style="margin-bottom:8px;">Room Assigned</div>
+        <div class="kv"><div class="k">Venue</div><div class="v">${esc(r.venue)}</div><div class="k">Time</div><div class="v">${r.time}</div><div class="k">Status</div><div class="v">Approved</div></div>
+      </div>`).join('')}
+    ${myRequests.filter(r=>r.status==='rejected').slice(-1).map(r=>`
+      <div class="card card-pad">
+        <div class="banner red" style="margin-bottom:8px;">Rejected</div>
+        <div style="font-size:12.5px;color:var(--text-2);margin-bottom:10px;">Reason: ${esc(r.rejectReason)}</div>
+        <button class="btn sm" onclick="dismissAndRequestAnother('${r.id}')">Request Another Room</button>
+      </div>`).join('')}
+  </div>` : ''}
+
+  <div class="section-title" style="margin-top:0;">My Requests</div>
+  ${myRequests.length? myRequests.map(r=>{
+    const room = ROOMS[r.roomId];
+    return `
+    <div class="card card-pad" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;">
+        <div><div style="font-weight:700;font-size:13.5px;">${esc(r.course)}</div><div style="color:var(--text-2);font-size:12px;">${r.date} · ${r.time} · ${r.strength} students ${room?'· Requesting '+room.name:''}</div></div>
+        <div style="display:flex;gap:6px;align-items:center;">${flowBadge(r.flowType)}${r.status==='room_assigned'?`<span class="chip green">${r.venue}</span>`:r.status==='rejected'?`<span class="chip red">Rejected</span>`:''}</div>
+      </div>
+      ${r.status==='rejected' ? `
+        <div class="banner red" style="margin:10px 0 4px;">✕ Rejected: "${esc(r.rejectReason||'No reason given.')}"</div>
+        <button class="btn sm" onclick="dismissAndRequestAnother('${r.id}')">Request Another Room</button>
+      ` : requestStepper(r)}
+    </div>`;
+  }).join('') : `<div class="empty" style="padding:24px;">No active requests.</div>`}
+  `;
+}
+function flowBadge(flowType){
+  const map = {
+    direct:{label:'Own Dept · Auto Approved', cls:'green'},
+    offhours:{label:'Own Dept · Off-Hours HoD', cls:'amber'},
+    cross:{label:'Cross Dept · Home HoD → Owning HoD', cls:'blue'},
+    common:{label:'Common Facility · Registrar', cls:'grey'},
+  };
+  const m = map[flowType] || map.direct;
+  return `<span class="chip ${m.cls}">${m.label}</span>`;
+}
+function requestStepper(r){
+  const stageSets = {
+    direct: ['Submitted','System Validation','Room Allocated'],
+    offhours: ['Submitted','HoD Approval (Off-Hours)','Room Allocated'],
+    cross: ['Submitted','Home HoD Recommendation','Owning HoD Approval','Room Allocated'],
+    common: ['Submitted','Registrar Approval','Room Allocated'],
+  };
+  const stages = stageSets[r.flowType] || stageSets.direct;
+  const cur = r.status==='room_assigned' ? stages.length : (r.status==='validating' ? 1 : r.stage);
+  return `<div class="stepper">
+    ${stages.map((s,i)=>`<div class="step ${i<cur?'done':i===cur?'active':''}"><div class="dotc">${i<cur?'✓':i+1}</div><div class="lbl">${s}</div></div>`).join('')}
+  </div>`;
+}
+
+function screenFacultyRequest(){
+  const d = state.facultyDraft;
+  const eligible = Object.values(ROOMS).filter(r=>{
+    if(r.status!=='Available') return false;
+    if(r.capacity < d.strength) return false;
+    if(d.projector && !r.facilities.includes('Projector')) return false;
+    if(d.ac && !r.facilities.includes('AC')) return false;
+    return true;
+  });
+  if(d.roomId && !eligible.find(r=>r.id===d.roomId)) d.roomId=null;
+  const selectedRoom = d.roomId ? ROOMS[d.roomId] : null;
+  const isCrossDept = selectedRoom && selectedRoom.ownership==='DEPT_OWNED' && selectedRoom.dept!==FACULTY_HOME_DEPT;
+  const isCommonOrPremium = selectedRoom && selectedRoom.ownership!=='DEPT_OWNED';
+  return `
+  <div class="crumbs"><a onclick="go('facultyWorkspace')">My Classes</a> / <span class="cur">Request Alternate Room</span></div>
+  <div class="page-head"><div><h1 class="page-title">Request Alternate Room</h1><p class="page-sub">Offline, occupied, and facility-mismatched rooms are hidden automatically. Select a room to submit.</p></div></div>
+
+  <div class="two-col">
+    <div class="card card-pad">
+      <div class="field"><label>Date</label><input type="date" value="${d.date}" onchange="state.facultyDraft.date=this.value; render();" /></div>
+      <div class="field"><label>Time</label><input type="time" value="${d.time}" onchange="state.facultyDraft.time=this.value; render();" /></div>
+      <div class="field"><label>Expected Strength</label><input type="number" value="${d.strength}" min="1" onchange="state.facultyDraft.strength=parseInt(this.value)||1; render();" /></div>
+      <div class="field"><label>Required Facilities</label>
+        <div class="checkrow">
+          <label class="checkitem"><input type="checkbox" ${d.projector?'checked':''} onchange="state.facultyDraft.projector=this.checked; render();" /> Projector</label>
+          <label class="checkitem"><input type="checkbox" ${d.ac?'checked':''} onchange="state.facultyDraft.ac=this.checked; render();" /> AC</label>
+        </div>
+      </div>
+      ${selectedRoom && !isCrossDept && !isCommonOrPremium ? `<div class="banner green">✓ ${selectedRoom.name} is in your own department. This is auto-validated by the system — no HoD approval needed, unless the requested time is a weekend/off-hours slot.</div>` : ''}
+      ${isCrossDept ? `<div class="banner amber">↪ ${selectedRoom.name} belongs to <b>${selectedRoom.dept}</b>. This will route to your Home HoD (${FACULTY_HOME_DEPT}) for recommendation, then to the ${selectedRoom.dept} HoD for final approval.</div>` : ''}
+      ${isCommonOrPremium ? `<div class="banner blue">↪ ${selectedRoom.name} is a ${selectedRoom.ownership==='PREMIUM'?'Premium Space':'Common Facility'}. This routes directly to the Registrar for approval.</div>` : ''}
+      <button class="btn primary" style="width:100%;justify-content:center;" ${!d.roomId?'disabled':''} onclick="submitFacultyRequest()">Submit Request</button>
+    </div>
+    <div>
+      <div class="section-title" style="margin-top:0;">Eligible Rooms <span class="hint">${eligible.length} found — select one</span></div>
+      <div class="table-wrap card-pad" style="padding:12px;">
+        ${eligible.length? eligible.map(r=>`
+          <div class="room-suggest" style="cursor:pointer;${d.roomId===r.id?'border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-line);':''}" onclick="state.facultyDraft.roomId='${r.id}'; render();">
+            <div>
+              <div class="rname">${r.name} ${d.roomId===r.id?'✓':''}</div>
+              <div class="rmeta">Capacity ${r.capacity} · ${r.facilities.join(', ')||'No extra facilities'} ${r.dept?'· '+r.dept:''}</div>
+            </div>
+            ${ownershipBadge(r)}
+          </div>`).join('') : `<div class="empty" style="padding:20px;">No rooms match — adjust filters.</div>`}
+      </div>
+    </div>
+  </div>
+  `;
+}
+function submitFacultyRequest(){
+  const d = state.facultyDraft;
+  if(!d.roomId){ toast('Select a room before submitting.', '⚠'); return; }
+  const room = ROOMS[d.roomId];
+  const facilities = [];
+  if(d.projector) facilities.push('Projector');
+  if(d.ac) facilities.push('AC');
+  const isOffHours = (d.time < '08:00' || d.time > '18:00');
+
+  let status, stage, flowType, crossDept=false, homeDept=FACULTY_HOME_DEPT, owningDept=null;
+  if(room.ownership==='DEPT_OWNED' && room.dept===FACULTY_HOME_DEPT){
+    // Own Department — auto-validated, no HoD approval screen (unless weekend/off-hours)
+    if(isOffHours){ status='pending_dept'; stage=1; flowType='offhours'; }
+    else { status='validating'; stage=1; flowType='direct'; }
+  } else if(room.ownership==='DEPT_OWNED'){
+    // Cross Department — Home HoD recommendation, then Owning Dept HoD approval
+    status='pending_recommendation'; stage=1; flowType='cross'; crossDept=true; owningDept=room.dept;
+  } else {
+    // Common Facility — straight to Registrar approval, no HoD step
+    status='pending_global'; stage=1; flowType='common';
+  }
+
+  const req = {id:'r'+Math.random().toString(36).slice(2,7), course:'ME302 (Alternate Room)', faculty:'Dr Iyer', dept:FACULTY_HOME_DEPT, date:d.date, time:d.time, strength:d.strength, facilities, roomId:d.roomId, status, stage, flowType, crossDept, homeDept, owningDept, offHours:isOffHours};
+  REQUESTS.push(req);
+  logAudit(`Alternate room request submitted by Dr Iyer for ${room.name} on ${d.date} ${d.time}.`);
+  markWt('submittedReq');
+
+  if(flowType==='direct'){
+    toast('Request submitted — running system validation…', '⏳');
+    go('facultyWorkspace');
+    runFacultyAutoValidation(req.id);
+    return;
+  }
+  toast(crossDept?`Request submitted — routing to Home HoD, then ${owningDept} HoD.`:flowType==='common'?'Request submitted — routing to Registrar for approval.':'Request submitted — flagged for HoD off-hours/weekend review.', '✓');
+  go('facultyWorkspace');
+}
+
+// Own-department, business-hours requests skip approval entirely — system validation only
+function runFacultyAutoValidation(reqId){
+  setTimeout(()=>{
+    const r = REQUESTS.find(x=>x.id===reqId);
+    if(!r || r.status!=='validating') return;
+    if(!roomStillAvailable(r)){ autoRejectUnavailable(r); return; }
+    lockRoomAndAssign(r, ROOMS[r.roomId], 'System Validation');
+    markWt('autoApproved');
+    render();
+  }, 900);
+}
+
+/* ---------------- APPROVALS (Level 2 / Registrar) ---------------- */
+
+function screenApprovals(){
+  const isHod = state.persona==='hod';
+  const pending = isHod
+    ? REQUESTS.filter(r=>r.status==='pending_owning_hod' && r.owningDept===HOD_DEPT)
+    : REQUESTS.filter(r=>r.status==='pending_global');
+  return `
+  <div class="crumbs"><span class="cur">Approvals</span></div>
+  <div class="page-head"><div><h1 class="page-title">Approvals</h1><p class="page-sub">${isHod?`Cross-department requests recommended to you as the Owning HoD for ${HOD_DEPT} rooms.`:'Common Facility & Premium Space requests routed directly from Faculty for Registrar approval.'}</p></div>
+    ${!isHod?`<button class="btn ghost sm" onclick="state.modal={type:'priorityLegend'}; render();">ⓘ Priority Legend</button>`:''}
+  </div>
+  <div class="table-wrap">
+    ${pending.length? pending.map(r=>{
+      const room = ROOMS[r.roomId];
+      return `
+      <div class="conflict-item">
+        <div class="conflict-main"><div class="conflict-title">${esc(r.course)} ${room?ownershipBadge(room):''} ${flowBadge(r.flowType)}</div><div class="conflict-sub">${r.faculty} · ${r.dept} · Requesting ${room?room.name:'—'} · ${isHod?'recommended by Home HoD':'submitted directly by Faculty'} · ${r.date} ${r.time}</div></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn sm danger" onclick="rejectRequestPrompt('${r.id}')">Reject</button>
+          <button class="btn sm primary" onclick="${isHod?`approveOwningHod('${r.id}')`:`approveGlobal('${r.id}')`}">Approve</button>
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty"><div class="icon">✓</div>${isHod?'No cross-department approvals pending.':'No Level 2 approvals pending.'}</div>`}
+  </div>
+  `;
+}
+
+/* ---------------- REPORTS ---------------- */
+
+function screenReports(){
+  return `
+  <div class="crumbs"><span class="cur">Reports</span></div>
+  <div class="page-head"><div><h1 class="page-title">Operational Success Metrics</h1><p class="page-sub">Campus-wide performance since term start.</p></div></div>
+  <div class="grid cols-4">
+    <div class="card stat-card"><div class="stat-label">Time to Publish</div><div class="stat-value">2.3 <span style="font-size:14px;">days</span></div><div class="stat-foot">Import → published timetable</div></div>
+    <div class="card stat-card"><div class="stat-label">Conflict-Free Allocation Rate</div><div class="stat-value green">93.7%</div><div class="stat-foot">Auto-allocated, no manual review</div></div>
+    <div class="card stat-card"><div class="stat-label">Self-Serve Success Rate</div><div class="stat-value green">88.1%</div><div class="stat-foot">Ad-hoc requests, no offline escalation</div></div>
+    <div class="card stat-card"><div class="stat-label">Manual Reallocation Rate</div><div class="stat-value amber">4.2%</div><div class="stat-foot">Reallocations after publication</div></div>
+  </div>
+  `;
+}
+
+/* ---------------- SCREEN 10: EMERGENCY OVERRIDE ---------------- */
+
+function screenEmergencyOverride(){
+  const room = ROOMS.AUD;
+  return `
+  <div class="crumbs"><a onclick="go('registrarDashboard')">Operations</a> / <span class="cur">Emergency Override</span></div>
+  <div class="page-head"><div><h1 class="page-title">Emergency Override</h1><p class="page-sub">Placement Drive requires Main Auditorium — immediate reallocation needed.</p></div></div>
+
+  <div class="two-col">
+    <div>
+      <div class="card card-pad">
+        <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin-bottom:10px;">Current Booking</div>
+        <div class="kv">
+          <div class="k">Venue</div><div class="v">${room.name}</div>
+          <div class="k">Booked By</div><div class="v">${state.forceCancelStage>=2?'—':'Dept. of Management — Annual Seminar'}</div>
+          <div class="k">Time</div><div class="v">${state.forceCancelStage>=2?'—':'2:00 PM – 4:00 PM Today'}</div>
+          <div class="k">Status</div><div class="v">${state.forceCancelStage>=2 ? statusChip('Available') : statusChip('Booked')}</div>
+        </div>
+
+        ${state.forceCancelStage===0 ? `
+          <button class="btn danger" style="margin-top:16px;" onclick="state.forceCancelStage=1; render();">Force Cancel</button>
+        ` : ''}
+
+        ${state.forceCancelStage===1 ? `
+          <div class="field" style="margin-top:16px;">
+            <label>Mandatory Reason (BR1 — required to submit)</label>
+            <textarea id="forceCancelReason" placeholder="e.g. Campus Placement Drive requires the Main Auditorium for 500+ attendees at 3:00 PM." oninput="state.forceCancelReason=this.value; render();">${esc(state.forceCancelReason)}</textarea>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button class="btn" onclick="state.forceCancelStage=0; state.forceCancelReason=''; render();">Cancel</button>
+            <button class="btn danger" ${state.forceCancelReason.trim().length<8?'disabled':''} onclick="runForceCancel()">Confirm Force Cancel</button>
+          </div>
+        ` : ''}
+
+        ${state.forceCancelStage>=2 ? `
+          <div style="margin-top:16px;">
+            ${['Faculty Notified','Booking Cancelled','Conflict Created','Audit Log Updated','Reallocation Task Generated'].map((s,i)=>`
+              <div class="pipe-item ${i < state.forceCancelPipe ? 'done':''} ${i===state.forceCancelPipe?'spin':''}"><span class="ic">${i<state.forceCancelPipe?'✓':''}</span> ${s}</div>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    </div>
+    <div>
+      <div class="section-title" style="margin-top:0;">Reason on Record</div>
+      <div class="card card-pad" style="min-height:80px;">
+        ${state.forceCancelStage>=2 ? `<div style="font-size:13px;">"${esc(state.forceCancelReason)}"</div><div style="color:var(--text-3);font-size:11.5px;margin-top:8px;">— Registrar, ${new Date().toLocaleString([], {hour:'2-digit',minute:'2-digit'})}</div>` : `<div style="color:var(--text-3);font-size:12.5px;">Reason will appear here once submitted (BR1 — Mandatory Reasoning).</div>`}
+      </div>
+      ${state.forceCancelStage>=3 ? `<div class="banner amber" style="margin-top:16px;">A new P1 conflict was created for the displaced booking and routed to the Conflict Inbox for reallocation.</div>`:''}
+    </div>
+  </div>
+  `;
+}
+
+function runForceCancel(){
+  state.forceCancelStage=2;
+  state.forceCancelPipe=0;
+  render();
+  const steps=5;
+  const tick=()=>{
+    setTimeout(()=>{
+      state.forceCancelPipe++;
+      if(state.forceCancelPipe>=steps){
+        state.forceCancelStage=3;
+        ROOMS.AUD.status='Available';
+        CONFLICTS.push({id:'c'+Math.random().toString(36).slice(2,6),priority:'P1',title:'MGT — Annual Seminar',subtitle:'Displaced by Force Cancel · needs reallocation',type:'no_room',action:'Resolve',status:'open'});
+        logAudit(`Force Cancel executed on Main Auditorium. Reason: "${state.forceCancelReason}"`);
+        toast('Force Cancel executed — audit log updated.', '⚡');
+        markWt('forceCancel'); markWt('observed');
+        render();
+        return;
+      }
+      render();
+      tick();
+    }, 450);
+  };
+  tick();
+}
+
+/* ---------------- AUDIT LOG VIEW ---------------- */
+
+function screenAuditView(){
+  return `
+  <div class="crumbs"><span class="cur">Audit Log</span></div>
+  <div class="page-head"><div><h1 class="page-title">Audit Log</h1><p class="page-sub">Immutable record of every override, approval and force action.</p></div></div>
+  <div class="card card-pad">
+    ${AUDIT_LOG.length? AUDIT_LOG.map(a=>`<div class="audit-row"><span class="audit-time">${a.time}</span><span>${esc(a.text)}</span></div>`).join('') : `<div class="empty">No audit events yet — actions you take will appear here.</div>`}
+  </div>
+  `;
+}
+
+/* ---------------- ONBOARDING MODAL ---------------- */
+
+function renderOnboardModal(){
+  return `
+  <div class="modal-backdrop">
+    <div class="modal onboard-card">
+      <div class="modal-head"><h3>Welcome to CampusOps</h3><button class="close-x" onclick="state.modal=null; state.seenOnboard=true; render();">✕</button></div>
+      <div class="modal-body">
+        <p style="color:var(--text-2);font-size:13px;margin-top:0;">CampusOps manages <b>where</b> classes happen. Your SIS remains the source of truth for <b>when</b> and <b>who</b>.</p>
+        <div class="onboard-tip"><span class="ic">🎓</span><div><b>Registrar</b> — imports the timetable, resolves conflicts, publishes, and holds override authority.</div></div>
+        <div class="onboard-tip"><span class="ic">🏢</span><div><b>HoD</b> — handles cross-department approvals, weekend/off-hours requests, department conflicts, and proxy delegation.</div></div>
+        <div class="onboard-tip"><span class="ic">📚</span><div><b>Faculty</b> — requests alternate rooms; own-department requests are auto-validated, never allocates directly.</div></div>
+        <div class="onboard-tip"><span class="ic">🧭</span><div>Use the <b>Guided Walkthrough</b> panel (bottom-left) to follow the full operational lifecycle.</div></div>
+      </div>
+      <div class="modal-foot"><button class="btn primary" onclick="state.modal=null; state.seenOnboard=true; render();">Start Walkthrough</button></div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- WALKTHROUGH PANEL ---------------- */
+
+function renderWalkthrough(){
+  const doneCount = WALKTHROUGH.filter(w=>wtFlags[w.k]).length;
+  const pct = Math.round((doneCount/WALKTHROUGH.length)*100);
+  if(!state.wtOpen){
+    return `<button class="wt-fab" onclick="state.wtOpen=true; render();">🧭 Guided Walkthrough <span class="chip" style="background:rgba(255,255,255,.15);color:#fff;border:none;">${doneCount}/${WALKTHROUGH.length}</span></button>`;
+  }
+  const curIdx = wtCurrentIndex();
+  return `
+  <div class="wt-panel">
+    <div class="wt-head"><b>Reviewer Walkthrough</b><button class="close-x" onclick="state.wtOpen=false; render();">✕</button></div>
+    <div class="wt-progress"><div class="fill" style="width:${pct}%"></div></div>
+    <div class="wt-list">
+      ${WALKTHROUGH.map((w,i)=>`
+        <div class="wt-item ${wtFlags[w.k]?'done':i===curIdx?'active':''}">
+          <span class="n">${wtFlags[w.k]?'✓':i+1}</span><span class="t">${w.t}</span>
+        </div>`).join('')}
+    </div>
+    <div class="wt-foot"><button class="btn sm ghost" style="width:100%;justify-content:center;" onclick="resetWalkthrough()">↺ Restart Walkthrough</button></div>
+  </div>`;
+}
+function resetWalkthrough(){
+  Object.keys(wtFlags).forEach(k=>delete wtFlags[k]);
+  toast('Walkthrough reset. Starting from Planning Mode.', '↺');
+  state.mode='planning'; state.persona='registrar'; state.timetableStatus='not_imported'; state.importStep=-1;
+  state.midUpdateStatus='idle'; state.midUpdateStep=-1;
+  go('import');
+}
+
+/* ---------------- TOASTS ---------------- */
+
+function renderToasts(){
+  return `<div class="toast-stack">${state.toasts.map(t=>`<div class="toast"><span class="ic">${t.icon}</span><span>${esc(t.msg)}</span></div>`).join('')}</div>`;
+}
+
+/* ---------------- ROOT RENDER ---------------- */
+
+const SCREENS = {
+  import: screenImport,
+  timetable: screenTimetable,
+  masterTimetable: screenMasterTimetable,
+  conflictInbox: screenConflictInbox,
+  registrarDashboard: screenRegistrarDashboard,
+  buildings: screenBuildings,
+  buildingOps: screenBuildingOps,
+  roomOps: screenRoomOps,
+  hodDashboard: screenHodDashboard,
+  facultyWorkspace: screenFacultyWorkspace,
+  facultyRequest: screenFacultyRequest,
+  approvals: screenApprovals,
+  reports: screenReports,
+  emergencyOverride: screenEmergencyOverride,
+  auditView: screenAuditView,
+};
+
+function render(){
+  const active = document.activeElement;
+  const activeId = active && active.id;
+  const selStart = active && typeof active.selectionStart==='number' ? active.selectionStart : null;
+  const selEnd = active && typeof active.selectionEnd==='number' ? active.selectionEnd : null;
+
+  const screenFn = SCREENS[state.screen] || screenImport;
+  document.getElementById('app').innerHTML = `
+    ${renderTopbar()}
+    <div class="body-wrap">
+      <div class="main">${screenFn()}</div>
+    </div>
+    ${renderWalkthrough()}
+    ${renderToasts()}
+    ${renderModal()}
+  `;
+
+  if(activeId){
+    const el = document.getElementById(activeId);
+    if(el){
+      el.focus();
+      if(selStart!==null && el.setSelectionRange){
+        try{ el.setSelectionRange(selStart, selEnd); }catch(e){}
+      }
+    }
+  }
+}
+
+/* initial boot */
+state.modal = {type:'onboard'};
+render();
+</script>
+</body>
+</html>
