@@ -473,6 +473,17 @@ let CONFLICTS = [
 const FACULTY_HOME_DEPT = 'Mechanical Engineering'; // demo faculty persona's home department
 const HOD_DEPT = 'Mechanical Engineering';           // demo HoD persona's department
 
+/* Make-Up Action Items — auto-generated on the owning HoD's dashboard whenever a Force Cancel
+   (or a BR2 Hardware Failure Cascade) displaces one of their department's classes, so the HoD
+   can find the displaced faculty a new room without hunting through the Conflict Inbox. */
+let MAKEUP_ITEMS = [
+  {id:'mk1', dept:'Mechanical Engineering', faculty:'Dr Iyer', course:'ME401', roomId:'A103', sessionId:'ME401',
+   reason:'Hall A103 forced Offline_Maintenance — Electrical Failure (BR2 Hardware Failure Cascade)', status:'open'},
+];
+function createMakeupItem(dept, faculty, course, reason, sessionId, roomId){
+  MAKEUP_ITEMS.push({id:'mk'+Math.random().toString(36).slice(2,6), dept, faculty, course, reason, sessionId:sessionId||null, roomId:roomId||null, status:'open'});
+}
+
 let REQUESTS = [
   // Extra class tied to ME302 — Dr Iyer (Mechanical) needs a one-off weekend lab session for the same course,
   // requesting Management's Hall B101 — awaiting Home HoD recommendation. sessionId links it back to ME302
@@ -493,6 +504,7 @@ const TOUR_SNAPSHOT = {
   conflicts: JSON.parse(JSON.stringify(CONFLICTS)),
   requests: JSON.parse(JSON.stringify(REQUESTS)),
   timetableMeta: JSON.parse(JSON.stringify(TIMETABLE_META)),
+  makeupItems: JSON.parse(JSON.stringify(MAKEUP_ITEMS)),
 };
 
 let AUDIT_LOG = [];
@@ -599,6 +611,13 @@ function setPersona(p){
 function personaLabel(p){
   return {registrar:'Registrar', hod:'Dept. Head (HoD)', faculty:'Faculty'}[p];
 }
+/* Permanent Venue Reallocations: Registrar can edit any published allocation; a HoD is an
+   "authorised user" only for venues owned by their own department (Section 5 — Ownership). */
+function canEditRoom(r){
+  if(state.persona==='registrar') return true;
+  if(state.persona==='hod') return !!r && r.dept===HOD_DEPT;
+  return false;
+}
 function personaSub(p){
   return {registrar:'Priya Sharma · Global Approver', hod:'Dr. Arvind Menon · Mech. Engg.', faculty:'Dr. Priya Iyer · Mech. Engg.'}[p];
 }
@@ -629,6 +648,7 @@ function renderTopnav(){
   if(state.persona==='hod'){
     return `
       <button class="${state.screen==='hodDashboard'?'active':''}" onclick="go('hodDashboard')">Department Dashboard</button>
+      <button class="${state.screen==='masterTimetable'?'active':''}" onclick="go('masterTimetable')">Master Timetable</button>
       <button class="${state.screen==='approvals'?'active':''}" onclick="go('approvals')">Approvals</button>
     `;
   }
@@ -644,13 +664,20 @@ function handleTopnav(id, mode){
   go(id);
 }
 
+/* Universal Search is Approver-exclusive (Section 4) — both the Registrar and
+   HoD are approvers, so it's available to either. Standard Users (Faculty) never
+   get it, per the "Restricted Access" rule. Destinations are safe for either
+   approver persona: rooms/buildings open their read/ops view, and a course/
+   faculty match jumps straight into the Master Timetable filtered to that
+   class — exactly how a HoD tracks down "where a faculty member's class has
+   been moved" without needing registrar-only screens. */
 function renderSearch(){
-  if(state.persona!=='registrar') return '';
+  if(state.persona==='faculty') return '';
   const q = state.searchQuery.trim().toLowerCase();
   let results = [];
   if(q){
     Object.values(ROOMS).forEach(r=>{ if(r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)) results.push({type:'Venue',label:r.name,go:()=>go('roomOps',{focusRoomId:r.id,focusBuildingId:r.building,mode:'operations'})}); });
-    SESSIONS.forEach(s=>{ if(s.course.toLowerCase().includes(q)||s.faculty.toLowerCase().includes(q)) results.push({type:'Course',label:`${s.course} — ${s.faculty}`,go:()=>go(state.mode==='planning'?'timetable':'conflictInbox')}); });
+    SESSIONS.forEach(s=>{ if(s.course.toLowerCase().includes(q)||s.faculty.toLowerCase().includes(q)) results.push({type:'Course',label:`${s.course} — ${s.faculty}`,go:()=>go('masterTimetable',{mtFilters:{dept:'',building:'',room:s.venue||'',faculty:s.faculty,course:''}})}); });
     BUILDINGS.forEach(b=>{ if(b.name.toLowerCase().includes(q)) results.push({type:'Building',label:b.name,go:()=>go('buildingOps',{focusBuildingId:b.id,mode:'operations'})}); });
     results = results.slice(0,7);
   }
@@ -675,7 +702,7 @@ function searchGo(i){ /* recomputed on render via closures; simplest: just rerun
   const q = state.searchQuery.trim().toLowerCase();
   let results = [];
   Object.values(ROOMS).forEach(r=>{ if(r.name.toLowerCase().includes(q)||r.id.toLowerCase().includes(q)) results.push(()=>go('roomOps',{focusRoomId:r.id,focusBuildingId:r.building,mode:'operations'})); });
-  SESSIONS.forEach(s=>{ if(s.course.toLowerCase().includes(q)||s.faculty.toLowerCase().includes(q)) results.push(()=>go(state.mode==='planning'?'timetable':'conflictInbox')); });
+  SESSIONS.forEach(s=>{ if(s.course.toLowerCase().includes(q)||s.faculty.toLowerCase().includes(q)) results.push(()=>go('masterTimetable',{mtFilters:{dept:'',building:'',room:s.venue||'',faculty:s.faculty,course:''}})); });
   BUILDINGS.forEach(b=>{ if(b.name.toLowerCase().includes(q)) results.push(()=>go('buildingOps',{focusBuildingId:b.id,mode:'operations'})); });
   if(results[i]) results[i]();
   state.searchQuery=''; state.searchOpen=false;
@@ -951,7 +978,7 @@ function mtBlockChip(s){
 }
 
 function screenMasterTimetable(){
-  const canEdit = state.persona==='registrar';
+  const canEdit = state.persona==='registrar' || state.persona==='hod';
   const sessions = mtFilteredSessions();
   const days = state.mtView==='daily' ? [state.mtDay] : DAYS;
   const f = state.mtFilters;
@@ -1154,6 +1181,54 @@ function renderModal(){
       </div>
     </div>`;
   }
+  if(state.modal.type==='makeupAssign'){
+    const m = state.modal;
+    const item = MAKEUP_ITEMS.find(x=>x.id===m.itemId);
+    const session = item ? SESSIONS.find(s=>s.id===item.sessionId) : null;
+    if(!item || !session){ state.modal=null; return ''; }
+    const options = makeupAssignOptions(session);
+    const pipeSteps = ['Availability Check','Save'];
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this && '${m.stage}'!=='validating'){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Make-Up Action Item</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="conflict-title" style="margin-bottom:2px;">${esc(session.course)} — ${esc(item.faculty)}</div>
+          <div class="conflict-sub" style="margin-bottom:16px;">${esc(item.reason)}</div>
+
+          ${m.stage==='pick' ? `
+            <div class="field"><label>New Venue</label>
+              <select onchange="state.modal.targetRoomId=this.value; render();">
+                <option value="">Select a room…</option>
+                ${options.map(r=>`<option value="${r.id}" ${m.targetRoomId===r.id?'selected':''}>${r.name} (Capacity ${r.capacity})</option>`).join('')}
+              </select>
+            </div>
+            ${!options.length?`<div class="banner amber" style="margin-top:4px;">No eligible available rooms right now — try again shortly or escalate via the Conflict Inbox.</div>`:''}
+          ` : `
+            <div style="margin-top:6px;">
+              ${pipeSteps.map((s,i)=>`
+                <div class="pipe-item ${i<m.pipe || m.stage==='done' || m.stage==='failed'?'done':''} ${i===m.pipe && m.stage==='validating'?'spin':''}">
+                  <span class="ic">${i<m.pipe || m.stage==='done' || m.stage==='failed'?'✓':''}</span> ${s}
+                </div>`).join('')}
+            </div>
+            ${m.stage==='done'?`<div class="banner green" style="margin-top:12px;">✓ ${session.course} reassigned to ${ROOMS[m.targetRoomId].name}. Make-up item resolved.</div>`:''}
+            ${m.stage==='failed'?`<div class="banner red" style="margin-top:12px;">✕ That room is no longer available — pick another.</div>`:''}
+          `}
+        </div>
+        <div class="modal-foot">
+          ${m.stage==='pick' ? `
+            <button class="btn ghost" onclick="state.modal=null; render();">Cancel</button>
+            <button class="btn primary" ${!m.targetRoomId?'disabled':''} onclick="runMakeupAssign()">Assign Room</button>
+          ` : (m.stage==='done') ? `
+            <button class="btn primary" onclick="state.modal=null; render();">Close</button>
+          ` : (m.stage==='failed') ? `
+            <button class="btn ghost" onclick="state.modal=null; render();">Close</button>
+            <button class="btn primary" onclick="state.modal.stage='pick'; state.modal.targetRoomId=''; render();">Try Another Room</button>
+          ` : `<span style="font-size:12px;color:var(--text-3);">Running…</span>`}
+        </div>
+      </div>
+    </div>`;
+  }
   if(state.modal.type==='reject'){
     const r = REQUESTS.find(x=>x.id===state.modal.requestId);
     if(!r){ state.modal=null; return ''; }
@@ -1201,7 +1276,7 @@ function renderModal(){
         <div class="modal-body">
           <p style="color:var(--text-2);font-size:13px;margin-top:0;">CampusOps manages <b>where</b> classes happen. Your SIS remains the source of truth for <b>when</b> and <b>who</b>.</p>
           <div class="onboard-tip"><span class="ic">🎓</span><div><b>Registrar</b> — imports the timetable, resolves conflicts, publishes/archives, and holds override authority.</div></div>
-          <div class="onboard-tip"><span class="ic">🏢</span><div><b>HoD</b> — handles only cross-department recommendations/approvals, weekend & off-hours requests, and department conflicts. Own-department, business-hours requests are auto-approved by the system.</div></div>
+          <div class="onboard-tip"><span class="ic">🏢</span><div><b>HoD</b> — recommends/approves cross-department requests, approves weekend & off-hours requests, triages department conflicts, and can permanently edit venue allocations for their own department's rooms in the Published timetable. Force Cancels affecting their department auto-generate a Make-Up Action Item on their dashboard. Own-department, business-hours requests are auto-approved by the system.</div></div>
           <div class="onboard-tip"><span class="ic">📚</span><div><b>Faculty</b> — requests alternate rooms by selecting one from the eligible list. Own-department requests are auto-validated; cross-department and common-facility requests route for approval.</div></div>
           <div class="onboard-tip"><span class="ic">🧭</span><div>Use the <b>Guided Walkthrough</b> panel (bottom-left) to follow the full operational lifecycle.</div></div>
         </div>
@@ -1297,7 +1372,9 @@ function runEditAllocation(){
           if(oldRoomId && ROOMS[oldRoomId]) ROOMS[oldRoomId].status='Available';
           session.venue = targetRoom.id;
           targetRoom.status='Occupied';
-          logAudit(`${session.course} allocation edited — venue changed to ${targetRoom.name}. Course timings unchanged.`);
+          const editorLabel = state.persona==='hod' ? `${HOD_DEPT} HoD (Permanent Reallocation)` : 'Registrar';
+          logAudit(`${session.course} allocation edited by ${editorLabel} — venue changed to ${targetRoom.name}. Course timings unchanged.`);
+          if(MAKEUP_ITEMS){ const mi = MAKEUP_ITEMS.find(x=>x.sessionId===session.id && x.status==='open'); if(mi) mi.status='resolved'; }
           toast('Master Timetable Updated — allocation saved.', '✓');
           m.stage='done';
         } else {
@@ -1312,6 +1389,58 @@ function runEditAllocation(){
       render();
       tick();
     }, 500);
+  };
+  tick();
+}
+
+/* ---------------- MAKE-UP ACTION ITEM — HoD FINDS A NEW ROOM FOR A DISPLACED CLASS ---------------- */
+
+function openMakeupAssign(id){
+  const item = MAKEUP_ITEMS.find(x=>x.id===id);
+  if(!item){ toast('Make-up item not found.', 'ℹ'); return; }
+  if(!item.sessionId || !SESSIONS.find(s=>s.id===item.sessionId)){
+    toast('This action item has no linked session to reassign — resolve manually via the Conflict Inbox.', 'ℹ');
+    return;
+  }
+  state.modal = {type:'makeupAssign', itemId:id, targetRoomId:'', stage:'pick', pipe:0};
+  render();
+}
+function makeupAssignOptions(session){
+  return Object.values(ROOMS).filter(r=>r.status==='Available' && r.capacity>=session.students);
+}
+function runMakeupAssign(){
+  const m = state.modal;
+  const item = MAKEUP_ITEMS.find(x=>x.id===m.itemId);
+  const session = item ? SESSIONS.find(s=>s.id===item.sessionId) : null;
+  const targetRoom = ROOMS[m.targetRoomId];
+  if(!item || !session || !targetRoom) return;
+  m.stage='validating'; m.pipe=0;
+  render();
+  const steps=2; // Availability Check -> Save
+  const tick=()=>{
+    setTimeout(()=>{
+      m.pipe++;
+      if(m.pipe>=steps){
+        const success = targetRoom.status==='Available';
+        if(success){
+          session.venue = targetRoom.id;
+          session.status = 'Assigned';
+          targetRoom.status = 'Occupied';
+          item.status = 'resolved';
+          logAudit(`Make-Up Action Item resolved by ${HOD_DEPT} HoD — ${session.course} (${item.faculty}) reassigned to ${targetRoom.name}. Faculty notified.`);
+          toast(`Make-up room assigned — ${session.course} moved to ${targetRoom.name}.`, '✓');
+          m.stage='done';
+        } else {
+          logAudit(`Make-Up Action Item — ${session.course} reassignment to ${targetRoom.name} failed validation.`);
+          toast('That room is no longer available — pick another.', '⚠');
+          m.stage='failed';
+        }
+        render();
+        return;
+      }
+      render();
+      tick();
+    }, 450);
   };
   tick();
 }
@@ -1482,7 +1611,7 @@ function screenRoomOps(){
   const suggestions = Object.values(ROOMS).filter(x=>x.status==='Available' && x.id!==r.id).slice(0,2);
   return `
   <div class="crumbs"><a onclick="go('registrarDashboard')">Operations</a> / <a onclick="go('buildingOps',{focusBuildingId:'${r.building}'})">${BUILDINGS.find(b=>b.id===r.building)?BUILDINGS.find(b=>b.id===r.building).name:'Common Facilities'}</a> / <span class="cur">${r.name}</span></div>
-  <div class="page-head"><div><h1 class="page-title">${r.name}</h1><p class="page-sub">${r.ownership==='COMMON'?'Common Facility':r.ownership==='PREMIUM'?'Premium Space':'Department-owned teaching space'}</p></div><div style="display:flex;gap:8px;align-items:center;">${ownershipBadge(r)}${statusChip(r.status)}<button class="btn sm" onclick="go('masterTimetable',{mtFilters:{...state.mtFilters, room:'${r.id}'}})">View in Master Timetable</button>${state.persona==='registrar'?`<button class="btn sm primary" onclick="openEditAllocation('${r.id}')">Edit Allocation</button>`:''}</div></div>
+  <div class="page-head"><div><h1 class="page-title">${r.name}</h1><p class="page-sub">${r.ownership==='COMMON'?'Common Facility':r.ownership==='PREMIUM'?'Premium Space':'Department-owned teaching space'}</p></div><div style="display:flex;gap:8px;align-items:center;">${ownershipBadge(r)}${statusChip(r.status)}<button class="btn sm" onclick="go('masterTimetable',{mtFilters:{...state.mtFilters, room:'${r.id}'}})">View in Master Timetable</button>${canEditRoom(r)?`<button class="btn sm primary" onclick="openEditAllocation('${r.id}')">Edit Allocation</button>`:''}</div></div>
 
   ${(r.status==='Offline'||r.status==='Maintenance') ? `<div class="banner red">⚠ This room was marked <b>&nbsp;${r.status==='Offline'?'Offline_Maintenance':'Maintenance'}&nbsp;</b> — all future bookings were automatically cancelled and routed here for reallocation (BR2 · Hardware Failure Cascade).</div>` : ''}
   ${r.status==='Reserved' && r.allocatedTo ? `<div class="banner blue">🔒 Locked for ${esc(r.allocatedTo)} — ${esc(r.allocatedCourse||'ad-hoc booking')}.</div>` : ''}
@@ -1545,6 +1674,7 @@ function screenHodDashboard(){
   const recommendPending = REQUESTS.filter(r=>r.status==='pending_recommendation' && r.homeDept===dept);
   const ownershipPending = REQUESTS.filter(r=>r.status==='pending_owning_hod' && r.owningDept===dept);
   const deptConflicts = CONFLICTS.filter(c=>c.status==='open' && c.sessionId && SESSIONS.find(s=>s.id===c.sessionId)?.dept===dept);
+  const deptMakeupItems = MAKEUP_ITEMS.filter(mi=>mi.dept===dept && mi.status==='open');
   const totalPending = offHoursPending.length + recommendPending.length + ownershipPending.length;
   return `
   <div class="crumbs"><span class="cur">Department Dashboard · ${dept}</span></div>
@@ -1552,7 +1682,7 @@ function screenHodDashboard(){
 
   <div class="grid cols-4">
     <div class="card stat-card"><div class="stat-label">Pending Requests</div><div class="stat-value amber">${totalPending}</div></div>
-    <div class="card stat-card"><div class="stat-label">Labs Occupied</div><div class="stat-value">2/2</div></div>
+    <div class="card stat-card"><div class="stat-label">Make-Up Action Items</div><div class="stat-value ${deptMakeupItems.length?'red':'green'}">${deptMakeupItems.length}</div></div>
     <div class="card stat-card"><div class="stat-label">Offline Rooms</div><div class="stat-value red">1</div><div class="stat-foot">Hall A103</div></div>
     <div class="card stat-card"><div class="stat-label">Weekend Requests</div><div class="stat-value">${REQUESTS.filter(r=>r.course.includes('Weekend')).length}</div></div>
   </div>
@@ -1569,6 +1699,20 @@ function screenHodDashboard(){
   </div>
 
   <div class="banner blue" style="margin-top:6px;">Own-department requests during business hours are auto-validated by the system and do not require HoD approval.</div>
+
+  <div class="section-title">Make-Up Action Items <span class="hint">Auto-generated when a Force Cancel or hardware failure displaces one of your department's classes</span></div>
+  <div class="table-wrap">
+    ${deptMakeupItems.length? deptMakeupItems.map(mi=>`
+      <div class="conflict-item">
+        <span class="pri P1">P1</span>
+        <div class="conflict-main">
+          <div class="conflict-title">${esc(mi.course)} <span class="chip amber">Needs Make-Up Room</span></div>
+          <div class="conflict-sub">${esc(mi.faculty)} · ${dept}</div>
+          <div class="conflict-sub">${esc(mi.reason)}</div>
+        </div>
+        <button class="btn sm primary" onclick="openMakeupAssign('${mi.id}')">Find New Room</button>
+      </div>`).join('') : `<div class="empty" style="padding:24px;">No open make-up action items for ${dept}.</div>`}
+  </div>
 
   <div class="section-title">Department Conflicts <span class="hint">Open conflicts affecting ${dept} sessions</span></div>
   <div class="table-wrap">
@@ -2321,6 +2465,7 @@ function runForceCancel(){
         state.forceCancelStage=3;
         ROOMS.AUD.status='Available';
         CONFLICTS.push({id:'c'+Math.random().toString(36).slice(2,6),priority:'P1',title:'MGT — Annual Seminar',subtitle:'Displaced by Force Cancel · needs reallocation',type:'no_room',action:'Resolve',status:'open'});
+        createMakeupItem('Management', 'Dept. of Management (Annual Seminar)', 'MGT — Annual Seminar', `Main Auditorium force-cancelled by Registrar. Reason: "${state.forceCancelReason}"`, null, 'AUD');
         logAudit(`Force Cancel executed on Main Auditorium. Reason: "${state.forceCancelReason}"`);
         toast('Force Cancel executed — audit log updated.', '⚡');
         markWt('forceCancel'); markWt('observed');
@@ -2356,7 +2501,7 @@ function renderOnboardModal(){
       <div class="modal-body">
         <p style="color:var(--text-2);font-size:13px;margin-top:0;">CampusOps manages <b>where</b> classes happen. Your SIS remains the source of truth for <b>when</b> and <b>who</b>.</p>
         <div class="onboard-tip"><span class="ic">🎓</span><div><b>Registrar</b> — imports the timetable, resolves conflicts, publishes, and holds override authority.</div></div>
-        <div class="onboard-tip"><span class="ic">🏢</span><div><b>HoD</b> — handles cross-department approvals, weekend/off-hours requests, department conflicts, and proxy delegation.</div></div>
+        <div class="onboard-tip"><span class="ic">🏢</span><div><b>HoD</b> — handles cross-department approvals, weekend/off-hours requests, department conflicts, permanent venue reallocations for their own rooms, Make-Up Action Items, and proxy delegation.</div></div>
         <div class="onboard-tip"><span class="ic">📚</span><div><b>Faculty</b> — requests alternate rooms; own-department requests are auto-validated, never allocates directly.</div></div>
         <div class="onboard-tip"><span class="ic">🧭</span><div>Use the <b>Guided Walkthrough</b> panel (bottom-left) to follow the full operational lifecycle.</div></div>
       </div>
@@ -2412,6 +2557,7 @@ function resetForTour(){
   CONFLICTS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.conflicts));
   REQUESTS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.requests));
   Object.assign(TIMETABLE_META, JSON.parse(JSON.stringify(TOUR_SNAPSHOT.timetableMeta)));
+  MAKEUP_ITEMS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.makeupItems));
   Object.keys(wtFlags).forEach(k=>delete wtFlags[k]);
   AUDIT_LOG.length = 0;
 
