@@ -463,6 +463,50 @@ function nextSaturdayIso(){
 
 const TIMETABLE_META = { semester:'Fall 2026', version:3, published:true };
 
+/* ---------------- TIMETABLE VERSION CONTROL (Section C1 — Version History) ----------------
+   Every published/incremental version keeps a lightweight snapshot of each session's venue,
+   so an authorised user (Registrar or HoD) can compare the live Master Timetable against any
+   earlier published version and see exactly what moved. */
+function snapshotSessions(){
+  return SESSIONS.map(s=>({id:s.id, course:s.course, faculty:s.faculty, dept:s.dept, venue:s.venue, day:s.day, time:s.time}));
+}
+function recordVersion(version, label){
+  VERSION_HISTORY = VERSION_HISTORY.filter(v=>v.version!==version);
+  VERSION_HISTORY.push({version, label, timestamp:new Date().toLocaleString([], {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit'}), snapshot:snapshotSessions()});
+}
+let VERSION_HISTORY = [
+  {version:1, label:'Initial Planning Import — SIS export processed, spaces auto-allocated.', timestamp:'Jul 14, 09:02',
+   snapshot:[]}, // pre-dates live session data; retained for the audit trail only
+  {version:2, label:'Pre-Publish Correction — 3 double-bookings manually resolved before go-live.', timestamp:'Jul 18, 16:41',
+   snapshot:[]},
+];
+recordVersion(3, 'Published to Campus — current operating baseline.');
+
+function openVersionHistory(){
+  state.modal = {type:'versionHistory'};
+  render();
+}
+function openVersionDiff(version){
+  state.modal = {type:'versionDiff', version};
+  render();
+}
+/* Compares a past version's snapshot against the live Master Timetable and buckets every
+   session into added / removed / reassigned-venue / unchanged, so the diff reads at a glance. */
+function computeVersionDiff(oldSnapshot){
+  const current = snapshotSessions();
+  const oldMap = {}; oldSnapshot.forEach(s=>oldMap[s.id]=s);
+  const curMap = {}; current.forEach(s=>curMap[s.id]=s);
+  const added=[], removed=[], reassigned=[];
+  current.forEach(s=>{ if(!oldMap[s.id]) added.push(s); });
+  oldSnapshot.forEach(s=>{ if(!curMap[s.id]) removed.push(s); });
+  current.forEach(s=>{
+    const prev = oldMap[s.id];
+    if(prev && prev.venue!==s.venue) reassigned.push({id:s.id, course:s.course, faculty:s.faculty, from:prev.venue, to:s.venue});
+  });
+  return {added, removed, reassigned};
+}
+
+
 let CONFLICTS = [
   {id:'c1',priority:'P1',title:'EE401',subtitle:'142 Students · No Suitable Room',type:'no_room',action:'Resolve',status:'open',sessionId:'EE401',origin:'Initial Planning'},
   {id:'c2',priority:'P1',title:'ME302',subtitle:'Double Booking · Hall A103, Tue 11:00 (clashes with EE305)',type:'double_book',action:'Resolve',status:'open',sessionId:'ME302',origin:'Initial Planning'},
@@ -862,9 +906,10 @@ function runMidUpdateStep(){
       // Only affected sessions are touched — simulate two affected allocations
       const s1 = SESSIONS.find(s=>s.id==='CS205');
       if(s1){ s1.status='Conflict'; s1.venue=null; }
-      CONFLICTS.push({id:'mc'+Math.random().toString(36).slice(2,6),priority:'P1',title:'CS205',subtitle:'Venue Capacity Reduced · Hall A101 downrated below enrollment','type':'no_room',action:'Resolve',status:'open',sessionId:'CS205',origin:'Mid Semester Update'});
+      CONFLICTS.push({id:'mc'+Math.random().toString(36).slice(2,6),priority:'P1',title:'CS205',subtitle:'Enrollment Surge · Hall A101 capacity exceeded by updated enrollment — needs a larger room',type:'no_room',action:'Resolve',status:'open',sessionId:'CS205',origin:'Mid Semester Update'});
       const s2 = SESSIONS.find(s=>s.id==='MGT210');
       if(s2){ CONFLICTS.push({id:'mc'+Math.random().toString(36).slice(2,6),priority:'P2',title:'MGT210',subtitle:'New Section Added · Needs venue confirmation',type:'offline',action:'Review',status:'open',sessionId:'MGT210',roomId:s2.venue,origin:'Mid Semester Update'}); }
+      recordVersion(TIMETABLE_META.version, 'Mid-Semester SIS Update — incremental validation, only affected sessions touched.');
       logAudit(`Updated SIS schedule imported — incremental validation complete. Version ${TIMETABLE_META.version} created.`);
       toast('Incremental validation complete — only affected sessions flagged for review.', '🔄');
       markWt('incrementalValidated');
@@ -992,6 +1037,7 @@ function screenMasterTimetable(){
         <button class="${state.mtView==='daily'?'on':''}" onclick="state.mtView='daily'; render();">Daily</button>
       </div>
       ${canEdit?`<button class="btn primary sm" onclick="toast('Click a timetable block, then use Edit Allocation on the room page.','ℹ')">Edit Allocation</button>`:''}
+      ${canEdit?`<button class="btn sm" onclick="openVersionHistory()">🕓 Version History</button>`:''}
       ${state.mode==='planning' ? `
         <button class="btn sm" onclick="go('conflictInbox')">Conflict Inbox (${CONFLICTS.filter(c=>c.status==='open').length})</button>
         <button class="btn primary sm" data-tour="publish-btn" ${remainingP1()>0?'disabled':''} onclick="publishTimetable()">Publish Timetable</button>
@@ -1224,6 +1270,103 @@ function renderModal(){
           ` : (m.stage==='failed') ? `
             <button class="btn ghost" onclick="state.modal=null; render();">Close</button>
             <button class="btn primary" onclick="state.modal.stage='pick'; state.modal.targetRoomId=''; render();">Try Another Room</button>
+          ` : `<span style="font-size:12px;color:var(--text-3);">Running…</span>`}
+        </div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='versionHistory'){
+    const sorted = VERSION_HISTORY.slice().sort((a,b)=>b.version-a.version);
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Timetable Version History</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div style="font-size:12px;color:var(--text-3);margin-bottom:14px;">Semester ${TIMETABLE_META.semester} · every published or incrementally-validated version is kept for full auditability.</div>
+          ${sorted.map(v=>`
+            <div class="conflict-item">
+              <div class="conflict-main">
+                <div class="conflict-title">Version ${v.version} ${v.version===TIMETABLE_META.version?'<span class="chip green">Current</span>':''}</div>
+                <div class="conflict-sub">${esc(v.label)}</div>
+                <div class="conflict-sub">${esc(v.timestamp)}</div>
+              </div>
+              ${v.version!==TIMETABLE_META.version && v.snapshot.length ? `<button class="btn sm" onclick="openVersionDiff(${v.version})">Compare with Current</button>` : ''}
+            </div>`).join('')}
+        </div>
+        <div class="modal-foot"><button class="btn primary" onclick="state.modal=null; render();">Close</button></div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='versionDiff'){
+    const v = VERSION_HISTORY.find(x=>x.version===state.modal.version);
+    if(!v){ state.modal=null; return ''; }
+    const diff = computeVersionDiff(v.snapshot);
+    const hasChanges = diff.added.length || diff.removed.length || diff.reassigned.length;
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Version ${v.version} → Version ${TIMETABLE_META.version} (Current)</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="conflict-sub" style="margin-bottom:14px;">${esc(v.label)} · ${esc(v.timestamp)}</div>
+          ${diff.reassigned.length? `
+            <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin-bottom:8px;">Venue Reassigned</div>
+            ${diff.reassigned.map(r=>`<div class="onboard-tip"><span class="ic">🔁</span><div><b>${esc(r.course)}</b> — ${esc(r.faculty)}<div style="color:var(--text-2);font-size:12px;">${roomLabel(r.from)} → ${roomLabel(r.to)}</div></div></div>`).join('')}
+          `:''}
+          ${diff.added.length? `
+            <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin:14px 0 8px;">Added Since</div>
+            ${diff.added.map(r=>`<div class="onboard-tip"><span class="ic">➕</span><div><b>${esc(r.course)}</b> — ${esc(r.faculty)} · ${roomLabel(r.venue)}</div></div>`).join('')}
+          `:''}
+          ${diff.removed.length? `
+            <div style="font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--text-3);margin:14px 0 8px;">Removed Since</div>
+            ${diff.removed.map(r=>`<div class="onboard-tip"><span class="ic">➖</span><div><b>${esc(r.course)}</b> — ${esc(r.faculty)} · was ${roomLabel(r.venue)}</div></div>`).join('')}
+          `:''}
+          ${!hasChanges? `<div class="empty" style="padding:20px 0;">No venue-level changes between these versions.</div>`:''}
+        </div>
+        <div class="modal-foot">
+          <button class="btn ghost" onclick="openVersionHistory()">Back to History</button>
+          <button class="btn primary" onclick="state.modal=null; render();">Close</button>
+        </div>
+      </div>
+    </div>`;
+  }
+  if(state.modal.type==='forceCancelRoom'){
+    const m = state.modal;
+    const room = ROOMS[m.roomId];
+    if(!room){ state.modal=null; return ''; }
+    const session = SESSIONS.find(s=>s.venue===room.id && s.status!=='Conflict');
+    const bookedBy = session ? `${session.course} — ${session.faculty}` : (room.allocatedTo || 'Current booking');
+    const steps = ['Faculty Notified','Booking Cancelled','Conflict Created','Audit Log Updated'];
+    return `
+    <div class="modal-backdrop" onmousedown="if(event.target===this && '${m.stage}'!=='running'){state.modal=null; render();}">
+      <div class="modal">
+        <div class="modal-head"><h3>Force Cancel — ${room.name}</h3><button class="close-x" onclick="state.modal=null; render();">✕</button></div>
+        <div class="modal-body">
+          <div class="kv" style="margin-bottom:14px;">
+            <div class="k">Venue</div><div class="v">${room.name}</div>
+            <div class="k">Booked By</div><div class="v">${m.stage==='done'?'—':esc(bookedBy)}</div>
+            <div class="k">Status</div><div class="v">${m.stage==='done'?statusChip('Available'):statusChip(room.status)}</div>
+          </div>
+          ${m.stage==='reason' ? `
+            <div class="field">
+              <label>Mandatory Reason (BR1 — required to submit)</label>
+              <textarea id="forceCancelRoomReason" placeholder="e.g. Campus Placement Drive requires this hall for 300+ attendees at 3:00 PM." oninput="state.modal.reason=this.value; render();">${esc(m.reason)}</textarea>
+            </div>
+          ` : `
+            <div style="margin-top:6px;">
+              ${steps.map((s,i)=>`
+                <div class="pipe-item ${i<m.pipe || m.stage==='done'?'done':''} ${i===m.pipe && m.stage==='running'?'spin':''}">
+                  <span class="ic">${i<m.pipe || m.stage==='done'?'✓':''}</span> ${s}
+                </div>`).join('')}
+            </div>
+            ${m.stage==='done'?`<div class="banner amber" style="margin-top:12px;">A new P1 conflict was created for the displaced booking and routed to the Conflict Inbox for reallocation.</div>`:''}
+          `}
+        </div>
+        <div class="modal-foot">
+          ${m.stage==='reason' ? `
+            <button class="btn ghost" onclick="state.modal=null; render();">Cancel</button>
+            <button class="btn danger" ${m.reason.trim().length<8?'disabled':''} onclick="runForceCancelRoomModal()">Confirm Force Cancel</button>
+          ` : m.stage==='done' ? `
+            <button class="btn primary" onclick="state.modal=null; render();">Close</button>
           ` : `<span style="font-size:12px;color:var(--text-3);">Running…</span>`}
         </div>
       </div>
@@ -1475,6 +1618,7 @@ function screenRegistrarDashboard(){
     </div>
     <div style="display:flex;gap:8px;">
       <button class="btn" onclick="go('masterTimetable')">View Master Timetable</button>
+      <button class="btn" onclick="openVersionHistory()">🕓 Version History</button>
       <button class="btn primary" onclick="markWt('midSemesterStarted'); go('import'); startMidSemesterUpdate();">Import Updated SIS Schedule</button>
     </div>
   </div>
@@ -1609,9 +1753,11 @@ function screenRoomOps(){
   const r = ROOMS[state.focusRoomId] || ROOMS.A103;
   const affected = affectedClassesFor(r.id);
   const suggestions = Object.values(ROOMS).filter(x=>x.status==='Available' && x.id!==r.id).slice(0,2);
+  const currentSession = SESSIONS.find(s=>s.venue===r.id && s.status!=='Conflict');
+  const canForceCancel = state.persona==='registrar' && ['Occupied','Reserved','Booked'].includes(r.status);
   return `
   <div class="crumbs"><a onclick="go('registrarDashboard')">Operations</a> / <a onclick="go('buildingOps',{focusBuildingId:'${r.building}'})">${BUILDINGS.find(b=>b.id===r.building)?BUILDINGS.find(b=>b.id===r.building).name:'Common Facilities'}</a> / <span class="cur">${r.name}</span></div>
-  <div class="page-head"><div><h1 class="page-title">${r.name}</h1><p class="page-sub">${r.ownership==='COMMON'?'Common Facility':r.ownership==='PREMIUM'?'Premium Space':'Department-owned teaching space'}</p></div><div style="display:flex;gap:8px;align-items:center;">${ownershipBadge(r)}${statusChip(r.status)}<button class="btn sm" onclick="go('masterTimetable',{mtFilters:{...state.mtFilters, room:'${r.id}'}})">View in Master Timetable</button>${canEditRoom(r)?`<button class="btn sm primary" onclick="openEditAllocation('${r.id}')">Edit Allocation</button>`:''}</div></div>
+  <div class="page-head"><div><h1 class="page-title">${r.name}</h1><p class="page-sub">${r.ownership==='COMMON'?'Common Facility':r.ownership==='PREMIUM'?'Premium Space':'Department-owned teaching space'}</p></div><div style="display:flex;gap:8px;align-items:center;">${ownershipBadge(r)}${statusChip(r.status)}<button class="btn sm" onclick="go('masterTimetable',{mtFilters:{...state.mtFilters, room:'${r.id}'}})">View in Master Timetable</button>${canEditRoom(r)?`<button class="btn sm primary" onclick="openEditAllocation('${r.id}')">Edit Allocation</button>`:''}${canForceCancel?`<button class="btn sm danger" onclick="openForceCancelRoom('${r.id}')">⚡ Force Cancel</button>`:''}</div></div>
 
   ${(r.status==='Offline'||r.status==='Maintenance') ? `<div class="banner red">⚠ This room was marked <b>&nbsp;${r.status==='Offline'?'Offline_Maintenance':'Maintenance'}&nbsp;</b> — all future bookings were automatically cancelled and routed here for reallocation (BR2 · Hardware Failure Cascade).</div>` : ''}
   ${r.status==='Reserved' && r.allocatedTo ? `<div class="banner blue">🔒 Locked for ${esc(r.allocatedTo)} — ${esc(r.allocatedCourse||'ad-hoc booking')}.</div>` : ''}
@@ -1664,6 +1810,50 @@ function reassignFrom(fromRoomId, toRoomId){
   toast(`${s.course} reassigned to ${ROOMS[toRoomId].name}. Faculty notified.`, '✓');
   markWt('reassigned');
   render();
+}
+
+/* ---------------- SYSTEM-WIDE FORCE CANCEL — ANY ROOM (Registrar) ----------------
+   The Emergency Override screen demonstrates the flow end-to-end on the Main Auditorium,
+   but the Registrar's override authority is system-wide (Section 2 — Preserve Human
+   Override): any actively-booked room can be force-cancelled directly from its Room
+   Operations page, e.g. clearing several halls back-to-back for a placement drive. */
+function openForceCancelRoom(roomId){
+  const room = ROOMS[roomId];
+  if(!room) return;
+  state.modal = {type:'forceCancelRoom', roomId, reason:'', stage:'reason', pipe:0};
+  render();
+}
+function runForceCancelRoomModal(){
+  const m = state.modal;
+  const room = ROOMS[m.roomId];
+  if(!room) return;
+  m.stage='running'; m.pipe=0;
+  render();
+  const steps = ['Faculty Notified','Booking Cancelled','Conflict Created','Audit Log Updated'];
+  const tick=()=>{
+    setTimeout(()=>{
+      m.pipe++;
+      if(m.pipe>=steps.length){
+        const session = SESSIONS.find(s=>s.venue===room.id && s.status!=='Conflict');
+        const displacedLabel = session ? session.course : (room.allocatedCourse || `${room.name} booking`);
+        const displacedFaculty = session ? session.faculty : (room.allocatedTo || 'Unknown');
+        const displacedDept = session ? session.dept : null;
+        if(session){ session.status='Conflict'; session.venue=null; }
+        room.status='Available'; room.allocatedTo=null; room.allocatedCourse=null;
+        CONFLICTS.push({id:'fc'+Math.random().toString(36).slice(2,6), priority:'P1', title:displacedLabel, subtitle:`Displaced by Force Cancel · ${room.name} · needs reallocation`, type:'no_room', action:'Resolve', status:'open', sessionId:session?session.id:null, roomId:room.id, origin:'Force Cancel'});
+        if(displacedDept) createMakeupItem(displacedDept, displacedFaculty, displacedLabel, `${room.name} force-cancelled by Registrar. Reason: "${m.reason}"`, session?session.id:null, room.id);
+        logAudit(`Force Cancel executed on ${room.name}. Reason: "${m.reason}". ${displacedLabel} (${displacedFaculty}) displaced.`);
+        toast(`Force Cancel executed on ${room.name} — audit log updated.`, '⚡');
+        markWt('forceCancel'); markWt('observed');
+        m.stage='done';
+        render();
+        return;
+      }
+      render();
+      tick();
+    }, 450);
+  };
+  tick();
 }
 
 /* ---------------- SCREEN 8: DEPARTMENT DASHBOARD (HoD) ---------------- */
@@ -2558,6 +2748,8 @@ function resetForTour(){
   REQUESTS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.requests));
   Object.assign(TIMETABLE_META, JSON.parse(JSON.stringify(TOUR_SNAPSHOT.timetableMeta)));
   MAKEUP_ITEMS = JSON.parse(JSON.stringify(TOUR_SNAPSHOT.makeupItems));
+  VERSION_HISTORY = VERSION_HISTORY.filter(v=>v.version<=2);
+  recordVersion(3, 'Published to Campus — current operating baseline.');
   Object.keys(wtFlags).forEach(k=>delete wtFlags[k]);
   AUDIT_LOG.length = 0;
 
