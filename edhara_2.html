@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E-DHARA — Energy Architecture &amp; Charging Economics Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d10;
+  --panel:#12171c;
+  --panel2:#171d23;
+  --line:#242c33;
+  --text:#e7ecef;
+  --muted:#8a9aa5;
+  --muted2:#5f6d76;
+  --grid:#f5a623;
+  --solar:#2dd4bf;
+  --wind:#5cc8ff;
+  --oa:#a78bfa;
+  --gc:#f472b6;
+  --bess:#8b7cf6;
+  --good:#3ddc97;
+  --warn:#f5a623;
+  --bad:#ef5350;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;font-size:14px;}
+h1,h2,h3,h4{font-family:'Space Grotesk',sans-serif;margin:0 0 6px 0;font-weight:600;letter-spacing:-0.01em;}
+.mono{font-family:'IBM Plex Mono',monospace;}
+a{color:var(--solar);}
+::selection{background:var(--solar);color:#04201c;}
+
+/* ===== layout ===== */
+#app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;height:100vh;}
+#topbar{grid-column:1/3;display:flex;align-items:center;gap:18px;padding:0 18px;background:linear-gradient(180deg,#12171c,#0e1215);border-bottom:1px solid var(--line);overflow-x:auto;white-space:nowrap;}
+#topbar .brand{font-family:'Space Grotesk';font-weight:700;font-size:15px;letter-spacing:0.02em;color:var(--text);flex:0 0 auto;}
+#topbar .brand span{color:var(--solar);}
+.ticker{display:flex;gap:16px;align-items:center;flex:1;}
+.tick{display:flex;flex-direction:column;line-height:1.1;flex:0 0 auto;}
+.tick .l{font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted2);}
+.tick .v{font-family:'IBM Plex Mono';font-size:13px;font-weight:600;}
+#mixbar{display:flex;height:6px;border-radius:4px;overflow:hidden;flex:0 0 160px;background:#000;}
+#sidebar{background:var(--panel);border-right:1px solid var(--line);padding:14px 0;overflow-y:auto;}
+.navgroup{margin-bottom:4px;}
+.navlabel{font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted2);padding:10px 18px 4px;}
+.navitem{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--muted);font-size:13px;border-left:2px solid transparent;transition:all .12s;}
+.navitem:hover{color:var(--text);background:#161c22;}
+.navitem.active{color:var(--text);border-left:2px solid var(--solar);background:#161c22;font-weight:600;}
+.navitem .dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);flex:0 0 auto;}
+.navitem.active .dot{background:var(--solar);}
+#main{overflow-y:auto;padding:24px 30px 80px;}
+.view{display:none;}
+.view.active{display:block;animation:fade .18s ease;}
+@keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+.viewhead{margin-bottom:18px;}
+.viewhead p{color:var(--muted);margin:4px 0 0;max-width:760px;font-size:13px;line-height:1.5;}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+@media(max-width:1100px){.grid2,.grid3,.grid4{grid-template-columns:1fr;}}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;}
+.card h3{font-size:13px;text-transform:uppercase;letter-spacing:0.04em;color:var(--muted);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;}
+.card h3 .badge{font-size:9px;padding:2px 7px;border-radius:20px;text-transform:none;letter-spacing:0;}
+
+.kpi{background:var(--panel2);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;}
+.kpi .l{font-size:10px;text-transform:uppercase;color:var(--muted2);letter-spacing:0.05em;}
+.kpi .v{font-family:'IBM Plex Mono';font-size:22px;font-weight:600;margin-top:4px;}
+.kpi .u{font-size:11px;color:var(--muted);margin-left:4px;}
+.kpi .sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+label{display:block;font-size:11px;color:var(--muted);margin:10px 0 4px;}
+label .req{color:var(--bad);}
+input[type=number],input[type=text],select,textarea{
+  width:100%;background:#0d1216;border:1px solid var(--line);color:var(--text);
+  padding:7px 9px;border-radius:6px;font-family:'IBM Plex Mono';font-size:12.5px;
+}
+select{font-family:'Inter';}
+input:focus,select:focus{outline:none;border-color:var(--solar);}
+.row{display:flex;gap:10px;}
+.row>div{flex:1;}
+.hint{font-size:10.5px;color:var(--muted2);margin-top:3px;line-height:1.4;}
+.inline-src{display:flex;gap:6px;align-items:center;margin-top:4px;}
+.inline-src select{flex:0 0 110px;font-size:10px;padding:4px 6px;}
+.inline-src input{flex:1;font-size:10px;padding:4px 6px;}
+
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;color:var(--muted2);font-weight:500;text-transform:uppercase;font-size:10px;letter-spacing:0.04em;padding:6px 8px;border-bottom:1px solid var(--line);}
+td{padding:7px 8px;border-bottom:1px solid #1a2127;font-family:'IBM Plex Mono';}
+tr:hover td{background:#141a1f;}
+.pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;}
+.pill.high{background:#123326;color:var(--good);}
+.pill.medium{background:#33280f;color:var(--warn);}
+.pill.low{background:#331414;color:#ff9b95;}
+.pill.verify{background:#2a2035;color:#c9a8ff;}
+
+button{background:var(--solar);color:#04201c;border:none;padding:9px 16px;border-radius:7px;font-weight:600;font-size:12.5px;cursor:pointer;font-family:'Inter';}
+button.ghost{background:transparent;border:1px solid var(--line);color:var(--text);}
+button.small{padding:5px 10px;font-size:11px;}
+button:hover{filter:brightness(1.08);}
+.btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
+
+.flagbox{border:1px solid #3a2f1a;background:#1b160a;border-radius:8px;padding:10px 12px;font-size:12px;color:#f0cd8a;margin:10px 0;}
+.flagbox.bad{border-color:#3a1a1a;background:#1b0a0a;color:#ff9b95;}
+.flagbox b{color:#fff;}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+.tabbtn{padding:8px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
+.tabbtn.active{color:var(--text);border-bottom-color:var(--solar);}
+.subview{display:none;}
+.subview.active{display:block;}
+
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 14px;}
+.legend span{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block;}
+
+.decisioncard{background:linear-gradient(160deg,#131a20,#0d1216);border:1px solid var(--line);border-radius:14px;padding:24px 26px;}
+.decisioncard h2{font-size:22px;}
+.reason{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #1a2127;}
+.reason .n{color:var(--solar);font-family:'IBM Plex Mono';font-weight:600;flex:0 0 20px;}
+
+.scenbtns{display:flex;gap:6px;flex-wrap:wrap;}
+.scenbtn{padding:6px 12px;border-radius:20px;border:1px solid var(--line);font-size:11.5px;cursor:pointer;color:var(--muted);}
+.scenbtn.active{background:var(--solar);color:#04201c;border-color:var(--solar);font-weight:600;}
+
+svg text{font-family:'IBM Plex Mono',monospace;}
+.footer-note{color:var(--muted2);font-size:11px;margin-top:30px;padding-top:14px;border-top:1px solid var(--line);line-height:1.6;}
+::-webkit-scrollbar{width:9px;height:9px;}
+::-webkit-scrollbar-thumb{background:#232b32;border-radius:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <div id="topbar">
+    <div class="brand">ENERGYNEX for E-Dhara <span>//</span> ENGINE</div>
+    <div class="ticker" id="ticker"></div>
+    <div id="mixbar"></div>
+  </div>
+
+  <div id="sidebar">
+    <div class="navgroup">
+      <div class="navlabel">Executive</div>
+      <div class="navitem active" data-view="v-site"><span class="dot"></span>Site &amp; Demand</div>
+      <div class="navitem" data-view="v-arch"><span class="dot"></span>Energy Architecture</div>
+      <div class="navitem" data-view="v-econ"><span class="dot"></span>Economics</div>
+      <div class="navitem" data-view="v-own"><span class="dot"></span>Ownership</div>
+      <div class="navitem" data-view="v-scen"><span class="dot"></span>Scenarios</div>
+      <div class="navitem" data-view="v-decision"><span class="dot"></span>Strategic Decision</div>
+    </div>
+    <div class="navgroup">
+      <div class="navlabel">Advanced Model</div>
+      <div class="navitem" data-view="v-dispatch"><span class="dot"></span>Hourly Dispatch</div>
+      <div class="navitem" data-view="v-bess"><span class="dot"></span>BESS Value Stack</div>
+      <div class="navitem" data-view="v-break"><span class="dot"></span>Break-Even Engine</div>
+      <div class="navitem" data-view="v-risk"><span class="dot"></span>Risk Register</div>
+      <div class="navitem" data-view="v-portfolio"><span class="dot"></span>Portfolio &amp; Corridor</div>
+      <div class="navitem" data-view="v-states"><span class="dot"></span>State Comparison</div>
+    </div>
+    <div class="navgroup">
+      <div class="navlabel">Audit</div>
+      <div class="navitem" data-view="v-audit"><span class="dot"></span>Source &amp; Assumption Audit</div>
+      <div class="navitem" data-view="v-about"><span class="dot"></span>Methodology / Limits</div>
+    </div>
+  </div>
+
+  <div id="main">
+
+  <!-- ============ SITE & DEMAND ============ -->
+  <div class="view active" id="v-site">
+    <div class="viewhead">
+      <h1>Site &amp; Demand</h1>
+      <p>Every downstream calculation is derived from this page. Nothing here is decided in advance — the architecture is discovered from what you enter.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h3>Location</h3>
+        <div class="row">
+          <div><label>State</label>
+            <select id="in_state">
+              <option>Gujarat</option><option>Maharashtra</option><option>Karnataka</option>
+              <option>Tamil Nadu</option><option>Delhi</option><option>Rajasthan</option>
+              <option>Other (manual entry)</option>
+            </select>
+          </div>
+          <div><label>Site archetype <span class="pill medium">Tier 12</span></label>
+            <select id="in_archetype">
+              <option value="lowutil">Low-utilisation public charger</option>
+              <option value="urbanhpc">Urban HPC hub</option>
+              <option value="highway" selected>Highway HPC hub</option>
+              <option value="fleet">Fleet depot</option>
+              <option value="etruck">Electric truck hub</option>
+              <option value="ebus">Electric bus depot</option>
+            </select>
+          </div>
+        </div>
+        <div class="btnrow"><button class="small ghost" id="applyArchetype">Apply archetype defaults</button></div>
+        <div class="hint">Archetype defaults set vehicle mix, operating hours and demand shape as editable starting points — labelled <b>ASSUMPTION</b>, not sourced ChargeZone operating data. Every value remains overridable below.</div>
+        <div class="row">
+          <div><label>DISCOM / supply area (Gujarat)</label>
+            <select id="in_discom" onchange="applyDiscom(this.value)">
+              <option value="DGVCL" selected>DGVCL (state-owned)</option>
+              <option value="MGVCL">MGVCL (state-owned)</option>
+              <option value="PGVCL">PGVCL (state-owned)</option>
+              <option value="UGVCL">UGVCL (state-owned)</option>
+              <option value="Torrent-Ahmedabad">Torrent Power — Ahmedabad</option>
+              <option value="Torrent-Surat">Torrent Power — Surat</option>
+              <option value="Torrent-Dahej">Torrent Power — Dahej</option>
+              <option value="MUL">MUL (Maruti captive licensee)</option>
+              <option value="AIVPL">AIVPL</option>
+              <option value="GIFT-PCL">GIFT Power Company Ltd (GIFT City)</option>
+              <option value="other">Other / outside Gujarat (manual entry)</option>
+            </select>
+            <div id="discomStatusNote" class="hint"><span class="pill high">VERIFIED</span> Tariff fields pre-filled from the GERC FY2026-27 schedule for DGVCL. All fields remain editable.</div>
+          </div>
+          <div><label>Connection voltage</label>
+            <select id="in_voltage"><option>LT</option><option selected>11 kV</option><option>33 kV</option><option>66 kV+</option></select>
+          </div>
+        </div>
+        <div class="flagbox">State-specific tariff, OA and GC charge figures used elsewhere in this model are <b>editable model assumptions</b>, not verified current regulator filings — see the Audit tab. Populate them from the current GERC/MERC/KERC/TNERC/DERC/RERC order before using this for a real investment decision.</div>
+      </div>
+
+      <div class="card">
+        <h3>Energy Objective</h3>
+        <div class="row">
+          <div><label>Conventional grid electricity allowed?</label>
+            <select id="in_gridallowed"><option value="1">Yes</option><option value="0">No</option></select>
+          </div>
+          <div><label>Renewable target (% of annual energy)</label><input id="in_retarget" type="number" value="60" min="0" max="100"></div>
+        </div>
+        <div class="row">
+          <div><label>Renewable definition required</label>
+            <select id="in_redef">
+              <option value="annual">Annual matching (contractual, most common)</option>
+              <option value="hourly">Hourly / time-matched physical matching</option>
+              <option value="attributed">Contractual attribution only (RECs/certificates)</option>
+            </select>
+          </div>
+          <div><label>Reliability requirement</label>
+            <select id="in_reliab"><option value="std">Standard (grid backup acceptable)</option><option value="high">High (near-zero unserved demand)</option></select>
+          </div>
+        </div>
+        <div class="hint">These three concepts — physical flow, commercial procurement, and the customer-facing "renewable charging" claim — are tracked separately throughout this model and are never collapsed into one number. See Methodology tab.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Charging Demand <span class="badge pill medium">Tier 6 — model input</span></h3>
+      <div id="demandTable"></div>
+      <button class="small ghost" id="addVehType">+ Add vehicle category</button>
+      <div class="row" style="margin-top:14px;">
+        <div><label>Operating days / year</label><input id="in_opdays" type="number" value="360"></div>
+        <div><label>Demand growth — Year 1→5 CAGR (%)</label><input id="in_growth" type="number" value="18"></div>
+        <div><label>Demand profile shape</label>
+          <select id="in_shape"><option value="daytime">Daytime-heavy</option><option value="evening" selected>Evening-heavy</option><option value="flat">Flat / 24h</option><option value="night">Night-heavy (freight)</option></select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card"><h3>Multi-Year Utilisation Ramp <span class="badge pill medium">Tier 7 — feeds cash flow directly</span></h3>
+      <div class="row">
+        <div><label>Year-1 utilisation (% of steady-state demand modelled above)</label><input id="in_util_y1" type="number" value="35" step="1"></div>
+        <div><label>Years to reach terminal utilisation</label><input id="in_util_rampyears" type="number" value="5" step="1"></div>
+      </div>
+      <div class="row">
+        <div><label>Terminal (steady-state) utilisation (%)</label><input id="in_util_terminal" type="number" value="100" step="1"></div>
+        <div><label>Ramp shape</label><select id="in_util_shape"><option value="linear" selected>Linear</option><option value="scurve">S-curve (slow start/finish)</option></select></div>
+      </div>
+      <div class="hint">The vehicle/session numbers above are treated as the site's <b>steady-state (terminal)</b> demand. Each project year is scaled by this ramp before it is passed through the SAME dispatch → energy cost → revenue → EBITDA → cash flow chain — so Year 1 can be uneconomic while steady state is attractive, and the model shows both.</div>
+      <div id="rampPreview" style="margin-top:8px;"></div>
+    </div>
+
+    <div class="grid4" id="demandKPIs"></div>
+  </div>
+
+  <!-- ============ ENERGY ARCHITECTURE ============ -->
+  <div class="view" id="v-arch">
+    <div class="viewhead">
+      <h1>Energy Architecture</h1>
+      <p>All technically feasible supply combinations are costed on the same basis — landed ₹/kWh delivered at the charger — so no source is assumed superior.</p>
+    </div>
+
+    <div class="tabs">
+      <div class="tabbtn active" data-sub="s-solar">Solar</div>
+      <div class="tabbtn" data-sub="s-wind">Wind</div>
+      <div class="tabbtn" data-sub="s-oa">Green Open Access</div>
+      <div class="tabbtn" data-sub="s-gc">Group Captive</div>
+      <div class="tabbtn" data-sub="s-grid">Grid</div>
+      <div class="tabbtn" data-sub="s-compare">Architecture Comparison</div>
+    </div>
+
+    <div class="subview active" id="s-solar">
+      <div class="grid2">
+        <div class="card"><h3>Solar Inputs</h3>
+          <div class="row"><div><label>Capacity (MW)</label><input id="s_mw" type="number" value="1.0" step="0.1"></div>
+          <div><label>CUF (%) <span class="pill medium">state/site-specific</span></label><input id="s_cuf" type="number" value="19.5" step="0.1"></div></div>
+          <div class="row"><div><label>CAPEX (₹ Cr/MW)</label><input id="s_capex" type="number" value="3.6" step="0.1"></div>
+          <div><label>O&amp;M (₹ Lakh/MW/yr)</label><input id="s_om" type="number" value="6.5"></div></div>
+          <div class="row"><div><label>Degradation (%/yr)</label><input id="s_deg" type="number" value="0.5" step="0.1"></div>
+          <div><label>Project life (yrs)</label><input id="s_life" type="number" value="25"></div></div>
+        </div>
+        <div class="card"><h3>Output</h3><div id="s_out"></div></div>
+      </div>
+    </div>
+
+    <div class="subview" id="s-wind">
+      <div class="grid2">
+        <div class="card"><h3>Wind Inputs</h3>
+          <div class="row"><div><label>Capacity (MW)</label><input id="w_mw" type="number" value="0" step="0.1"></div>
+          <div><label>CUF (%)</label><input id="w_cuf" type="number" value="26" step="0.1"></div></div>
+          <div class="row"><div><label>CAPEX (₹ Cr/MW)</label><input id="w_capex" type="number" value="6.2" step="0.1"></div>
+          <div><label>O&amp;M (₹ Lakh/MW/yr)</label><input id="w_om" type="number" value="9"></div></div>
+          <div class="row"><div><label>Degradation (%/yr)</label><input id="w_deg" type="number" value="0.3" step="0.1"></div>
+          <div><label>Project life (yrs)</label><input id="w_life" type="number" value="24"></div></div>
+        </div>
+        <div class="card"><h3>Output</h3><div id="w_out"></div></div>
+      </div>
+    </div>
+
+    <div class="subview" id="s-oa">
+      <div class="card"><h3>Landed Green Open Access Cost — full stack, nothing collapsed into one ₹/kWh figure</h3>
+        <div class="grid3">
+          <div><label>PPA / energy price (₹/kWh) <span class="pill medium">BENCHMARK — generation price, not delivered OA price</span></label><input id="oa_energy" type="number" value="3.43" step="0.01"></div>
+          <div><label>Transmission charge (₹/kWh) <span class="pill verify">NOT VERIFIED</span></label><input id="oa_trans" type="number" value="0.15" step="0.01"></div>
+          <div><label>Wheeling charge (₹/kWh) <span class="pill high">VERIFIED (Gujarat HT, 4 DISCOMs)</span></label><input id="oa_wheel" type="number" value="0.2352" step="0.0001"></div>
+          <div><label>Cross-subsidy surcharge (₹/kWh) <span class="pill high">VERIFIED (Gujarat HT)</span></label><input id="oa_css" type="number" value="1.33" step="0.01"></div>
+          <div><label>Additional surcharge (₹/kWh) <span class="pill high">VERIFIED thru 30-09-2026</span></label><input id="oa_addl" type="number" value="0.76" step="0.01"></div>
+          <div><label>Banking charge (₹/kWh) <span class="pill high">VERIFIED thru 31-08-2026</span></label><input id="oa_bank" type="number" value="1.50" step="0.01"></div>
+          <div><label>SLDC / scheduling / deviation (₹/kWh) <span class="pill verify">NOT VERIFIED</span></label><input id="oa_sldc" type="number" value="0.10" step="0.01"></div>
+          <div><label>Transmission &amp; distribution losses (%) <span class="pill verify">NOT VERIFIED</span></label><input id="oa_loss" type="number" value="4.5" step="0.1"></div>
+          <div><label>Other levies / taxes (₹/kWh) <span class="pill verify">NOT VERIFIED</span></label><input id="oa_tax" type="number" value="0.12" step="0.01"></div>
+        </div>
+        <div class="hint">Gujarat FY2026-27: Wheeling/CSS/Additional-Surcharge/Banking are VERIFIED against the GERC tariff schedule and Fifth GEOA Amendment 2026 (see Audit tab for sources, effective dates and expiry). PPA/energy, transmission, SLDC, losses and taxes remain editable — NOT VERIFIED — inputs; enter your actual quote/order figures.</div>
+        <div class="row" style="margin-top:6px;">
+          <div><label>OA procurement capacity (MW contracted)</label><input id="oa_mw" type="number" value="1.0" step="0.1"></div>
+          <div><label>OA source shape</label>
+            <select id="oa_shape"><option value="solar" selected>Solar-shaped (daytime)</option><option value="wind">Wind-shaped</option><option value="flat">Round-the-clock (flat)</option></select>
+          </div>
+          <div><label>Min. contracted capacity for OA eligibility (MW) <span class="pill verify">VERIFY per state/DISCOM</span></label><input id="oa_min_mw" type="number" value="0.1" step="0.01"></div>
+        </div>
+        <div class="hint">0.1 MW (100 kW) is the commonly-cited Green Open Access threshold under the Green Open Access Rules, 2022 — an editable model assumption, not a confirmed state-specific figure. Below this, OA is treated as regulatorily ineligible and excluded as a hard constraint by the optimiser.</div>
+        <div class="flagbox">All figures above are <b>editable placeholders</b> — real values differ materially by state, voltage level and consumer category and must be taken from the current OA regulations of the relevant SERC. <b>Regulatory validation required</b> before use.</div>
+        <div id="oa_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="subview" id="s-gc">
+      <div class="card"><h3>Group Captive Structure</h3>
+        <div class="grid3">
+          <div><label>SPV plant size (MW)</label><input id="gc_mw" type="number" value="3" step="0.1"></div>
+          <div><label>Min. captive-consumer equity ownership (%)</label><input id="gc_equity" type="number" value="26"></div>
+          <div><label>Min. self-consumption requirement (%)</label><input id="gc_selfcons" type="number" value="51"></div>
+        </div>
+        <div class="hint">26% equity / 51% self-consumption are the thresholds most commonly cited under the captive generation framework (Electricity Rules, as amended) — <b>confirm against the current rule text and any state-commission interpretation</b> before relying on them; this model does not assert they are current law.</div>
+        <div class="grid3" style="margin-top:6px;">
+          <div><label>Your (ChargeZone) equity stake in SPV (%)</label><input id="gc_myequity" type="number" value="26"></div>
+          <div><label>CAPEX (₹ Cr/MW, blended solar+wind)</label><input id="gc_capex" type="number" value="4.2" step="0.1"></div>
+          <div><label>GC variable/pass-through charges (₹/kWh) <span class="pill verify">NOT the total GC cost — see GC fully-loaded output below</span></label><input id="gc_charges" type="number" value="1.35" step="0.01"></div>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <div><label>SPV solar share of MW (%) <span class="pill medium">Tier 9</span></label><input id="gc_solarshare" type="number" value="60" step="5"></div>
+          <div><label>SPV wind share of MW (%, auto = 100−solar)</label><input id="gc_windshare_display" type="text" value="40" disabled></div>
+        </div>
+        <div class="row" style="margin-top:6px;">
+          <div><label>ChargeZone entitlement of GC generation (%, energy — separate from equity %) <span class="pill medium">assumption</span></label><input id="gc_entitlement" type="number" value="26" step="1"></div>
+          <div></div>
+        </div>
+        <div class="hint">Generation is computed hourly from the site's own solar CUF-shaped × solar MW + wind CUF-shaped × wind MW (per the split above). Equity ownership share, energy entitlement, and actual self-consumption are tracked as three separate numbers — owning 26% of the SPV does not automatically mean receiving 26% of its energy; the entitlement field above is an explicit, editable assumption, not derived from equity %.</div>
+        <div id="gc_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="subview" id="s-grid">
+      <div class="card"><h3>Grid Supply</h3>
+        <div class="grid3">
+          <div><label>Energy charge (₹/kWh) <span class="pill high">VERIFIED (Gujarat HT-EVCS, state-owned DISCOMs)</span></label><input id="g_energy" type="number" value="4.00" step="0.01"></div>
+          <div><label>Demand charge (₹/kVA/month) <span class="pill high">VERIFIED</span></label><input id="g_demand" type="number" value="25"></div>
+          <div><label>Fixed charge (₹/month) <span class="pill verify">NOT VERIFIED</span></label><input id="g_fixed" type="number" value="15000"></div>
+          <div><label>Peak ToU surcharge (₹/kWh, 07:00–11:00 &amp; 18:00–22:00) <span class="pill high">VERIFIED</span></label><input id="g_tod" type="number" value="0.45" step="0.01"></div>
+          <div><label>Solar-hour ToU discount (₹/kWh, 11:00–17:00) <span class="pill high">VERIFIED</span></label><input id="g_solardisc" type="number" value="0.60" step="0.01"></div>
+          <div><label>Excess-demand charge (₹/kVA/month, above contract demand) <span class="pill high">VERIFIED</span></label><input id="g_excess_demand" type="number" value="50"></div>
+          <div><label>FPPPA / fuel &amp; power purchase price adjustment (₹/kWh) <span class="pill verify">NOT VERIFIED — confirm this quarter's notified rate</span></label><input id="g_fppca" type="number" value="0.00" step="0.01"></div>
+          <div><label>Connection-related costs, amortized (₹/kWh) <span class="pill verify">NOT VERIFIED — one-time service-line/security-deposit-linked costs spread over expected annual energy, if any</span></label><input id="g_conn_amort" type="number" value="0.00" step="0.01"></div>
+          <div><label>Taxes / electricity duty (%)</label><input id="g_tax" type="number" value="15" step="0.1"></div>
+          <div><label>Sanctioned load (kVA)</label><input id="g_sanc" type="number" value="500"></div>
+        </div>
+        <div class="hint">Gujarat FY2026-27: Energy/Demand/Peak-ToU/Solar-hour-discount/Excess-demand charges are VERIFIED against the GERC tariff schedule for DGVCL/MGVCL/PGVCL/UGVCL effective 01-04-2026 (see Audit tab). Selecting a different DISCOM/licensee on the Site tab auto-fills these where verified; Torrent/MUL/AIVPL/GIFT areas are NOT VERIFIED — enter their own tariff.</div>
+        <div class="hint">FPPPA/FPPAS is a genuinely separate, periodically-revised (typically quarterly) surcharge that GERC requires DISCOMs to show as its own line item on the bill — it is NOT already included in the "Energy charge" figure above and must NOT be left at 0 for a real decision. Check the current DGVCL/MGVCL/PGVCL/UGVCL FPPPA order before relying on this output. "Connection-related costs, amortized" covers one-time charges tied to getting/upgrading the connection (as distinct from the ongoing Demand/Fixed charges above) — leave at 0 if none apply to this site.</div>
+        <div class="row" style="margin-top:6px;">
+          <div><label>Grid upgrade available?</label><select id="g_upgrade_avail"><option value="0">No</option><option value="1">Yes</option></select></div>
+          <div><label>Additional MW available via upgrade</label><input id="g_upgrade_mw" type="number" value="0.5" step="0.1"></div>
+          <div><label>Upgrade CAPEX (₹ Cr)</label><input id="g_upgrade_capex" type="number" value="0.4" step="0.05"></div>
+        </div>
+        <div class="flagbox">Grid tariffs are DISCOM- and category-specific (commercial / EV public charging category where notified) and change with each tariff order — treat every value here as a placeholder pending the current schedule. Grid connection capacity (sanctioned load) is a <b>hard MW constraint</b> inside the 8,760-hour dispatch — see Hourly Dispatch and Strategic Decision tabs for unserved-energy consequences.</div>
+        <div id="g_out" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="subview" id="s-compare">
+      <div class="card">
+        <h3>Landed Cost by Architecture (₹/kWh delivered at charger)</h3>
+        <div class="hint">This table is now populated from the canonical 8,760-hour dispatch engine (annual reconciliation), not a separate annual-GWh-matching shortcut — see Hourly Dispatch tab for the full monthly/annual breakdown behind each number.</div>
+        <div id="archTable"></div>
+      </div>
+      <div class="card"><h3>Delivered Cost Comparison</h3><div id="archChart"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ ECONOMICS ============ -->
+  <div class="view" id="v-econ">
+    <div class="viewhead">
+      <h1>Economics</h1>
+      <p>Operating economics (₹/kWh, margin, EBITDA) are kept separate from investment economics (CAPEX, IRR, NPV) — a high project IRR is never allowed to mask poor underlying energy economics. All figures below are produced by the canonical 8,760-hour engine's annual reconciliation, year by year through the utilisation ramp — not a 24h × operating-days shortcut.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="card"><h3>Revenue &amp; Operating Economics</h3>
+        <div class="row"><div><label>Public charging price (₹/kWh)</label><input id="e_price" type="number" value="15.5" step="0.1"></div>
+        <div><label>Fleet contract price (₹/kWh)</label><input id="e_fleetprice" type="number" value="11.5" step="0.1"></div></div>
+        <div class="row"><div><label>Share of demand from fleet (%)</label><input id="e_fleetshare" type="number" value="30"></div>
+        <div><label>Green charging premium (₹/kWh, 0 = none)</label><input id="e_greenprem" type="number" value="0"></div></div>
+        <div id="e_op_out" style="margin-top:10px;"></div>
+        <div class="hint" id="e_reverse_out" style="margin-top:10px;"></div>
+      </div>
+      <div class="card"><h3>CAPEX (chargers &amp; balance of site)</h3>
+        <div class="row"><div><label>Charger CAPEX (₹ Cr, total)</label><input id="e_chargercapex" type="number" value="2.4" step="0.1"></div>
+        <div><label>Grid connection &amp; transformer (₹ Cr)</label><input id="e_gridcapex" type="number" value="0.6" step="0.1"></div></div>
+        <div class="row"><div><label>Civil, canopy, safety, dev. costs (₹ Cr)</label><input id="e_civilcapex" type="number" value="0.5" step="0.1"></div>
+        <div><label>Contingency (%)</label><input id="e_contg" type="number" value="8"></div></div>
+      </div>
+    </div>
+
+    <div class="grid2">
+      <div class="card"><h3>Financing</h3>
+        <div class="row"><div><label>Debt (%)</label><input id="f_debt" type="number" value="65"></div>
+        <div><label>Interest rate (%)</label><input id="f_rate" type="number" value="10.5" step="0.1"></div></div>
+        <div class="row"><div><label>Tenor (yrs)</label><input id="f_tenor" type="number" value="10"></div>
+        <div><label>Equity hurdle / discount rate (%)</label><input id="f_hurdle" type="number" value="16"></div></div>
+        <div class="row"><div><label>Corporate tax rate (%)</label><input id="f_tax" type="number" value="25.2" step="0.1"></div>
+        <div><label>Depreciation (WDV, %/yr)</label><input id="f_dep" type="number" value="15"></div></div>
+        <div class="row"><div><label>Minimum DSCR covenant</label><input id="f_mindscr" type="number" value="1.15" step="0.05"></div>
+        <div><label>Target IRR for reverse pricing (%)</label><input id="f_targetirr" type="number" value="18" step="0.5"></div></div>
+        <div class="hint" style="margin-top:6px;font-weight:600">Risk-adjusted optimisation</div>
+        <div class="row"><div><label>Optimiser objective</label>
+          <select id="in_riskobjective"><option value="0" selected>Deterministic (Base Case only)</option><option value="1">Probability-weighted (Base/Downside/Upside/Stress)</option></select>
+        </div>
+        <div><label>Risk aversion λ (downside semi-deviation penalty)</label><input id="risk_lambda" type="number" value="0.5" step="0.1"></div></div>
+        <div class="row"><div><label>P(Base Case) %</label><input id="p_base" type="number" value="50" step="1"></div>
+        <div><label>P(Downside) %</label><input id="p_downside" type="number" value="25" step="1"></div></div>
+        <div class="row"><div><label>P(Upside) %</label><input id="p_upside" type="number" value="15" step="1"></div>
+        <div><label>P(Stress Case) %</label><input id="p_stress" type="number" value="10" step="1"></div></div>
+        <div class="hint">Probabilities are auto-normalised to sum to 100% regardless of what's entered. When the optimiser objective is set to probability-weighted, the architecture the optimiser actually selects can change — see Decision tab → Risk-Adjusted Analysis.</div>
+      </div>
+      <div class="card"><h3>Investment Outputs</h3><div id="f_out"></div></div>
+    </div>
+
+    <div class="card"><h3>Cash Flow (15-year, ₹ Cr) — each year driven by its own 8,760h dispatch at that year's utilisation</h3><div id="cashflowTable" style="max-height:320px;overflow:auto;"></div></div>
+  </div>
+
+  <!-- ============ OWNERSHIP ============ -->
+  <div class="view" id="v-own">
+    <div class="viewhead"><h1>Ownership &amp; Commercial Model</h1>
+      <p>Physical energy architecture and financial ownership are separate decisions. Compare who carries CAPEX, risk and return for each commercial structure.</p>
+    </div>
+    <div class="grid3" id="ownCards"></div>
+    <div class="card"><h3>BESS: Own vs BESS-as-a-Service</h3>
+      <div class="grid3">
+        <div><label>BaaS monthly fixed fee (₹ Lakh)</label><input id="b_baasfixed" type="number" value="2.5" step="0.1"></div>
+        <div><label>BaaS ₹/kWh throughput</label><input id="b_baasrate" type="number" value="2.1" step="0.1"></div>
+        <div><label>BaaS contract escalation (%/yr)</label><input id="b_baasesc" type="number" value="3" step="0.5"></div>
+      </div>
+      <div id="baasCompare" style="margin-top:10px;"></div>
+    </div>
+    <div class="card"><h3>Partial DOCO — Asset-by-Asset Ownership</h3><div id="partialDocoTable"></div></div>
+  </div>
+
+  <!-- ============ SCENARIOS ============ -->
+  <div class="view" id="v-scen">
+    <div class="viewhead"><h1>Scenario Engine</h1><p>Switch macro/technical scenarios and watch every downstream number recompute through the 8,760h engine.</p></div>
+    <div class="scenbtns" id="scenBtns"></div>
+    <div class="grid4" style="margin-top:16px;" id="scenKPIs"></div>
+    <div class="card"><h3>Custom Stress Test</h3>
+      <div class="grid3">
+        <div><label>Utilisation shock (%)</label><input id="st_util" type="number" value="0"></div>
+        <div><label>Grid tariff shock (%)</label><input id="st_grid" type="number" value="0"></div>
+        <div><label>BESS CAPEX shock (%)</label><input id="st_bess" type="number" value="0"></div>
+        <div><label>Charging price shock (%)</label><input id="st_price" type="number" value="0"></div>
+        <div><label>Interest rate shock (bps)</label><input id="st_int" type="number" value="0"></div>
+        <div><label>Renewable generation shock (%)</label><input id="st_ren" type="number" value="0"></div>
+      </div>
+    </div>
+    <div class="card"><h3>Base / Downside / Upside — NPV &amp; IRR</h3><div id="scenCompareTable"></div></div>
+  </div>
+
+  <!-- ============ STRATEGIC DECISION ============ -->
+  <div class="view" id="v-decision">
+    <div class="viewhead"><h1>Strategic Decision</h1></div>
+    <div class="decisioncard" id="decisionMain"></div>
+    <div class="grid2" style="margin-top:16px;">
+      <div class="card"><h3>Why This Model?</h3><div id="whyList"></div></div>
+      <div class="card"><h3>What Would Change The Decision?</h3><div id="sensList"></div></div>
+    </div>
+    <div class="card"><h3>Next-Best Architecture — And Why It Lost</h3><div id="nextBestBox"></div></div>
+    <div class="card">
+      <h3>Minimum-Utilisation Solver <span class="badge pill medium">on demand</span></h3>
+      <p class="hint">Holds the recommended architecture and CAPEX fixed, scales the utilisation ramp (Year-1 and terminal) by a single factor, and bisection-searches for the lowest terminal utilisation at which each threshold is still met — using the exact multi-year 8,760h engine at every trial point, not a shortcut formula.</p>
+      <button id="runMinUtilBtn" class="small ghost">Solve minimum utilisation thresholds</button>
+      <div id="minUtilTable" style="margin-top:12px"></div>
+    </div>
+    <div class="card">
+      <h3>Risk-Adjusted Analysis <span class="badge pill medium">Base / Downside / Upside / Stress</span></h3>
+      <p class="hint">Runs the recommended architecture through all four scenario multiplier sets (reusing the same scenario definitions as the Scenarios tab), weights each by its configured probability (Financing tab), and computes an expected NPV net of a downside semi-deviation risk penalty. If the "Optimiser objective" on the Financing tab is set to probability-weighted, the architecture ABOVE is already the risk-adjusted winner — this panel also shows what the optimiser would have picked deterministically, for comparison.</p>
+      <button id="runRiskAdjBtn" class="small ghost">Run risk-adjusted analysis (4 scenarios)</button>
+      <div id="riskAdjTable" style="margin-top:12px"></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Key Risks</h3><div id="riskShort"></div></div>
+      <div class="card"><h3>Data Confidence</h3><div id="confSummary"></div></div>
+    </div>
+  </div>
+
+  <!-- ============ HOURLY DISPATCH ============ -->
+  <div class="view" id="v-dispatch">
+    <div class="viewhead"><h1>8,760-Hour Dispatch Engine <span class="badge pill high">Canonical</span></h1>
+      <p>This is the ONE dispatch calculation used everywhere else in the model (Economics, BESS, Grid, Decision, Break-Even, Optimizer). It runs a full 8,760-hour synthetic year (labelled <b>SYNTHETIC</b> — replace with metered/weather data when available), aggregates hour→month→year, and THAT annual energy result (not 24h × operating-days) is what feeds EBITDA, cash flow, NPV and IRR. The representative day chart below is a same-shape zoom-in on one illustrative day for readability, not a separate calculation.</p>
+    </div>
+    <div class="row" style="margin-bottom:10px;">
+      <div><label>Dispatch priority order (highest priority first)</label>
+        <select id="in_priority">
+          <option value="solar-wind-gc-oa-bess-grid" selected>Solar → Wind → GC → OA → BESS → Grid</option>
+          <option value="solar-wind-oa-gc-bess-grid">Solar → Wind → OA → GC → BESS → Grid</option>
+          <option value="solar-wind-bess-gc-oa-grid">Solar → Wind → BESS → GC → OA → Grid</option>
+        </select>
+      </div>
+      <div><label>Renewable matching basis (mirrors Site tab)</label><input id="priorityHint" type="text" value="see Site & Demand → Energy Objective" disabled></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--grid)"></i>Grid</span>
+      <span><i style="background:var(--solar)"></i>Solar</span>
+      <span><i style="background:var(--wind)"></i>Wind</span>
+      <span><i style="background:var(--oa)"></i>Open Access</span>
+      <span><i style="background:var(--gc)"></i>Group Captive</span>
+      <span><i style="background:var(--bess)"></i>BESS discharge</span>
+    </div>
+    <div class="card"><h3>Representative Day (zoom-in on the 8,760h run)</h3><div id="dispatchChart"></div></div>
+    <div class="card"><h3>Energy Balance Check — full 8,760h year</h3><div id="balanceCheck"></div></div>
+    <div class="card"><h3>Annual Reconciliation — 8,760h Aggregate (the numbers actually used downstream)</h3><div id="annualReconTable"></div></div>
+    <div class="card"><h3>Monthly Energy by Source (GWh) — sum of 12 months = annual total</h3><div id="monthlyChart"></div><div id="monthlyTable" style="margin-top:10px;"></div></div>
+  </div>
+
+  <!-- ============ BESS VALUE STACK ============ -->
+  <div class="view" id="v-bess">
+    <div class="viewhead"><h1>BESS Value Stack &amp; Sizing Optimiser</h1>
+      <p>BESS MW and MWh are independent decision variables (linked only by the min/max C-rate feasibility band below, not fixed to a single C-rate). The model sweeps candidate MW×MWh combinations and finds where marginal value stops exceeding marginal cost, using the full 8,760h engine.</p>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>BESS Parameters</h3>
+        <div class="row"><div><label>Max energy to evaluate (MWh)</label><input id="b_maxmwh" type="number" value="10"></div>
+        <div><label>Max power to evaluate (MW) <span class="pill medium">Tier 5</span></label><input id="b_maxmw" type="number" value="6"></div></div>
+        <div class="row"><div><label>Default C-rate (power/energy) — used only as a starting guide</label><input id="b_crate" type="number" value="0.5" step="0.05"></div>
+        <div></div></div>
+        <div class="row"><div><label>Min allowed C-rate</label><input id="b_cratemin" type="number" value="0.15" step="0.05"></div>
+        <div><label>Max allowed C-rate</label><input id="b_cratemax" type="number" value="1.0" step="0.05"></div></div>
+        <div class="hint">MW and MWh are independent decision variables in the optimiser/sweep (searched on a grid, e.g. 5MW/10MWh vs 5MW/20MWh vs 10MW/20MWh) — implied C-rate (MW/MWh) is checked against the min/max range above and infeasible combinations are rejected before scoring, rather than MW being derived from MWh × a fixed C-rate.</div>
+        <div class="row"><div><label>CAPEX — energy component (₹ Cr/MWh)</label><input id="b_capex" type="number" value="1.9" step="0.05"></div>
+        <div><label>CAPEX — power component (₹ Cr/MW)</label><input id="b_capex_mw" type="number" value="0.35" step="0.05"></div></div>
+        <div class="row"><div><label>Round-trip efficiency (%)</label><input id="b_rte" type="number" value="88"></div></div>
+        <div class="row"><div><label>Usable SOC band (%)</label><input id="b_soc" type="number" value="85"></div>
+        <div><label>Cycles/day (avg)</label><input id="b_cycles" type="number" value="1.2" step="0.1"></div></div>
+        <div class="row"><div><label>Annual degradation (%)</label><input id="b_deg" type="number" value="2.5" step="0.1"></div>
+        <div><label>O&amp;M (% of CAPEX/yr)</label><input id="b_om" type="number" value="1.5" step="0.1"></div></div>
+        <div class="row"><div><label>Useful life before replacement (yrs)</label><input id="b_life" type="number" value="8"></div>
+        <div><label>Replacement CAPEX (% of original ₹/MWh)</label><input id="b_replcost" type="number" value="65" step="1"></div></div>
+        <div class="row"><div><label>Min usable fraction before forced replacement (%)</label><input id="b_minusable" type="number" value="70" step="1"></div>
+        <div></div></div>
+      </div>
+      <div class="card"><h3>Why BESS? — Benefit With vs Without (same 8,760h engine, both runs)</h3><div id="bessWhy"></div></div>
+    </div>
+    <div class="card"><h3>Marginal Value vs Marginal Cost — MW×MWh Grid Sweep</h3><div id="bessSweepChart"></div></div>
+    <div class="card"><h3>Degradation &amp; Replacement Schedule</h3><div id="bessDegTable"></div></div>
+    <div class="card"><h3>Own BESS vs BESS-as-a-Service</h3>
+      <div id="baasCompare2" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <!-- ============ BREAK-EVEN ============ -->
+  <div class="view" id="v-break">
+    <div class="viewhead"><h1>Break-Even Engine</h1><p>Every architecture choice is a threshold, not a rule of thumb.</p></div>
+    <div class="grid2">
+      <div class="card"><h3>Group Captive vs Green OA vs Grid</h3><div id="breakGCOA"></div></div>
+      <div class="card"><h3>BESS vs Grid-Only</h3><div id="breakBESS"></div></div>
+    </div>
+    <div class="grid2">
+      <div class="card"><h3>Own BESS vs BaaS</h3><div id="breakBaaS"></div></div>
+      <div class="card"><h3>COCO vs DOCO</h3><div id="breakCOCO"></div></div>
+    </div>
+    <div class="card"><h3>Grid Connection CAPEX Break-Even</h3><div id="breakGrid"></div></div>
+  </div>
+
+  <!-- ============ RISK ============ -->
+  <div class="view" id="v-risk">
+    <div class="viewhead"><h1>Risk Register</h1></div>
+    <div class="card"><div id="riskTable"></div></div>
+  </div>
+
+  <!-- ============ STATE COMPARISON ============ -->
+  <div class="view" id="v-states">
+    <div class="viewhead"><h1>State Comparison <span class="badge pill medium">Slot 2 — lightweight</span></h1>
+      <p>Runs the SAME integrated engine (same demand, same candidate architecture) against editable per-state assumption sets. This is a comparison tool for the assumptions you enter, not a source of verified tariff data — every figure is tagged VERIFY until you attach a source in the row.</p>
+    </div>
+    <div class="card"><h3>Per-State Assumptions</h3><div id="stateAssumpTable"></div></div>
+    <div class="card"><h3>OA vs GC vs Grid — Delivered ₹/kWh by State (same demand &amp; architecture, run through the 8,760h engine)</h3><div id="stateCompareTable"></div></div>
+    <div class="card">
+      <h3>Independent Best Architecture by State <span class="badge pill medium">full re-optimisation, not a shared architecture</span></h3>
+      <p class="hint">The table above holds the architecture fixed and only swaps state assumptions. This runs the FULL two-stage optimiser (coarse search + exact multi-year refine) separately for each state, so solar/wind/OA/GC/BESS sizing can differ by state. This is heavier (6 full optimisations), so it runs on demand rather than on every keystroke.</p>
+      <button id="runStateOptBtn" class="small ghost">Run full per-state optimisation</button>
+      <div id="stateOptTable" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- ============ AUDIT ============ -->
+  <div class="view" id="v-audit">
+    <div class="viewhead">
+      <h1>Source &amp; Assumption Audit</h1>
+      <p>Every economic input in this model appears here. Fill in the source URL and effective date from the current regulator/company document before treating an output as decision-grade. Nothing here should be read as a verified current fact unless you have added a source.</p>
+    </div>
+    <div class="card"><div id="auditTable"></div></div>
+    <div class="card"><h3>Automated Validation Tests</h3><button class="small ghost" id="runTestsBtn">Run tests</button><div id="testResults" style="margin-top:10px;"></div></div>
+  </div>
+
+  <!-- ============ ABOUT ============ -->
+  <div class="view" id="v-about">
+    <div class="viewhead"><h1>Methodology &amp; Known Limits</h1></div>
+    <div class="card">
+      <h3>What this build actually does</h3>
+      <p style="color:var(--muted);line-height:1.7;" id="aboutMainText"></p>
+      <h3 style="margin-top:16px;">Known simplifications (this revision)</h3>
+      <ul style="color:var(--muted);line-height:1.8;" id="aboutLimitsList"></ul>
+      <h3 style="margin-top:16px;">Files</h3>
+      <p style="color:var(--muted);">index.html (this app, self-contained)</p>
+    </div>
+  </div>
+
+  </div>
+</div>
+
+<script src="edhara.js"></script>
+</body>
+</html>
