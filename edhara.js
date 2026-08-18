@@ -2346,10 +2346,13 @@ function renderTestResults(){
 /* ---------------- nav & tabs wiring ---------------- */
 document.querySelectorAll('.navitem').forEach(item=>{
   item.addEventListener('click', ()=>{
+    if(item.classList.contains('disabled')) return; // not-yet-built tab — no view to switch to
+    const target = $(item.dataset.view);
+    if(!target){ console.warn('Nav target missing for', item.dataset.view, '— tab not switched.'); return; }
     document.querySelectorAll('.navitem').forEach(i=>i.classList.remove('active'));
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     item.classList.add('active');
-    $(item.dataset.view).classList.add('active');
+    target.classList.add('active');
   });
 });
 document.querySelectorAll('.tabbtn').forEach(t=>{
