@@ -51,9 +51,8 @@ a{color:var(--solar);}
 .navitem.active{color:var(--text);border-left:2px solid var(--solar);background:#161c22;font-weight:600;}
 .navitem .dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);flex:0 0 auto;}
 .navitem.active .dot{background:var(--solar);}
-.navitem.disabled{cursor:default;opacity:.45;pointer-events:none;}
-.navitem.disabled:hover{color:var(--muted);background:none;}
-.navitem .soon-badge{margin-left:auto;font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted2);background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:999px;padding:1px 7px;flex:0 0 auto;}
+.navitem.disabled{opacity:.4;cursor:not-allowed;pointer-events:none;}
+.navitem.disabled .soon{font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:#2a2f36;color:var(--muted);border-radius:3px;padding:1px 5px;margin-left:auto;}
 #main{overflow-y:auto;padding:24px 30px 80px;}
 .view{display:none;}
 .view.active{display:block;animation:fade .18s ease;}
@@ -136,38 +135,71 @@ svg text{font-family:'IBM Plex Mono',monospace;}
 ::-webkit-scrollbar{width:9px;height:9px;}
 ::-webkit-scrollbar-thumb{background:#232b32;border-radius:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
+
+/* ===== guided-flow additions ===== */
+.navitem-soon{display:flex;align-items:center;gap:10px;padding:9px 18px;cursor:pointer;color:var(--muted2);font-size:13px;border-left:2px solid transparent;opacity:.62;transition:all .12s;}
+.navitem-soon:hover{opacity:1;color:var(--text);background:#161c22;}
+.navitem-soon .dot{width:6px;height:6px;border-radius:50%;background:var(--muted2);flex:0 0 auto;}
+.navitem-soon .soon{font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:#2a2f36;color:var(--muted);border-radius:3px;padding:1px 5px;margin-left:auto;}
+
+.progressbar{display:flex;align-items:center;gap:0;margin-bottom:20px;overflow-x:auto;padding-bottom:6px;}
+.pstep{display:flex;align-items:center;gap:7px;flex:0 0 auto;padding:6px 10px;border-radius:20px;cursor:pointer;font-size:11.5px;color:var(--muted);white-space:nowrap;}
+.pstep:hover{color:var(--text);}
+.pstep .num{width:18px;height:18px;border-radius:50%;background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:10px;font-family:'IBM Plex Mono';flex:0 0 auto;}
+.pstep.active{color:var(--text);font-weight:600;background:#161c22;}
+.pstep.active .num{background:var(--solar);color:#04201c;border-color:var(--solar);}
+.pstep.done .num{background:var(--good);color:#04201c;border-color:var(--good);}
+.pstep-sep{width:14px;height:1px;background:var(--line);flex:0 0 auto;}
+
+.runcard{background:linear-gradient(160deg,#131a20,#0d1216);border:1px solid var(--solar);}
+.run-btn{background:var(--solar);color:#04201c;font-size:14px;padding:12px 22px;border-radius:8px;font-weight:700;}
+.run-btn:hover{filter:brightness(1.08);}
+
+.dirtybanner{display:none;align-items:center;justify-content:space-between;gap:12px;background:#1b160a;border:1px solid var(--warn);color:#f0cd8a;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:12.5px;}
+.dirtybanner button{background:var(--warn);color:#1b160a;}
+
+.modal-overlay{position:fixed;inset:0;background:rgba(4,6,8,.72);display:none;align-items:center;justify-content:center;z-index:100;}
+.modal-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:24px 26px;max-width:420px;width:90%;}
+.modal-eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--solar);font-weight:700;margin-bottom:6px;}
+.modal-box h3{font-size:17px;margin-bottom:8px;}
+.modal-status{font-size:11px;color:var(--muted2);margin:10px 0 16px;text-transform:uppercase;letter-spacing:.04em;}
 </style>
 </head>
 <body>
 <div id="app">
 
   <div id="topbar">
-    <div class="brand">ENERGYNEX for E-Dhara <span>//</span> ENGINE</div>
+    <div class="brand">E‑DHARA <span>//</span> ENGINE</div>
     <div class="ticker" id="ticker"></div>
     <div id="mixbar"></div>
   </div>
 
   <div id="sidebar">
     <div class="navgroup">
-      <div class="navlabel">Executive</div>
-      <div class="navitem active" data-view="v-site"><span class="dot"></span>Site &amp; Demand</div>
+      <div class="navlabel">Project</div>
+      <div class="navitem active" data-view="v-location"><span class="dot"></span>Location</div>
+      <div class="navitem" data-view="v-demand"><span class="dot"></span>Charging Demand</div>
+      <div class="navitem" data-view="v-objective"><span class="dot"></span>Energy Objective</div>
       <div class="navitem" data-view="v-arch"><span class="dot"></span>Energy Architecture</div>
       <div class="navitem" data-view="v-econ"><span class="dot"></span>Economics</div>
-      <div class="navitem" data-view="v-own"><span class="dot"></span>Ownership</div>
+    </div>
+    <div class="navgroup">
+      <div class="navlabel">Results</div>
       <div class="navitem" data-view="v-scen"><span class="dot"></span>Scenarios</div>
       <div class="navitem" data-view="v-decision"><span class="dot"></span>Strategic Decision</div>
     </div>
     <div class="navgroup">
-      <div class="navlabel">Advanced Model</div>
-      <div class="navitem disabled" data-view="v-dispatch" title="Not yet built — coming soon"><span class="dot"></span>Hourly Dispatch<span class="soon-badge">Soon</span></div>
-      <div class="navitem disabled" data-view="v-bess" title="Not yet built — coming soon"><span class="dot"></span>BESS Value Stack<span class="soon-badge">Soon</span></div>
-      <div class="navitem disabled" data-view="v-break" title="Not yet built — coming soon"><span class="dot"></span>Break-Even Engine<span class="soon-badge">Soon</span></div>
-      <div class="navitem disabled" data-view="v-risk" title="Not yet built — coming soon"><span class="dot"></span>Risk Register<span class="soon-badge">Soon</span></div>
-      <div class="navitem disabled" title="Not yet built — coming soon"><span class="dot"></span>Portfolio &amp; Corridor<span class="soon-badge">Soon</span></div>
-      <div class="navitem disabled" data-view="v-states" title="Not yet built — coming soon"><span class="dot"></span>State Comparison<span class="soon-badge">Soon</span></div>
+      <div class="navlabel">Advanced Model — Soon</div>
+      <div class="navitem-soon" data-soon="dispatch"><span class="dot"></span>Hourly Dispatch<span class="soon">Soon</span></div>
+      <div class="navitem-soon" data-soon="bess"><span class="dot"></span>BESS Value Stack<span class="soon">Soon</span></div>
+      <div class="navitem-soon" data-soon="break"><span class="dot"></span>Break-Even Engine<span class="soon">Soon</span></div>
+      <div class="navitem-soon" data-soon="risk"><span class="dot"></span>Risk Register<span class="soon">Soon</span></div>
+      <div class="navitem-soon" data-soon="portfolio"><span class="dot"></span>Portfolio &amp; Corridor<span class="soon">Soon</span></div>
+      <div class="navitem-soon" data-soon="states"><span class="dot"></span>State Comparison<span class="soon">Soon</span></div>
+      <div class="navitem-soon" data-soon="own"><span class="dot"></span>Ownership &amp; Capital<span class="soon">Soon</span></div>
     </div>
     <div class="navgroup">
-      <div class="navlabel">Audit</div>
+      <div class="navlabel">Reference</div>
       <div class="navitem" data-view="v-audit"><span class="dot"></span>Source &amp; Assumption Audit</div>
       <div class="navitem" data-view="v-about"><span class="dot"></span>Methodology / Limits</div>
     </div>
@@ -175,83 +207,69 @@ svg text{font-family:'IBM Plex Mono',monospace;}
 
   <div id="main">
 
-  <!-- ============ SITE & DEMAND ============ -->
-  <div class="view active" id="v-site">
+  <div class="progressbar" id="progressBar"></div>
+  <div class="dirtybanner" id="dirtyBanner"><span>Inputs changed since the last run — results on this page may be out of date.</span><button class="small" id="rerunBtn">Run Analysis Again</button></div>
+
+  <!-- ============ LOCATION ============ -->
+  <div class="view active" id="v-location">
     <div class="viewhead">
-      <h1>Site &amp; Demand</h1>
-      <p>Every downstream calculation is derived from this page. Nothing here is decided in advance — the architecture is discovered from what you enter.</p>
+      <h1>Location &amp; Site</h1>
+      <p>Tell us where this site is and what type of charging location you are evaluating. Every downstream calculation is derived from this page onward — nothing is decided in advance.</p>
     </div>
 
-    <div class="grid2">
-      <div class="card">
-        <h3>Location</h3>
-        <div class="row">
-          <div><label>State</label>
-            <select id="in_state">
-              <option>Gujarat</option><option>Maharashtra</option><option>Karnataka</option>
-              <option>Tamil Nadu</option><option>Delhi</option><option>Rajasthan</option>
-              <option>Other (manual entry)</option>
-            </select>
-          </div>
-          <div><label>Site archetype <span class="pill medium">Tier 12</span></label>
-            <select id="in_archetype">
-              <option value="lowutil">Low-utilisation public charger</option>
-              <option value="urbanhpc">Urban HPC hub</option>
-              <option value="highway" selected>Highway HPC hub</option>
-              <option value="fleet">Fleet depot</option>
-              <option value="etruck">Electric truck hub</option>
-              <option value="ebus">Electric bus depot</option>
-            </select>
-          </div>
+    <div class="card">
+      <h3>Location</h3>
+      <div class="row">
+        <div><label>State</label>
+          <select id="in_state">
+            <option>Gujarat</option><option>Maharashtra</option><option>Karnataka</option>
+            <option>Tamil Nadu</option><option>Delhi</option><option>Rajasthan</option>
+            <option>Other (manual entry)</option>
+          </select>
         </div>
-        <div class="btnrow"><button class="small ghost" id="applyArchetype">Apply archetype defaults</button></div>
-        <div class="hint">Archetype defaults set vehicle mix, operating hours and demand shape as editable starting points — labelled <b>ASSUMPTION</b>, not sourced ChargeZone operating data. Every value remains overridable below.</div>
-        <div class="row">
-          <div><label>DISCOM / supply area (Gujarat)</label>
-            <select id="in_discom" onchange="applyDiscom(this.value)">
-              <option value="DGVCL" selected>DGVCL (state-owned)</option>
-              <option value="MGVCL">MGVCL (state-owned)</option>
-              <option value="PGVCL">PGVCL (state-owned)</option>
-              <option value="UGVCL">UGVCL (state-owned)</option>
-              <option value="Torrent-Ahmedabad">Torrent Power — Ahmedabad</option>
-              <option value="Torrent-Surat">Torrent Power — Surat</option>
-              <option value="Torrent-Dahej">Torrent Power — Dahej</option>
-              <option value="MUL">MUL (Maruti captive licensee)</option>
-              <option value="AIVPL">AIVPL</option>
-              <option value="GIFT-PCL">GIFT Power Company Ltd (GIFT City)</option>
-              <option value="other">Other / outside Gujarat (manual entry)</option>
-            </select>
-            <div id="discomStatusNote" class="hint"><span class="pill high">VERIFIED</span> Tariff fields pre-filled from the GERC FY2026-27 schedule for DGVCL. All fields remain editable.</div>
-          </div>
-          <div><label>Connection voltage</label>
-            <select id="in_voltage"><option>LT</option><option selected>11 kV</option><option>33 kV</option><option>66 kV+</option></select>
-          </div>
+        <div><label>Site archetype <span class="pill medium">Tier 12</span></label>
+          <select id="in_archetype">
+            <option value="lowutil">Low-utilisation public charger</option>
+            <option value="urbanhpc">Urban HPC hub</option>
+            <option value="highway" selected>Highway HPC hub</option>
+            <option value="fleet">Fleet depot</option>
+            <option value="etruck">Electric truck hub</option>
+            <option value="ebus">Electric bus depot</option>
+          </select>
         </div>
-        <div class="flagbox">State-specific tariff, OA and GC charge figures used elsewhere in this model are <b>editable model assumptions</b>, not verified current regulator filings — see the Audit tab. Populate them from the current GERC/MERC/KERC/TNERC/DERC/RERC order before using this for a real investment decision.</div>
       </div>
+      <div class="btnrow"><button class="small ghost" id="applyArchetype">Apply archetype defaults</button></div>
+      <div class="hint">Archetype defaults set vehicle mix, operating hours and demand shape as editable starting points — labelled <b>ASSUMPTION</b>, not sourced ChargeZone operating data. Every value remains overridable below.</div>
+      <div class="row">
+        <div><label>DISCOM / supply area (Gujarat)</label>
+          <select id="in_discom" onchange="applyDiscom(this.value)">
+            <option value="DGVCL" selected>DGVCL (state-owned)</option>
+            <option value="MGVCL">MGVCL (state-owned)</option>
+            <option value="PGVCL">PGVCL (state-owned)</option>
+            <option value="UGVCL">UGVCL (state-owned)</option>
+            <option value="Torrent-Ahmedabad">Torrent Power — Ahmedabad</option>
+            <option value="Torrent-Surat">Torrent Power — Surat</option>
+            <option value="Torrent-Dahej">Torrent Power — Dahej</option>
+            <option value="MUL">MUL (Maruti captive licensee)</option>
+            <option value="AIVPL">AIVPL</option>
+            <option value="GIFT-PCL">GIFT Power Company Ltd (GIFT City)</option>
+            <option value="other">Other / outside Gujarat (manual entry)</option>
+          </select>
+          <div id="discomStatusNote" class="hint"><span class="pill high">VERIFIED</span> Tariff fields pre-filled from the GERC FY2026-27 schedule for DGVCL. All fields remain editable.</div>
+        </div>
+        <div><label>Connection voltage</label>
+          <select id="in_voltage"><option>LT</option><option selected>11 kV</option><option>33 kV</option><option>66 kV+</option></select>
+        </div>
+      </div>
+      <div class="flagbox">State-specific tariff, OA and GC charge figures used elsewhere in this model are <b>editable model assumptions</b>, not verified current regulator filings — see the Audit tab. Populate them from the current GERC/MERC/KERC/TNERC/DERC/RERC order before using this for a real investment decision.</div>
+    </div>
+  </div>
 
-      <div class="card">
-        <h3>Energy Objective</h3>
-        <div class="row">
-          <div><label>Conventional grid electricity allowed?</label>
-            <select id="in_gridallowed"><option value="1">Yes</option><option value="0">No</option></select>
-          </div>
-          <div><label>Renewable target (% of annual energy)</label><input id="in_retarget" type="number" value="60" min="0" max="100"></div>
-        </div>
-        <div class="row">
-          <div><label>Renewable definition required</label>
-            <select id="in_redef">
-              <option value="annual">Annual matching (contractual, most common)</option>
-              <option value="hourly">Hourly / time-matched physical matching</option>
-              <option value="attributed">Contractual attribution only (RECs/certificates)</option>
-            </select>
-          </div>
-          <div><label>Reliability requirement</label>
-            <select id="in_reliab"><option value="std">Standard (grid backup acceptable)</option><option value="high">High (near-zero unserved demand)</option></select>
-          </div>
-        </div>
-        <div class="hint">These three concepts — physical flow, commercial procurement, and the customer-facing "renewable charging" claim — are tracked separately throughout this model and are never collapsed into one number. See Methodology tab.</div>
-      </div>
+  <!-- ============ CHARGING DEMAND ============ -->
+  <div class="view" id="v-demand">
+    <div class="viewhead">
+      <h1>Charging Demand</h1>
+      <p>How much charging demand will this site have? Vehicle mix and sessions are treated as the site's steady-state (terminal) demand; the utilisation ramp below scales each project year before it reaches the dispatch engine.</p>
     </div>
 
     <div class="card">
@@ -281,6 +299,37 @@ svg text{font-family:'IBM Plex Mono',monospace;}
     </div>
 
     <div class="grid4" id="demandKPIs"></div>
+  </div>
+
+  <!-- ============ ENERGY OBJECTIVE ============ -->
+  <div class="view" id="v-objective">
+    <div class="viewhead">
+      <h1>Energy Objective</h1>
+      <p>What are we trying to achieve with the energy system? Tell the engine what matters — it then searches for the architecture that best satisfies these objectives. Renewable is a constraint you set, not a conclusion the model assumes.</p>
+    </div>
+
+    <div class="card">
+      <h3>Energy Objective</h3>
+      <div class="row">
+        <div><label>Conventional grid electricity allowed?</label>
+          <select id="in_gridallowed"><option value="1">Yes</option><option value="0">No</option></select>
+        </div>
+        <div><label>Renewable target (% of annual energy)</label><input id="in_retarget" type="number" value="60" min="0" max="100"></div>
+      </div>
+      <div class="row">
+        <div><label>Renewable definition required</label>
+          <select id="in_redef">
+            <option value="annual">Annual matching (contractual, most common)</option>
+            <option value="hourly">Hourly / time-matched physical matching</option>
+            <option value="attributed">Contractual attribution only (RECs/certificates)</option>
+          </select>
+        </div>
+        <div><label>Reliability requirement</label>
+          <select id="in_reliab"><option value="std">Standard (grid backup acceptable)</option><option value="high">High (near-zero unserved demand)</option></select>
+        </div>
+      </div>
+      <div class="hint">These three concepts — physical flow, commercial procurement, and the customer-facing "renewable charging" claim — are tracked separately throughout this model and are never collapsed into one number. See Methodology tab.</div>
+    </div>
   </div>
 
   <!-- ============ ENERGY ARCHITECTURE ============ -->
@@ -465,6 +514,14 @@ svg text{font-family:'IBM Plex Mono',monospace;}
     </div>
 
     <div class="card"><h3>Cash Flow (15-year, ₹ Cr) — each year driven by its own 8,760h dispatch at that year's utilisation</h3><div id="cashflowTable" style="max-height:320px;overflow:auto;"></div></div>
+
+    <div class="card runcard" id="runCard">
+      <h3 style="color:var(--text);">Run Site Analysis</h3>
+      <p class="hint" style="margin-bottom:12px;font-size:12px;">Review your inputs above, then run the full analysis to generate the recommended architecture, scenarios and strategic decision for this site.</p>
+      <div id="runValidation" class="flagbox bad" style="display:none;"></div>
+      <button id="runAnalysisBtn" class="run-btn">Run Site Analysis →</button>
+      <div id="runStatusNote" class="hint" style="margin-top:10px;"></div>
+    </div>
   </div>
 
   <!-- ============ OWNERSHIP ============ -->
@@ -654,6 +711,151 @@ svg text{font-family:'IBM Plex Mono',monospace;}
   </div>
 </div>
 
+<div class="modal-overlay" id="soonModalOverlay">
+  <div class="modal-box">
+    <div class="modal-eyebrow">Coming Soon</div>
+    <h3 id="soonModalTitle"></h3>
+    <p class="hint" id="soonModalDesc" style="font-size:12.5px;line-height:1.6;"></p>
+    <div class="modal-status" id="soonModalStatus"></div>
+    <button class="small" id="soonModalClose">Got it</button>
+  </div>
+</div>
+
 <script src="edhara.js"></script>
+<script>
+/* ================================================================
+   GUIDED-FLOW LAYER — added on top of the existing engine.
+   Does not modify edhara.js: reuses its global renderAll()/getLastState()
+   and its existing '.navitem' click behaviour, and only adds new
+   interface plumbing for the simplified Location -> Demand ->
+   Energy Objective -> Energy Architecture -> Economics -> Run ->
+   Scenarios -> Strategic Decision journey, plus the "Soon" wall
+   around the deeper engineering tabs.
+   ================================================================ */
+(function(){
+  // ---------- "Soon" modal for Advanced Model items ----------
+  const SOON_INFO = {
+    dispatch:  {title:"8,760-Hour Dispatch",   desc:"Hour-by-hour physical dispatch, grid constraints, BESS behaviour, curtailment and unserved energy — the engineering layer behind the investment decision."},
+    bess:      {title:"BESS Value Stack",      desc:"Battery sizing, degradation, replacement and value-versus-cost analysis, including the independent MW × MWh sizing sweep."},
+    break:     {title:"Break-Even Engine",     desc:"Identifies the utilisation, tariff and cost thresholds where the recommendation changes."},
+    risk:      {title:"Risk Register",         desc:"Structured project risks across demand, grid, regulation, financing and execution."},
+    portfolio: {title:"Portfolio & Corridor",  desc:"Compare multiple sites and determine where the next unit of capital should go."},
+    states:    {title:"State Comparison",      desc:"Compare the same site architecture across different state tariff/CUF assumptions."},
+    own:       {title:"Ownership & Capital",   desc:"COCO vs partial-DOCO vs BESS-as-a-Service comparisons for the recommended architecture."},
+  };
+  const overlay = document.getElementById('soonModalOverlay');
+  const mTitle = document.getElementById('soonModalTitle');
+  const mDesc = document.getElementById('soonModalDesc');
+  const mStatus = document.getElementById('soonModalStatus');
+  function openSoonModal(key){
+    const info = SOON_INFO[key] || {title:"Coming Soon", desc:""};
+    mTitle.textContent = info.title;
+    mDesc.textContent = info.desc;
+    mStatus.textContent = "STATUS: ADVANCED MODEL — the current version focuses on the site-level investment decision.";
+    overlay.style.display = 'flex';
+  }
+  document.querySelectorAll('.navitem-soon').forEach(item=>{
+    item.addEventListener('click', ()=> openSoonModal(item.dataset.soon));
+  });
+  document.getElementById('soonModalClose').addEventListener('click', ()=>{ overlay.style.display='none'; });
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.style.display='none'; });
+
+  // ---------- progress stepper ----------
+  const STEPS = [
+    {view:'v-location',  label:'Location',            n:1},
+    {view:'v-demand',    label:'Demand',               n:2},
+    {view:'v-objective', label:'Energy Objective',     n:3},
+    {view:'v-arch',      label:'Energy Architecture',  n:4},
+    {view:'v-econ',      label:'Economics',            n:5},
+    {view:'v-scen',      label:'Scenarios',            n:6},
+    {view:'v-decision',  label:'Strategic Decision',   n:7},
+  ];
+  const bar = document.getElementById('progressBar');
+  bar.innerHTML = STEPS.map((s,i)=>
+    `<div class="pstep" data-view="${s.view}"><span class="num">${s.n}</span><span>${s.label}</span></div>` +
+    (i<STEPS.length-1 ? '<div class="pstep-sep"></div>' : '')
+  ).join('');
+  bar.querySelectorAll('.pstep').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const nav = document.querySelector('.navitem[data-view="'+el.dataset.view+'"]');
+      if(nav) nav.click();
+    });
+  });
+
+  let hasRun = false;
+  let dirty = false;
+  const dirtyBanner = document.getElementById('dirtyBanner');
+
+  function currentViewId(){
+    const active = document.querySelector('#main > .view.active');
+    return active ? active.id : '';
+  }
+  function updateStepper(){
+    const activeId = currentViewId();
+    const activeIdx = STEPS.findIndex(s=>s.view===activeId);
+    bar.querySelectorAll('.pstep').forEach((el,i)=>{
+      el.classList.toggle('active', el.dataset.view===activeId);
+      el.classList.toggle('done', hasRun && i<=activeIdx);
+    });
+  }
+  function updateDirtyBanner(){
+    const activeId = currentViewId();
+    const onResults = (activeId==='v-scen' || activeId==='v-decision');
+    dirtyBanner.style.display = (hasRun && dirty && onResults) ? 'flex' : 'none';
+  }
+
+  // keep stepper/banner synced with the existing nav click handling in edhara.js
+  document.querySelectorAll('.navitem').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      if(item.classList.contains('disabled')) return;
+      setTimeout(()=>{ updateStepper(); updateDirtyBanner(); }, 0);
+    });
+  });
+  updateStepper();
+
+  document.addEventListener('input', e=>{
+    if(!e.target.matches('input,select')) return;
+    if(e.target.closest('#demandTable')) { if(hasRun){ dirty = true; updateDirtyBanner(); } return; }
+    if(hasRun){ dirty = true; updateDirtyBanner(); }
+  });
+
+  // ---------- validation + Run Site Analysis ----------
+  const REQUIRED = [
+    {id:'e_price', label:'Public charging price (Economics)'},
+    {id:'g_sanc',  label:'Sanctioned grid capacity (Energy Architecture → Grid)'},
+    {id:'in_opdays', label:'Operating days / year (Charging Demand)'},
+  ];
+  function validateInputs(){
+    const missing = [];
+    REQUIRED.forEach(r=>{
+      const el = document.getElementById(r.id);
+      const v = el ? parseFloat(el.value) : NaN;
+      if(!el || el.value===''||isNaN(v)||v<=0) missing.push(r.label);
+    });
+    return missing;
+  }
+  const runValidation = document.getElementById('runValidation');
+  const runStatusNote = document.getElementById('runStatusNote');
+  function runAnalysis(){
+    const missing = validateInputs();
+    if(missing.length){
+      runValidation.style.display = 'block';
+      runValidation.innerHTML = '<b>'+missing.length+' input'+(missing.length>1?'s':'')+' need'+(missing.length>1?'':'s')+' your attention before we can run the analysis:</b><br>'+missing.join(' · ');
+      return;
+    }
+    runValidation.style.display = 'none';
+    if(typeof renderAll==='function') renderAll();
+    hasRun = true;
+    dirty = false;
+    runStatusNote.textContent = 'Analysis complete — see Scenarios and Strategic Decision in the sidebar.';
+    const scenNav = document.querySelector('.navitem[data-view="v-scen"]');
+    if(scenNav) scenNav.click();
+    updateStepper();
+    updateDirtyBanner();
+  }
+  document.getElementById('runAnalysisBtn').addEventListener('click', runAnalysis);
+  document.getElementById('rerunBtn').addEventListener('click', runAnalysis);
+})();
+</script>
 </body>
 </html>
