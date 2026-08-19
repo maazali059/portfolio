@@ -206,6 +206,7 @@ function runDispatch8760(profiles, params, collectHourly){
     demand:0, solar:0, wind:0, gc:0, oa:0, bessCharge:0, bessDischarge:0, grid:0, curtail:0, unserved:0
   }));
   let peakGridMW = 0;
+  let peakGridNeedMW = 0;
   const hourly = collectHourly ? [] : null;
 
   for(let h=0; h<n; h++){
@@ -227,7 +228,10 @@ function runDispatch8760(profiles, params, collectHourly){
         if(u>0){ bessDis+=u; need-=u; soc-=u/params.dischargeEff; }
       }
     }
-    // grid resolves last, hard-capped
+    // grid resolves last, hard-capped — track the UNCAPPED requirement too,
+    // so the reason for any unserved energy can be shown honestly (peakGridMW
+    // itself is always <= gridCapMW by construction and can never "exceed" it).
+    peakGridNeedMW = Math.max(peakGridNeedMW, Math.max(need,0));
     gridUsed = Math.min(params.gridCapMW, Math.max(need,0));
     let unserved = Math.max(need-gridUsed, 0);
 
@@ -270,7 +274,7 @@ function runDispatch8760(profiles, params, collectHourly){
     grid:s.grid+m.grid, curtail:s.curtail+m.curtail, unserved:s.unserved+m.unserved
   }), {demand:0,solar:0,wind:0,gc:0,oa:0,bessCharge:0,bessDischarge:0,grid:0,curtail:0,unserved:0});
 
-  return {monthly, annual, peakGridMW, hourly};
+  return {monthly, annual, peakGridMW, peakGridNeedMW, hourly};
 }
 
 
@@ -783,6 +787,7 @@ function evaluateCandidateSteadyState(inp, units, baseDemand8760, candidate, gri
 
   return {
     candidate, annual:a, servedMWh, renShare, unservedMWh:a.unserved, peakGridMW:result.peakGridMW,
+    peakGridNeedMW:result.peakGridNeedMW,
     sanctionedMW:gridCapMW, totalCapexCr, equityCr, debtCr, revenueCr, energyCostCr, omTotalCr, ebitdaCr,
     landedCostPerKWh, proxyEquityIRR, proxyProjectIRR, proxyNPV, dscrY1,
     gcMyEquityCapexCr, gcCapexTotalCr, bessCapexCr, blendedPrice,
@@ -1353,24 +1358,37 @@ function renderDemandTable(){
   });
 }
 
-function renderTicker(baseDemand8760, best, finExact){
+function renderTicker(baseDemand8760, best, finExact, inp){
   const annualGWh = sumProfile(baseDemand8760)/1000;
   const peakMW = Math.max(...baseDemand8760);
   const t=$('ticker');
+  const renGap = (inp?.retarget ?? 0) - best.renShare;
+  const renSub = renGap > 0.05
+    ? `<div class="tsub warn">▼ ${fmt(renGap,1)}pt vs ${fmt(inp.retarget,0)}% target — why?</div>`
+    : (inp ? `<div class="tsub good">meets ${fmt(inp.retarget,0)}% target</div>` : '');
+  const unservedSub = (best.unservedMWh||0) > 0.01 ? `<div class="tsub warn">grid-capped — why?</div>` : '';
   t.innerHTML = `
     ${tick('ANNUAL DEMAND (terminal)', fmt(annualGWh,2), 'GWh')}
     ${tick('PEAK LOAD', fmt(peakMW,2), 'MW')}
     ${tick('LANDED COST', fmt(best.landedCostPerKWh,2), '₹/kWh')}
-    ${tick('RENEWABLE', fmt(best.renShare,1), '%')}
+    ${tick('RENEWABLE', fmt(best.renShare,1), '%', renSub, true)}
     ${tick('PROJECT IRR', irrLabel(finExact.projectIRR), '')}
     ${tick('EQUITY IRR', irrLabel(finExact.equityIRR), '')}
-    ${tick('UNSERVED', fmt(best.unservedMWh||0,1), 'MWh/yr')}
+    ${tick('UNSERVED', fmt(best.unservedMWh||0,1), 'MWh/yr', unservedSub, unservedSub!=='')}
     ${tick('SCENARIO', scenarioPresets[scenario].label, '')}
   `;
+  t.querySelectorAll('.tick.clickable').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const nav = document.querySelector('.navitem[data-view="v-decision"]');
+      if(nav) nav.click();
+    });
+  });
   const mix = $('mixbar');
   const segs = [{v:best.renShare,c:'var(--solar)'},{v:100-best.renShare,c:'var(--grid)'}];
   mix.innerHTML = segs.map(s=>`<div style="flex:${Math.max(s.v,0.5)};background:${s.c}"></div>`).join('');
-  function tick(l,v,u){ return `<div class="tick"><div class="l">${l}</div><div class="v">${v}<span style="font-size:10px;color:var(--muted)"> ${u}</span></div></div>`; }
+  function tick(l,v,u,sub,clickable){
+    return `<div class="tick${clickable?' clickable':''}"><div class="l">${l}</div><div class="v">${v}<span style="font-size:10px;color:var(--muted)"> ${u}</span></div>${sub||''}</div>`;
+  }
 }
 
 function renderDemandKPIs(baseDemand8760, inp){
@@ -1622,6 +1640,18 @@ function decomposePenalty(ev, finExact, inp){
 }
 
 function renderDecisionTab(inp, best, nextBest, finExact, presets){
+  const renGapPts = inp.retarget - best.renShare;
+  const gridSharePctOfDemand = best.annual.demand>0 ? (best.annual.grid/best.annual.demand*100) : 0;
+  const unservedSharePctOfDemand = best.annual.demand>0 ? (best.unservedMWh/best.annual.demand*100) : 0;
+  const renGapBox = renGapPts > 0.05 ? `<div class="flagbox" style="margin-top:14px">
+      <b>Why ${fmt(best.renShare,1)}% renewable, not the ${fmt(inp.retarget,0)}% target you set.</b>
+      The renewable target is a scored constraint in the optimiser, not a hard 100% rule — every candidate is judged on NPV/IRR net of penalties (renewable shortfall, DSCR, grid dependency, curtailment, unserved energy), and this architecture won because closing the remaining ${fmt(renGapPts,1)} pt gap would have needed more CAPEX than the shortfall penalty currently costs it.
+      <div style="margin-top:8px">That ${fmt(renGapPts,1)} pt gap splits as:
+        <b>${fmt(gridSharePctOfDemand,1)}%</b> residual grid import (${fmt(best.annual.grid/1000,2)} GWh/yr)${best.unservedMWh>0.01?` <b>+ ${fmt(unservedSharePctOfDemand,1)}%</b> unserved energy (${fmt(best.unservedMWh,1)} MWh/yr — demand the dispatch could not meet even from the grid)`:''}.
+        Both count against the renewable percentage because it is measured against <i>total</i> demand, not just demand that was actually served.
+      </div>
+      <div style="margin-top:8px">Exact multi-year equity IRR here is ${irrLabel(finExact.equityIRR)} against a ${fmt(inp.f_hurdle,1)}% hurdle${finExact.equityIRR<inp.f_hurdle?' — already below it':''}, which is why the optimiser did not push further toward 100%. See "What would change the decision?" below for the specific levers (grid capacity, BESS CAPEX, utilisation) that close this gap.</div>
+    </div>` : '';
   $('decisionMain').innerHTML = `
     <div class="hint" style="text-transform:uppercase;letter-spacing:0.08em;color:var(--solar)">Recommended architecture — ${scenarioPresets[scenario].label}</div>
     <h2>${best.name}</h2>
@@ -1631,7 +1661,8 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
       ${kpiCard('CAPEX required', fmt(finExact.totalCapexCr,1),'₹ Cr')}
       ${kpiCard('Equity IRR (exact, multi-year)', irrLabel(finExact.equityIRR),'')}
     </div>
-    ${best.unservedMWh>0.01 ? `<div class="flagbox bad" style="margin-top:14px"><b>Grid connection capacity exceeded.</b> This architecture's peak hourly grid draw (${fmt(best.peakGridMW,2)} MW) exceeds the sanctioned/upgraded capacity (${fmt(best.sanctionedMW,2)} MW). ${fmt(best.unservedMWh,1)} MWh/yr of demand is modelled as UNSERVED across the 8,760h year, not silently imported — enable/expand the grid upgrade on the Grid Supply tab or add BESS/renewables to close the gap.</div>` : ''}`;
+    ${renGapBox}
+    ${best.unservedMWh>0.01 ? `<div class="flagbox bad" style="margin-top:14px"><b>Grid connection capacity is the binding constraint.</b> In this architecture's peak hour, the site needed <b>${fmt(best.peakGridNeedMW,2)} MW</b> from the grid after solar/wind/OA/GC/BESS were exhausted — but the sanctioned/upgraded connection only allows <b>${fmt(best.sanctionedMW,2)} MW</b>. The grid delivered its full ${fmt(best.sanctionedMW,2)} MW ceiling in those hours (so "peak grid draw" itself always shows ≤ the cap — it can never exceed it, since it's hard-capped in the dispatch); the ${fmt(Math.max(best.peakGridNeedMW-best.sanctionedMW,0),2)} MW shortfall in those hours is what's left unserved, totalling ${fmt(best.unservedMWh,1)} MWh/yr across the 8,760h year — not silently imported. Enable/expand the grid upgrade on the Grid Supply tab, or add BESS/renewables sized to cover peak hours, to close the gap.</div>` : ''}`;
 
   const gridOnly = presets.find(p=>p.name==='Grid only');
   const reasons = [
@@ -1640,7 +1671,7 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
     `Achieves ${fmt(best.renShare,1)}% renewable share (physical-flow definition, from actual hourly dispatch) under the "${inp.redef==='hourly'?'hourly time-matched':inp.redef==='attributed'?'contractual attribution':'annual matching'}" definition selected on the Site tab.`,
     `Exact multi-year project IRR of ${irrLabel(finExact.projectIRR)} and equity IRR of ${irrLabel(finExact.equityIRR)} against a ${fmt(inp.f_hurdle,1)}% hurdle rate, with average DSCR of ${fmt(finExact.avgDSCR,2)}× (covenant ${fmt(inp.f_mindscr,2)}×, ${finExact.dscrOK?'met':'NOT met'}).`,
     `Requires ₹${fmt(finExact.totalCapexCr,1)} Cr total CAPEX — the search compares this against the NPV/IRR it produces, so a cheaper-₹/kWh option with weaker returns can be correctly passed over.`,
-    `Grid connection: peak hourly draw of ${fmt(best.peakGridMW,2)} MW against ${fmt(best.sanctionedMW,2)} MW available capacity — ${best.unservedMWh>0.01?fmt(best.unservedMWh,1)+' MWh/yr unserved under current sizing':'no unserved energy under current sizing'}.`,
+    `Grid connection: peak hourly requirement of ${fmt(best.peakGridNeedMW,2)} MW against ${fmt(best.sanctionedMW,2)} MW available capacity — ${best.unservedMWh>0.01?fmt(best.unservedMWh,1)+' MWh/yr unserved under current sizing':'no unserved energy under current sizing'}.`,
     `Grid was retained for residual demand ${best.annual.grid>0.01?`(${fmt(best.annual.grid/1000,2)} GWh/yr, ${fmt(best.annual.grid/best.annual.demand*100,0)}% of demand)`:'not at all'} because, at this sizing, its marginal ₹/kWh was below the annualised cost of adding further BESS/renewable capacity to displace it further.`,
   ];
   $('whyList').innerHTML = reasons.map((r,i)=>`<div class="reason"><div class="n">${String(i+1).padStart(2,'0')}</div><div>${r}</div></div>`).join('');
@@ -2165,7 +2196,7 @@ function renderAll(){
     const presets = buildArchitecturePresets(inp, units, baseDemand8760, gridCapMW, best);
     const curEval = evaluateCandidateSteadyState(inp, units, baseDemand8760, {solarMW:inp.s_mw, windMW:inp.w_mw, oaMW:inp.oa_mw, gcMW:inp.gc_mw, bessMW:0, bessMWh:0}, gridCapMW, null);
 
-    renderTicker(baseDemand8760, best, finExact);
+    renderTicker(baseDemand8760, best, finExact, inp);
     renderDemandKPIs(baseDemand8760, inp);
     renderArchTab(inp, units, curEval, oa, presets, gridCapMW);
     renderEconTab(inp, units, baseDemand8760, best, finExact, gridCapMW);
