@@ -197,6 +197,7 @@ function runDispatch8760(profiles, params, collectHourly){
     demand:0, solar:0, wind:0, gc:0, oa:0, bessCharge:0, bessDischarge:0, grid:0, curtail:0, unserved:0
   }));
   let peakGridMW = 0;
+  let peakGridNeedMW = 0;
   const hourly = collectHourly ? [] : null;
 
   for(let h=0; h<n; h++){
@@ -218,7 +219,10 @@ function runDispatch8760(profiles, params, collectHourly){
         if(u>0){ bessDis+=u; need-=u; soc-=u/params.dischargeEff; }
       }
     }
-    // grid resolves last, hard-capped
+    // grid resolves last, hard-capped — track the UNCAPPED requirement too,
+    // so any unserved energy can be explained honestly (peakGridMW itself is
+    // always <= gridCapMW by construction and can never "exceed" it).
+    peakGridNeedMW = Math.max(peakGridNeedMW, Math.max(need,0));
     gridUsed = Math.min(params.gridCapMW, Math.max(need,0));
     let unserved = Math.max(need-gridUsed, 0);
 
@@ -261,7 +265,7 @@ function runDispatch8760(profiles, params, collectHourly){
     grid:s.grid+m.grid, curtail:s.curtail+m.curtail, unserved:s.unserved+m.unserved
   }), {demand:0,solar:0,wind:0,gc:0,oa:0,bessCharge:0,bessDischarge:0,grid:0,curtail:0,unserved:0});
 
-  return {monthly, annual, peakGridMW, hourly};
+  return {monthly, annual, peakGridMW, peakGridNeedMW, hourly};
 }
 
 module.exports = {

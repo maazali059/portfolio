@@ -1639,6 +1639,72 @@ function decomposePenalty(ev, finExact, inp){
   };
 }
 
+/* ================================================================
+   RETURN DIAGNOSTICS — explains WHY IRR/NPV look weak (or don't),
+   in terms of the specific mechanism, not just the headline numbers.
+   Reads only off the already-computed best/finExact result — adds no
+   new calculation, so it can never disagree with the numbers shown
+   elsewhere on this tab. Uses peakGridNeedMW (the uncapped hourly
+   requirement) rather than peakGridMW (the capped delivery) when
+   describing the grid-capacity constraint, since peakGridMW is by
+   construction always <= sanctionedMW and can never "exceed" it —
+   peakGridNeedMW is what actually explains any unserved energy.
+   ================================================================ */
+function computeReturnDiagnostics(inp, best, finExact){
+  const findings = [];
+  const rows = finExact.rows || [];
+  const y1 = rows[0];
+  const terminal = rows.slice().reverse().find(r=>r.utilFrac>=0.999) || rows[rows.length-1];
+
+  // 1. Chronic, steady-state capacity-constrained unserved energy (recurs every year, not a ramp issue)
+  if(terminal){
+    const unservedPct = terminal.annual.demand>0 ? (terminal.annual.unserved/terminal.annual.demand*100) : 0;
+    if(unservedPct > 3){
+      const lostRevenueCr = terminal.annual.unserved*1000*best.blendedPrice/1e7;
+      const severity = unservedPct>10 ? 'bad' : '';
+      findings.push({sev:severity, title:`Grid/asset capacity is the binding constraint, not energy cost — ${fmt(unservedPct,1)}% of demand goes unserved every year at steady state.`,
+        detail:`${fmt(terminal.annual.unserved,0)} MWh/yr of the ${fmt(terminal.annual.demand,0)} MWh/yr terminal demand is modelled as UNSERVED — this recurs every year at steady state, it is not a ramp-up artefact. In this architecture's peak hour the site needed ${fmt(best.peakGridNeedMW,2)} MW from the grid after solar/wind/OA/GC/BESS were exhausted, against ${fmt(best.sanctionedMW,2)} MW sanctioned/upgraded capacity (the grid itself always delivers ≤ its cap by construction — it is the ${fmt(Math.max(best.peakGridNeedMW-best.sanctionedMW,0),2)} MW shortfall in those hours that goes unserved). Estimated lost revenue: ~₹${fmt(lostRevenueCr,2)} Cr/yr at the current blended price of ₹${fmt(best.blendedPrice,2)}/kWh. Raising sanctioned grid capacity and/or the BESS/solar sizing ceilings the optimiser is allowed to search would let it close some or all of this gap.`});
+    }
+  }
+
+  // 2. Front-loaded CAPEX vs a slow utilisation ramp -> negative early free cash flow to equity
+  if(y1 && y1.fcfe < 0){
+    let negYears = 0;
+    for(const r of rows){ if(r.fcfe<0) negYears++; else break; }
+    findings.push({sev:'', title:`CAPEX is spent upfront (₹${fmt(finExact.totalCapexCr,1)} Cr) while Year 1 utilisation is only ${fmt(y1.utilFrac*100,0)}% — free cash flow to equity is negative for the first ${negYears} year${negYears>1?'s':''}.`,
+      detail:`Year 1 FCFE is ₹${fmt(y1.fcfe,2)} Cr (revenue ₹${fmt(y1.rev,2)} Cr against ₹${fmt(y1.opex+y1.interestCr+y1.principal,2)} Cr of opex+debt service). At a ${fmt(inp.f_hurdle,1)}% discount rate, weak or negative early-year cash flows are penalised disproportionately in the NPV calculation, even when steady-state economics (see below) are healthy. A slower/steeper ramp shape, a longer debt tenor, or a moratorium period would each reduce this front-loading effect — worth testing on the Charging Demand and Economics tabs.`});
+  }
+
+  // 3. DSCR covenant breach during the ramp (before steady state)
+  const breachYears = rows.filter(r=>r.dscr!=null && isFinite(r.dscr) && r.dscr < inp.f_mindscr).map(r=>r.y);
+  if(breachYears.length>0){
+    const early = breachYears.filter(y=>y<=3);
+    findings.push({sev: early.length>0 ? 'bad':'', title:`DSCR falls below the ${fmt(inp.f_mindscr,2)}× covenant in ${breachYears.length} of ${rows.length} years${early.length>0?' — including the ramp-up period':''}.`,
+      detail:`Years ${breachYears.join(', ')} show DSCR below covenant. ${early.length>0?'Breaching the covenant during ramp-up (Years '+early.join(', ')+') is the higher-risk case — a lender would likely require a DSRA, a moratorium, or a lower initial debt fraction to get comfortable with this profile.':'These breaches occur after steady state, which is unusual — check for a BESS/asset replacement year landing here (replCapexThisYear) before assuming it is a ramp effect.'}`});
+  }
+
+  // 4. Margin-healthy-but-timing-poor mismatch: steady-state EBITDA margin is strong, yet equity IRR still misses hurdle
+  if(terminal && isFinite(finExact.equityIRR)){
+    const marginPct = terminal.rev>0 ? (terminal.ebitda/terminal.rev*100) : 0;
+    if(finExact.equityIRR < inp.f_hurdle && marginPct > 50){
+      findings.push({sev:'', title:`This is a timing problem, not a margin problem — steady-state EBITDA margin is a healthy ${fmt(marginPct,0)}%, but multi-year equity IRR (${irrLabel(finExact.equityIRR)}) still falls short of the ${fmt(inp.f_hurdle,1)}% hurdle.`,
+        detail:`By Year ${terminal.y}, EBITDA margin is ${fmt(marginPct,0)}% (₹${fmt(terminal.ebitda,2)} Cr EBITDA on ₹${fmt(terminal.rev,2)} Cr revenue) and DSCR is ${terminal.dscr!=null?fmt(terminal.dscr,2)+'×':'n/a (debt repaid)'}. The IRR shortfall is being driven by the early-year cash-flow weakness (see above) and/or the discount rate, not by the underlying unit economics of energy cost vs charging price.`});
+    }
+  }
+
+  // 5. Clean bill of health
+  if(findings.length===0){
+    findings.push({sev:'good', title:'No major structural return issues detected.', detail:`Steady-state unserved energy, early free-cash-flow-to-equity, and DSCR-covenant checks all came back clean against current assumptions.`});
+  }
+  return findings;
+}
+function renderReturnDiagnostics(inp, best, finExact){
+  const findings = computeReturnDiagnostics(inp, best, finExact);
+  $('diagPanel').innerHTML = findings.map(f=>
+    `<div class="flagbox ${f.sev}"><div class="diagtitle" style="font-weight:700;color:#fff;margin-bottom:3px;">${f.title}</div><div>${f.detail}</div></div>`
+  ).join('');
+}
+
 function renderDecisionTab(inp, best, nextBest, finExact, presets){
   const renGapPts = inp.retarget - best.renShare;
   const gridSharePctOfDemand = best.annual.demand>0 ? (best.annual.grid/best.annual.demand*100) : 0;
@@ -1663,6 +1729,7 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
     </div>
     ${renGapBox}
     ${best.unservedMWh>0.01 ? `<div class="flagbox bad" style="margin-top:14px"><b>Grid connection capacity is the binding constraint.</b> In this architecture's peak hour, the site needed <b>${fmt(best.peakGridNeedMW,2)} MW</b> from the grid after solar/wind/OA/GC/BESS were exhausted — but the sanctioned/upgraded connection only allows <b>${fmt(best.sanctionedMW,2)} MW</b>. The grid delivered its full ${fmt(best.sanctionedMW,2)} MW ceiling in those hours (so "peak grid draw" itself always shows ≤ the cap — it can never exceed it, since it's hard-capped in the dispatch); the ${fmt(Math.max(best.peakGridNeedMW-best.sanctionedMW,0),2)} MW shortfall in those hours is what's left unserved, totalling ${fmt(best.unservedMWh,1)} MWh/yr across the 8,760h year — not silently imported. Enable/expand the grid upgrade on the Grid Supply tab, or add BESS/renewables sized to cover peak hours, to close the gap.</div>` : ''}`;
+  renderReturnDiagnostics(inp, best, finExact);
 
   const gridOnly = presets.find(p=>p.name==='Grid only');
   const reasons = [

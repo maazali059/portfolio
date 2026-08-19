@@ -82,6 +82,7 @@ check('hourly energy balance holds for all 8760 hours', balanceOK, `maxErr=${max
 check('no negative energy flows anywhere', result.hourly.every(h=>h.solar>=-1e-9&&h.wind>=-1e-9&&h.gc>=-1e-9&&h.oa>=-1e-9&&h.bessDischarge>=-1e-9&&h.grid>=-1e-9&&h.unserved>=-1e-9&&h.bessCharge>=-1e-9), '');
 
 check('grid import never exceeds sanctioned cap', result.hourly.every(h=>h.grid<=params.gridCapMW+1e-6), '');
+check('peakGridNeedMW (uncapped requirement) is always >= peakGridMW (capped delivery)', result.peakGridNeedMW>=result.peakGridMW-1e-9, `need=${result.peakGridNeedMW} capped=${result.peakGridMW}`);
 
 check('SOC never violates min/max bounds', result.hourly.every(h=>h.soc>=h.socMin-1e-6 && h.soc<=h.socMax+1e-6), '');
 
@@ -90,6 +91,7 @@ check('BESS discharge never exceeds bessMW', result.hourly.every(h=>h.bessDischa
 // unserved energy correctly appears when grid cap is tiny
 const paramsTinyGrid = {...params, gridCapMW:0.001};
 const resultTiny = E.runDispatch8760({demand:P.demand, solar:P.solar, wind:P.wind, gcAvail:P.gcAvail, oaAvail:P.oaAvail}, paramsTinyGrid, false);
+check('tiny grid cap makes peakGridNeedMW exceed the cap (proves the two numbers can genuinely differ)', resultTiny.peakGridNeedMW > paramsTinyGrid.gridCapMW, `need=${resultTiny.peakGridNeedMW} cap=${paramsTinyGrid.gridCapMW}`);
 check('tiny grid cap produces unserved energy', resultTiny.annual.unserved>0, resultTiny.annual.unserved);
 
 // zero-BESS, zero-OA, zero-GC, zero-renewable cases
