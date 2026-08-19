@@ -42,6 +42,11 @@ a{color:var(--solar);}
 .tick{display:flex;flex-direction:column;line-height:1.1;flex:0 0 auto;}
 .tick .l{font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:var(--muted2);}
 .tick .v{font-family:'IBM Plex Mono';font-size:13px;font-weight:600;}
+.tick .tsub{font-size:9px;margin-top:1px;white-space:nowrap;}
+.tick .tsub.warn{color:var(--warn);}
+.tick .tsub.good{color:var(--good);}
+.tick.clickable{cursor:pointer;}
+.tick.clickable:hover .v{text-decoration:underline;}
 #mixbar{display:flex;height:6px;border-radius:4px;overflow:hidden;flex:0 0 160px;background:#000;}
 #sidebar{background:var(--panel);border-right:1px solid var(--line);padding:14px 0;overflow-y:auto;}
 .navgroup{margin-bottom:4px;}
@@ -110,6 +115,9 @@ button:hover{filter:brightness(1.08);}
 .flagbox{border:1px solid #3a2f1a;background:#1b160a;border-radius:8px;padding:10px 12px;font-size:12px;color:#f0cd8a;margin:10px 0;}
 .flagbox.bad{border-color:#3a1a1a;background:#1b0a0a;color:#ff9b95;}
 .flagbox b{color:#fff;}
+.flagbox.good{border-color:#123326;background:#0a1b14;color:var(--good);}
+.diagitem{margin:10px 0;}
+.diagitem .difftitle{font-weight:700;color:#fff;margin-bottom:3px;}
 
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:16px;}
 .tabbtn{padding:8px 14px;font-size:12px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;}
@@ -215,6 +223,27 @@ svg text{font-family:'IBM Plex Mono',monospace;}
     <div class="viewhead">
       <h1>Location &amp; Site</h1>
       <p>Tell us where this site is and what type of charging location you are evaluating. Every downstream calculation is derived from this page onward — nothing is decided in advance.</p>
+    </div>
+
+    <div class="card" id="caseStudyCard" style="border-color:var(--solar);">
+      <h3>Loaded: Case Study — ChargeZone Project E-DHARA, Dahej (Gujarat) <span class="pill medium">Prefilled</span></h3>
+      <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px;">This site's inputs are pre-populated from ChargeZone's own public announcement of its first Project E-DHARA hub, so you can sanity-check the engine's output against a real, named project rather than a hypothetical site. Only the facts ChargeZone has actually disclosed are set below; everything else keeps the model's normal generic default (already labelled assumption/benchmark throughout the app) — nothing is presented as sourced that isn't.</p>
+      <table style="font-size:12.5px;">
+        <tr><th>Field</th><th>Prefilled value</th><th>Status</th></tr>
+        <tr><td>State / DISCOM</td><td>Gujarat / Torrent Power — Dahej</td><td><span class="pill high">PUBLIC</span></td></tr>
+        <tr><td>Site archetype</td><td>Highway HPC hub</td><td><span class="pill high">PUBLIC</span> (serves highway passenger + freight traffic)</td></tr>
+        <tr><td>Solar capacity</td><td>1.0 MW</td><td><span class="pill high">PUBLIC</span></td></tr>
+        <tr><td>BESS energy</td><td>5.0 MWh</td><td><span class="pill high">PUBLIC</span></td></tr>
+        <tr><td>Grid supply</td><td>Allowed, backup/residual only</td><td><span class="pill high">PUBLIC</span> — hub designed to run primarily off-grid</td></tr>
+        <tr><td>Vehicle mix</td><td>Passenger EVs (4W) + electric freight (BillionE Mobility LCV/MCV) only — bus and 2W/3W categories removed</td><td><span class="pill high">PUBLIC</span> (categories only)</td></tr>
+        <tr><td>BESS power (MW), vehicles/day, sessions/day, kWh/session, CAPEX, financing, charging price, grid tariff, sanctioned load, renewable-target %</td><td>Left at the model's existing generic defaults</td><td><span class="pill verify" title="ChargeZone has not publicly disclosed these figures for the Dahej site. Overwriting them with invented numbers and labelling them 'from the case study' would misrepresent what is actually known.">NOT DISCLOSED — unchanged</span></td></tr>
+      </table>
+      <div class="hint">Sources: ChargeZone / Autocar Professional, EVreporter, Telematics Wire, Loktej Business News (all Nov 2025), reporting the launch of Project E-DHARA and the Dahej site's 1 MW solar + 5 MWh BESS configuration, serving passenger EVs and BillionE Mobility freight trucks, designed to run primarily off-grid. Torrent Power's own Dahej-area tariff schedule is not publicly loaded into this model (see DISCOM note below) — enter it manually before treating outputs as investment-grade.</div>
+      <div class="btnrow" style="margin-top:10px;">
+        <button class="small ghost" id="loadCaseStudyBtn">Reload case-study defaults</button>
+        <button class="small ghost" id="resetGenericBtn">Reset to generic site (clear case study)</button>
+      </div>
+      <div class="hint" id="caseStudyNote" style="margin-top:6px;"></div>
     </div>
 
     <div class="card">
@@ -563,6 +592,11 @@ svg text{font-family:'IBM Plex Mono',monospace;}
   <div class="view" id="v-decision">
     <div class="viewhead"><h1>Strategic Decision</h1></div>
     <div class="decisioncard" id="decisionMain"></div>
+    <div class="card" id="diagCard" style="margin-top:16px;">
+      <h3>Why Are the Returns Weak? <span class="badge pill medium">automated diagnostics</span></h3>
+      <p class="hint" style="margin-top:0;">Every check below reads straight off the exact multi-year 8,760h engine result above — it names the specific mechanism (capacity, timing, or covenant) behind a weak number instead of just reporting the number.</p>
+      <div id="diagPanel"></div>
+    </div>
     <div class="grid2" style="margin-top:16px;">
       <div class="card"><h3>Why This Model?</h3><div id="whyList"></div></div>
       <div class="card"><h3>What Would Change The Decision?</h3><div id="sensList"></div></div>
@@ -855,6 +889,66 @@ svg text{font-family:'IBM Plex Mono',monospace;}
   }
   document.getElementById('runAnalysisBtn').addEventListener('click', runAnalysis);
   document.getElementById('rerunBtn').addEventListener('click', runAnalysis);
+})();
+
+/* ================================================================
+   CASE-STUDY PREFILL — ChargeZone Project E-DHARA, Dahej (Gujarat)
+   Sets ONLY the fields ChargeZone has actually disclosed publicly
+   (state, DISCOM/licensee, archetype, 1 MW solar, 5 MWh BESS, grid-
+   as-backup, and the two vehicle categories the hub actually serves).
+   Everything else is deliberately left untouched at the model's
+   existing generic defaults, which are already labelled assumption/
+   benchmark elsewhere in the UI — this loader never invents a number
+   and presents it as sourced. Sources: ChargeZone's Nov-2025 Project
+   E-DHARA announcement, as reported by Autocar Professional,
+   EVreporter, Telematics Wire and Loktej Business News.
+   ================================================================ */
+(function(){
+  const GENERIC_VEHICLE_ROWS = [
+    {name:"Passenger cars (4W)", vpd:180, spd:1.0, kwh:22},
+    {name:"Electric buses",      vpd:12,  spd:1.0, kwh:140},
+    {name:"E-freight / LCV-MCV", vpd:35,  spd:1.0, kwh:85},
+    {name:"2W / 3W",             vpd:60,  spd:1.0, kwh:2.5},
+  ];
+  const CASE_STUDY_VEHICLE_ROWS = [
+    {name:"Passenger cars (4W)", vpd:180, spd:1.0, kwh:22},
+    {name:"E-freight / LCV-MCV (BillionE Mobility)", vpd:35, spd:1.0, kwh:85},
+  ];
+  function setVal(id, val){ const el = document.getElementById(id); if(el) el.value = val; }
+
+  function loadCaseStudy(){
+    setVal('in_state', 'Gujarat');
+    setVal('in_archetype', 'highway');
+    setVal('in_discom', 'Torrent-Dahej');
+    if(typeof applyDiscom==='function') applyDiscom('Torrent-Dahej'); // correctly leaves tariff fields NOT VERIFIED — Torrent's own Dahej tariff isn't publicly loaded here
+    setVal('in_gridallowed', '1');
+    setVal('s_mw', '1');
+    setVal('b_maxmwh', '5');
+    if(typeof vehicleRows!=='undefined'){
+      vehicleRows.length = 0;
+      CASE_STUDY_VEHICLE_ROWS.forEach(r=>vehicleRows.push({...r}));
+    }
+    if(typeof renderDemandTable==='function') renderDemandTable();
+    if(typeof renderAll==='function') renderAll();
+    const note = document.getElementById('caseStudyNote');
+    if(note) note.textContent = 'Case-study defaults loaded — see the table above for exactly which fields came from ChargeZone\u2019s public announcement.';
+  }
+  function resetGeneric(){
+    if(typeof vehicleRows!=='undefined'){
+      vehicleRows.length = 0;
+      GENERIC_VEHICLE_ROWS.forEach(r=>vehicleRows.push({...r}));
+    }
+    if(typeof renderDemandTable==='function') renderDemandTable();
+    if(typeof renderAll==='function') renderAll();
+    const note = document.getElementById('caseStudyNote');
+    if(note) note.textContent = 'Reset to the generic (non-case-study) model defaults. Click "Reload case-study defaults" above to bring the Dahej figures back.';
+  }
+  document.getElementById('loadCaseStudyBtn')?.addEventListener('click', loadCaseStudy);
+  document.getElementById('resetGenericBtn')?.addEventListener('click', resetGeneric);
+
+  // Auto-load once on page open, after edhara.js's own initial renderAll() has already run,
+  // so the very first thing the user sees is the Dahej case study, not a blank generic site.
+  loadCaseStudy();
 })();
 </script>
 </body>
