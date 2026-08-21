@@ -77,12 +77,10 @@
 
         .s1-arrow { width: 30px; display: flex; align-items: center; justify-content: center; color: var(--primary-dark); font-size: 24px; font-weight: bold; }
 
-        /* Specifics for Box 2 */
         .energy-section { margin-bottom: 10px; }
         .energy-section-title { font-size: 11px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
         .checkbox-item { display: flex; align-items: center; gap: 5px; font-size: 13px; margin-bottom: 4px; }
         
-        /* Specifics for Box 3 */
         .decision-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         .decision-table td { padding: 4px 0; border-bottom: 1px solid #f1f5f9; }
         .decision-table td:last-child { text-align: right; font-weight: bold; }
@@ -102,24 +100,18 @@
         
         .brain-box { border: 1px solid var(--light-blue); background: #f8fafc; padding: 15px; border-radius: 4px; display: flex; gap: 10px; font-size: 12px; color: var(--text-dark); align-items: center; }
         
-        /* Flowchart styling */
-        .flowchart-top { display: flex; justify-content: space-between; margin-bottom: 40px; position: relative; z-index: 2; }
-        .fc-node { border: 2px solid var(--border-color); border-radius: 4px; background: white; padding: 10px; text-align: center; width: 110px; font-size: 11px; font-weight: bold; color: var(--primary-dark); }
-        .fc-node.solar { border-color: #fbbf24; color: #d97706; }
-        .fc-node.grid { border-color: #3b82f6; color: #1d4ed8; }
-        .fc-node.green { border-color: var(--accent-green); color: var(--accent-green-dark); }
-        .fc-node.captive { border-color: #8b5cf6; color: #6d28d9; }
+        /* Rigid Flowchart Coordinate System */
+        .flowchart-container { position: relative; width: 520px; height: 300px; margin: 0 auto; margin-bottom: 15px; }
+        .fc-node-abs { position: absolute; border: 2px solid var(--border-color); border-radius: 4px; background: white; padding: 5px; text-align: center; font-size: 11px; font-weight: bold; color: var(--primary-dark); z-index: 10; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         
-        .flowchart-mid { display: flex; justify-content: center; margin-bottom: 40px; position: relative; z-index: 2; }
-        .fc-node.bess { border-color: var(--accent-green); display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .fc-node-abs.solar { border-color: #fbbf24; color: #d97706; left: 10px; top: 10px; width: 90px; height: 60px; }
+        .fc-node-abs.grid { border-color: #3b82f6; color: #1d4ed8; left: 130px; top: 10px; width: 90px; height: 60px; }
+        .fc-node-abs.green-oa { border-color: var(--accent-green); color: var(--accent-green-dark); left: 280px; top: 10px; width: 100px; height: 60px; }
+        .fc-node-abs.captive { border-color: #8b5cf6; color: #6d28d9; left: 410px; top: 10px; width: 110px; height: 60px; }
+        .fc-node-abs.bess { border-color: var(--accent-green); left: 230px; top: 150px; width: 90px; height: 40px; flex-direction: row; gap: 5px; }
+        .fc-node-abs.load { left: 30px; top: 240px; width: 280px; height: 50px; border: none; background: var(--light-gray); flex-direction: row; gap: 10px; font-size: 14px; }
         
-        .flowchart-bot { display: flex; justify-content: center; position: relative; z-index: 2; }
-        .fc-node.load { border: none; background: var(--light-gray); width: auto; padding: 10px 20px; display: flex; align-items: center; gap: 10px; font-size: 14px; }
-        
-        .fc-svg-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
-        
-        /* Legend */
-        .fc-legend { position: absolute; bottom: 10px; right: 10px; font-size: 10px; display: flex; flex-direction: column; gap: 5px; }
+        .fc-legend { position: absolute; bottom: 10px; right: 10px; font-size: 10px; display: flex; flex-direction: column; gap: 5px; z-index: 10; }
         .legend-item { display: flex; align-items: center; gap: 5px; }
         
         .principle-list { font-size: 13px; }
@@ -150,7 +142,6 @@
         .eco-total-val { font-size: 16px; font-weight: bold; color: var(--primary-dark); }
         .eco-total-val.green { color: var(--accent-green-dark); }
         .eco-total-val.purple { color: #6d28d9; }
-        .s4-footer { text-align: center; font-size: 12px; font-weight: 500; margin-top: 15px; }
         
         /* Section 5 */
         .finance-grid { display: flex; gap: 10px; margin-top: 15px; }
@@ -218,7 +209,6 @@
     <div class="section">
         <div class="section-title">1. SIMPLE INPUTS. POWERFUL ANSWERS.</div>
         <div class="s1-grid">
-            <!-- Box 1 -->
             <div class="s1-box">
                 <div class="box-header">
                     <div class="step-num">01</div>
@@ -245,7 +235,6 @@
             
             <div class="s1-arrow">→</div>
 
-            <!-- Box 2 -->
             <div class="s1-box">
                 <div class="box-header">
                     <div class="step-num green">02</div>
@@ -276,7 +265,6 @@
 
             <div class="s1-arrow">→</div>
 
-            <!-- Box 3 -->
             <div class="s1-box">
                 <div class="box-header">
                     <div class="step-num">03</div>
@@ -290,7 +278,6 @@
                         <svg style="width: 40px; fill: var(--accent-green-dark);" viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM7 10.82C5.84 10.4 5 9.3 5 8V7h2v3.82zM19 8c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
                         <div style="font-size: 11px; font-weight: bold; color: var(--accent-green-dark);">Recommended<br>Architecture</div>
                         <div style="font-size: 11px; font-weight: bold; color: var(--primary-dark); margin-top: 5px;">Grid + Solar + BESS</div>
-                        
                         <div class="check-list" style="text-align: left; margin-top: 20px;">
                             <div>✔ Meets return target</div>
                             <div>✔ Meets renewable target</div>
@@ -326,60 +313,49 @@
             <div class="s2-col-left">
                 <div style="font-size: 11px; font-weight: bold; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 15px;">ALL VALID COMBINATIONS ARE CONSIDERED</div>
                 <div class="valid-combo-list">
-                    <div>Grid</div>
-                    <div>Green OA</div>
-                    <div>Group Captive</div>
-                    <div>Solar</div>
-                    <div>Wind</div>
-                    <div>BESS</div>
+                    <div>Grid</div><div>Green OA</div><div>Group Captive</div><div>Solar</div><div>Wind</div><div>BESS</div>
                 </div>
                 <div style="font-size: 12px; color: var(--primary-dark); font-weight: 500; margin-bottom: 15px;">... and every meaningful<br>combination of the above.</div>
                 <div class="brain-box">
-                    <svg style="width: 30px; fill: var(--primary-dark);" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L3 21l3.39-1.97C7.93 20.26 9.88 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-1.8 0-3.46-.57-4.83-1.53l-1.93 1.12 1.12-1.93C5.57 15.46 5 13.8 5 12c0-3.86 3.14-7 7-7s7 3.14 7 7-3.14 7-7 7zM9 8h6v2H9zm0 4h6v2H9z"/></svg>
+                    <svg style="width: 30px; fill: var(--primary-dark); flex-shrink:0;" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9 0 2.12.74 4.07 1.97 5.61L3 21l3.39-1.97C7.93 20.26 9.88 21 12 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm0 16c-1.8 0-3.46-.57-4.83-1.53l-1.93 1.12 1.12-1.93C5.57 15.46 5 13.8 5 12c0-3.86 3.14-7 7-7s7 3.14 7 7-3.14 7-7 7zM9 8h6v2H9zm0 4h6v2H9z"/></svg>
                     <div><strong>No hard-coded recipes.</strong><br>The engine searches thousands of combinations within physical, regulatory and financial constraints.</div>
                 </div>
             </div>
             
             <div class="s2-col-mid">
-                <div style="font-size: 11px; font-weight: bold; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 20px; text-align: center;">EXAMPLE ARCHITECTURE: GRID + SOLAR + BESS</div>
+                <div style="font-size: 11px; font-weight: bold; color: var(--primary-dark); text-transform: uppercase; margin-bottom: 15px; text-align: center;">EXAMPLE ARCHITECTURE: GRID + SOLAR + BESS</div>
                 
-                <svg class="fc-svg-overlay" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <marker id="arrowSolid" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/>
-                        </marker>
-                        <marker id="arrowDash" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/>
-                        </marker>
-                        <marker id="arrowGray" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
-                            <path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/>
-                        </marker>
-                    </defs>
-                    <!-- Lines from top nodes to load -->
-                    <line x1="85" y1="80" x2="85" y2="200" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
-                    <line x1="220" y1="80" x2="220" y2="200" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
-                    <line x1="85" y1="120" x2="270" y2="120" stroke="#22c55e" stroke-width="2" />
-                    <!-- BESS lines -->
-                    <line x1="220" y1="120" x2="220" y2="135" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
-                    <line x1="280" y1="175" x2="280" y2="200" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
-                    <!-- Dashed lines -->
-                    <line x1="365" y1="80" x2="365" y2="120" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" />
-                    <line x1="500" y1="80" x2="500" y2="120" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4,4" />
-                    <line x1="365" y1="120" x2="220" y2="120" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" />
-                    <line x1="365" y1="120" x2="280" y2="120" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" />
-                </svg>
+                <!-- RIGID FLOWCHART SYSTEM -->
+                <div class="flowchart-container">
+                    <!-- Absolute SVG Base Layer -->
+                    <svg style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1;">
+                        <defs>
+                            <marker id="arrowSolid" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#22c55e"/></marker>
+                            <marker id="arrowDash" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3b82f6"/></marker>
+                            <marker id="arrowGray" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#94a3b8"/></marker>
+                        </defs>
+                        <!-- Main drops to Load -->
+                        <path d="M 55 70 L 55 234" fill="none" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
+                        <path d="M 175 70 L 175 234" fill="none" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
+                        <path d="M 275 190 L 275 234" fill="none" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
+                        
+                        <!-- Procurement Connections (Horizontals at top) -->
+                        <path d="M 465 70 L 465 85 L 340 85" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowGray)" />
+                        <path d="M 330 70 L 330 100 L 185 100" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowDash)" />
+                        
+                        <!-- BESS Charging Branches -->
+                        <path d="M 55 115 L 290 115 L 290 144" fill="none" stroke="#22c55e" stroke-width="2" marker-end="url(#arrowSolid)" />
+                        <path d="M 175 130 L 260 130 L 260 144" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4,4" marker-end="url(#arrowDash)" />
+                    </svg>
 
-                <div class="flowchart-top">
-                    <div class="fc-node solar">SOLAR<br><span style="font-size:24px">☀</span></div>
-                    <div class="fc-node grid">GRID<br><span style="font-size:24px">🗼</span></div>
-                    <div class="fc-node green">GREEN OA<br><span style="font-size:10px; font-weight: normal; color:#333">(If selected)</span><br><span style="font-size:24px">🍃</span></div>
-                    <div class="fc-node captive">GROUP CAPTIVE<br><span style="font-size:10px; font-weight: normal; color:#333">(If selected)</span><br><span style="font-size:24px">🏭</span></div>
-                </div>
-                <div class="flowchart-mid">
-                    <div class="fc-node bess"><span style="font-size:20px; color:var(--accent-green-dark);">⚡</span> BESS</div>
-                </div>
-                <div class="flowchart-bot">
-                    <div class="fc-node load"><span style="font-size:20px; color:var(--primary-dark);">🔌</span> <strong>CHARGING SITE<br>LOAD</strong></div>
+                    <!-- Absolute DOM Nodes (Matched flawlessly to SVG coordinates) -->
+                    <div class="fc-node-abs solar">SOLAR<br><span style="font-size:20px; line-height: 1.2;">☀</span></div>
+                    <div class="fc-node-abs grid">GRID<br><span style="font-size:20px; line-height: 1.2;">🗼</span></div>
+                    <div class="fc-node-abs green-oa">GREEN OA<br><span style="font-size:9px; font-weight: normal; color:#333;">(If selected)</span><br><span style="font-size:16px; line-height: 1;">🍃</span></div>
+                    <div class="fc-node-abs captive">GROUP CAPTIVE<br><span style="font-size:9px; font-weight: normal; color:#333;">(If selected)</span><br><span style="font-size:16px; line-height: 1;">🏭</span></div>
+                    
+                    <div class="fc-node-abs bess"><span style="font-size:16px; color:var(--accent-green-dark);">⚡</span> BESS</div>
+                    <div class="fc-node-abs load"><span style="font-size:20px; color:var(--primary-dark);">🔌</span> <strong>CHARGING SITE LOAD</strong></div>
                 </div>
 
                 <div class="fc-legend">
@@ -432,16 +408,15 @@
                     <!-- Grid Lines -->
                     <line x1="0" y1="100" x2="300" y2="100" stroke="#eee" />
                     <!-- Area Paths -->
-                    <path d="M0,200 L0,150 L25,120 L50,110 L75,100 L100,60 L125,50 L150,70 L175,130 L200,160 L225,150 L250,160 L275,170 L300,180 L300,200 Z" fill="#0070c0" /> <!-- Grid to Load -->
-                    <path d="M50,110 L75,100 L100,40 L125,20 L150,40 L175,90 L200,160 L175,130 L150,70 L125,50 L100,60 L75,100 Z" fill="#ffc000" /> <!-- Solar to Load -->
-                    <path d="M0,150 L25,120 L50,110 L25,140 L0,170 Z" fill="#7030a0" /> <!-- BESS to Load -->
+                    <path d="M0,200 L0,150 L25,120 L50,110 L75,100 L100,60 L125,50 L150,70 L175,130 L200,160 L225,150 L250,160 L275,170 L300,180 L300,200 Z" fill="#0070c0" />
+                    <path d="M50,110 L75,100 L100,40 L125,20 L150,40 L175,90 L200,160 L175,130 L150,70 L125,50 L100,60 L75,100 Z" fill="#ffc000" />
+                    <path d="M0,150 L25,120 L50,110 L25,140 L0,170 Z" fill="#7030a0" />
                     <!-- Demand Line -->
                     <path d="M0,150 L25,120 L50,110 L75,100 L100,40 L125,20 L150,40 L175,90 L200,160 L225,150 L250,160 L275,170 L300,180" fill="none" stroke="#000" stroke-width="2" stroke-dasharray="4,4" />
                 </svg>
                 <div style="position: absolute; top: 0; left: -20px; font-size: 10px;">25</div>
                 <div style="position: absolute; top: 95px; left: -25px; font-size: 10px;">12.5</div>
                 <div style="position: absolute; bottom: -5px; left: -10px; font-size: 10px;">0</div>
-                
                 <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px;">
                     <span>00:00</span><span>06:00</span><span>12:00</span><span>18:00</span><span>24:00</span>
                 </div>
@@ -473,15 +448,7 @@
                 <div class="eco-col">
                     <div class="eco-title">GRID</div>
                     <ul class="eco-list">
-                        <li>Energy Charge</li>
-                        <li>ToD / Peak Charge</li>
-                        <li>Demand / Fixed</li>
-                        <li>Transmission</li>
-                        <li>Wheeling</li>
-                        <li>Losses</li>
-                        <li>Taxes / Duties</li>
-                        <li>Other Charges</li>
-                        <li>Custom Charges</li>
+                        <li>Energy Charge</li><li>ToD / Peak Charge</li><li>Demand / Fixed</li><li>Transmission</li><li>Wheeling</li><li>Losses</li><li>Taxes / Duties</li><li>Other Charges</li><li>Custom Charges</li>
                     </ul>
                     <div class="eco-total-lbl">TOTAL COST</div>
                     <div class="eco-total-val">₹ 4.95 / kWh</div>
@@ -489,15 +456,7 @@
                 <div class="eco-col">
                     <div class="eco-title green">GREEN OA</div>
                     <ul class="eco-list">
-                        <li>PPA / Energy Price</li>
-                        <li>Transmission</li>
-                        <li>Wheeling</li>
-                        <li>CSS</li>
-                        <li>Banking</li>
-                        <li>SLDC / Scheduling</li>
-                        <li>Losses</li>
-                        <li>Taxes / Levies</li>
-                        <li>Custom Charges</li>
+                        <li>PPA / Energy Price</li><li>Transmission</li><li>Wheeling</li><li>CSS</li><li>Banking</li><li>SLDC / Scheduling</li><li>Losses</li><li>Taxes / Levies</li><li>Custom Charges</li>
                     </ul>
                     <div class="eco-total-lbl">TOTAL COST</div>
                     <div class="eco-total-val green">₹ 4.62 / kWh</div>
@@ -505,15 +464,7 @@
                 <div class="eco-col">
                     <div class="eco-title purple">GROUP CAPTIVE</div>
                     <ul class="eco-list">
-                        <li>Generation Cost</li>
-                        <li>Annualized CAPEX</li>
-                        <li>Financing Cost</li>
-                        <li>O&M</li>
-                        <li>Transmission</li>
-                        <li>Wheeling</li>
-                        <li>Losses</li>
-                        <li>CSS / Surcharge</li>
-                        <li>Custom Charges</li>
+                        <li>Generation Cost</li><li>Annualized CAPEX</li><li>Financing Cost</li><li>O&M</li><li>Transmission</li><li>Wheeling</li><li>Losses</li><li>CSS / Surcharge</li><li>Custom Charges</li>
                     </ul>
                     <div class="eco-total-lbl">TOTAL COST</div>
                     <div class="eco-total-val purple">₹ 4.35 / kWh</div>
@@ -551,18 +502,15 @@
                     <div style="position:relative; width: 100%; height: 200px; border-left: 1px solid #ccc; border-bottom: 1px solid #ccc; margin-bottom: 10px;">
                         <svg width="100%" height="100%" viewBox="0 0 200 200" preserveAspectRatio="none">
                             <line x1="0" y1="100" x2="200" y2="100" stroke="#000" stroke-width="1" />
-                            <!-- Yr 0 (Negative CAPEX) -->
+                            <!-- Yr 0 -->
                             <rect x="5" y="100" width="8" height="60" fill="#f97316" />
-                            <!-- Yr 1 to 15 (Revenue green bars upward, Opex/Debt orange/blue downward) -->
+                            <!-- Yrs -->
                             <rect x="20" y="80" width="8" height="20" fill="#22c55e" />
                             <rect x="20" y="100" width="8" height="15" fill="#f97316" />
                             <rect x="20" y="115" width="8" height="25" fill="#3b82f6" />
-                            
                             <rect x="35" y="75" width="8" height="25" fill="#22c55e" />
                             <rect x="35" y="100" width="8" height="15" fill="#f97316" />
                             <rect x="35" y="115" width="8" height="25" fill="#3b82f6" />
-                            
-                            <!-- Simulating growth -->
                             <rect x="50" y="70" width="8" height="30" fill="#22c55e" />
                             <rect x="65" y="65" width="8" height="35" fill="#22c55e" />
                             <rect x="80" y="60" width="8" height="40" fill="#22c55e" />
@@ -573,8 +521,6 @@
                             <rect x="155" y="35" width="8" height="65" fill="#22c55e" />
                             <rect x="170" y="30" width="8" height="70" fill="#22c55e" />
                             <rect x="185" y="25" width="8" height="75" fill="#22c55e" />
-                            
-                            <!-- Downward bars -->
                             <rect x="50" y="100" width="8" height="15" fill="#f97316" /> <rect x="50" y="115" width="8" height="25" fill="#3b82f6" />
                             <rect x="65" y="100" width="8" height="15" fill="#f97316" /> <rect x="65" y="115" width="8" height="25" fill="#3b82f6" />
                             <rect x="80" y="100" width="8" height="15" fill="#f97316" /> <rect x="80" y="115" width="8" height="25" fill="#3b82f6" />
@@ -585,7 +531,6 @@
                             <rect x="155" y="100" width="8" height="15" fill="#f97316" />
                             <rect x="170" y="100" width="8" height="15" fill="#f97316" />
                             <rect x="185" y="100" width="8" height="15" fill="#f97316" />
-
                             <!-- Net Cash Flow Line -->
                             <path d="M9,160 L24,120 L39,115 L54,110 L69,105 L84,100 L99,95 L114,65 L129,60 L144,55 L159,50 L174,45 L189,40" fill="none" stroke="#000" stroke-width="2" marker-start="url(#dot)" marker-mid="url(#dot)" marker-end="url(#dot)" />
                             <defs>
