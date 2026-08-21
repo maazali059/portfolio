@@ -18,6 +18,16 @@
   'use strict';
   const $ = id => document.getElementById(id);
   function ce(tag, cls, html){ const e = document.createElement(tag); if(cls) e.className = cls; if(html != null) e.innerHTML = html; return e; }
+  // edhara.js declares `fmt` with `const`, so — like any top-level
+  // let/const in one <script> tag — it is NOT visible as a bare
+  // identifier from this separate <script src="phase.js"> file (only
+  // `function`-declared globals like renderAll/getLastState/irrLabel
+  // cross that boundary, since those attach to `window`). Re-declaring
+  // the exact same formatting implementation here (pure display
+  // formatting, no calculation) is the fix — confirmed via a live DOM
+  // harness that every phase.js call to bare `fmt(...)` threw
+  // ReferenceError and silently blanked the Decision hero without it.
+  const fmt = (n, d=2) => { if(!isFinite(n)) return "\u2014"; return Number(n).toLocaleString('en-IN',{maximumFractionDigits:d,minimumFractionDigits:0}); };
   function moveInto(target, elOrId){
     const node = typeof elOrId === 'string' ? $(elOrId) : elOrId;
     if(node) target.appendChild(node);
@@ -418,6 +428,7 @@
   let fullDetailHost = null; // original decisionMain/diagCard/why-sens/nextBest, moved to Deep Dive
   (function buildDecisionScreen(){
     const vDec = $('v-decision');
+    const vRisk = $('v-risk');
     if(!vDec) return;
 
     const minUtilCard = $('runMinUtilBtn') ? $('runMinUtilBtn').closest('.card') : null;
@@ -445,6 +456,32 @@
     if(diagCard) fullDetailHost.appendChild(diagCard);
     if(whySensGrid) fullDetailHost.appendChild(whySensGrid);
     if(nextBestCard) fullDetailHost.appendChild(nextBestCard);
+
+    // CRITICAL: attach both hosts into the live document RIGHT NOW, not
+    // lazily when Deep Dive is first opened. edhara.js's own renderAll()
+    // calls renderDecisionTab() UNCONDITIONALLY on every input change,
+    // and renderDecisionTab does `$('decisionMain').innerHTML = ...`
+    // with no null-check. If decisionMain (or diagCard/whyList/sensList/
+    // nextBestBox, all touched the same way) is left detached — sitting
+    // only inside the in-memory fullDetailHost — that assignment throws
+    // on the very next renderAll() after page load, and because
+    // renderAll() has a try/finally with NO catch, the exception aborts
+    // the entire render pipeline permanently: _last (getLastState())
+    // never gets reassigned again, so every screen driven by it —
+    // Decision, Dispatch, Finance, Risk, Audit, States, Methodology —
+    // freezes at the page-load snapshot forever, silently. Confirmed via
+    // a live DOM harness: after any Site/Energy input change the entire
+    // app stopped updating with no visible error. Attaching these hosts
+    // into v-risk immediately (hidden, since v-risk isn't the active
+    // view) keeps every element edhara.js unconditionally writes to
+    // permanently present in the document, exactly like before this
+    // redesign — only their visual position changed.
+    if(vRisk){
+      const riskLabel = ce('div','viewhead','<h3 style="margin-top:20px;">Decision Stress-Testing</h3><p>These tools were moved here from the Decision screen to keep the headline recommendation uncluttered \u2014 same engine, same numbers.</p>');
+      vRisk.appendChild(riskLabel);
+      vRisk.appendChild(riskExtrasHost);
+      vRisk.appendChild(fullDetailHost);
+    }
 
     // ---- Hero: verdict + architecture + 5 headline stats ----
     const hero = ce('div','card');
@@ -660,16 +697,9 @@
     buildTabbedWrapper('v-p2-finance', 'Finance', 'Revenue, CAPEX, financing structure, ownership models and the exact multi-year cash-flow / IRR / DSCR chain behind the headline numbers.',
       [{label:'Revenue & Financing', node:vEcon}, {label:'Ownership Models', node:vOwn}, {label:'Break-Even', node:vBreak}]);
 
-    // ---- Risk: existing v-risk + the 3 blocks moved out of Decision ----
-    const vRisk = $('v-risk');
-    if(vRisk && riskExtrasHost){
-      const label = ce('div','viewhead','<h3 style="margin-top:20px;">Decision Stress-Testing</h3><p>These tools were moved here from the Decision screen to keep the headline recommendation uncluttered \u2014 same engine, same numbers.</p>');
-      vRisk.appendChild(label);
-      vRisk.appendChild(riskExtrasHost);
-    }
-    if(vRisk && fullDetailHost){
-      vRisk.appendChild(fullDetailHost);
-    }
+    // Risk tab content (existing v-risk + the extras moved out of Decision)
+    // is already attached eagerly in buildDecisionScreen() above — see the
+    // comment there for why that has to happen immediately, not here.
 
     // ---- Dispatch, Scenarios, States, Audit, Methodology: used as-is ----
   }
