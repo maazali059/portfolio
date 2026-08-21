@@ -37,7 +37,12 @@
   const style = document.createElement('style');
   style.textContent = `
     #sidebar{display:none !important;}
-    #main{margin-left:0 !important;}
+    #main{
+    grid-column:1 / 3;
+    grid-row:2;
+    margin-left:0 !important;
+    min-width:0;
+    }
     .ctxbar{display:flex;align-items:center;gap:10px;padding:10px 24px;background:#0d1116;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted);flex-wrap:wrap;}
     .ctxbar b{color:var(--text);}
     .ctxbar .sep{color:var(--line);}
