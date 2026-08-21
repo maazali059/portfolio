@@ -169,6 +169,85 @@ function generateGC8760Profiles(gcMW, solarSharePct, solarUnitShape, windUnitSha
   return {genProfile, availProfile};
 }
 
+/* ---------------- HOURLY TARIFF BUILDER ----------------
+   Converts a Flat or Time-of-Day tariff definition into an 8760-length
+   ₹/kWh array so dispatch can use the ACTUAL applicable price for each
+   hour, never an annual average. ToD pattern repeats identically every
+   day (slots are hour-of-day, not date-specific) — this matches how
+   DISCOM/OA/GC ToD tariffs are actually published.
+   slots: [{start:0, end:6, rate:3.2}, ...] — start/end are hour-of-day
+   integers 0-24, non-wrapping (a 22:00-02:00 slot must be entered as
+   two slots: 22-24 and 0-2). Later slots overwrite earlier ones on
+   overlap (last-write-wins), so the caller controls precedence. Hours
+   not covered by any slot fall back to flatValue. */
+function buildHourlyTariff(mode, flatValue, slots){
+  const hourRate = new Array(24).fill(flatValue);
+  if(mode==='tod' && Array.isArray(slots)){
+    for(const slot of slots){
+      const start = clamp(Math.round(slot.start),0,24);
+      const end = clamp(Math.round(slot.end),0,24);
+      for(let h=start; h<end; h++){ if(h>=0&&h<24) hourRate[h]=slot.rate; }
+    }
+  }
+  const out = new Float64Array(HOURS_PER_YEAR);
+  for(let h=0; h<HOURS_PER_YEAR; h++) out[h]=hourRate[TIMELINE_8760[h].hour];
+  return out;
+}
+
+/* ---------------- BESS SCHEDULE (strategy -> which hours-of-day are
+   used for economic Grid/OA/GC charging, and which hours discharge is
+   restricted to) ----------------
+   Computed ONCE per dispatch call (not per-hour) from the 24-hour ToD
+   pattern, since tariffs are daily-periodic by construction above.
+   This is a deterministic, explainable heuristic (cheapest N hours /
+   priciest N hours, N sized off MWh/MW), consistent with the coarse
+   grid-search style already used by the optimiser elsewhere in this
+   model — NOT a full forward-looking stochastic optimisation. */
+function computeBessSchedule(bessMW, bessMWh, tariffs, strategy, sources, customWindows, rte){
+  if(strategy==='custom' && customWindows){
+    return {
+      chargeHours: new Set(customWindows.chargeHours||[]),
+      dischargeRestrict: (customWindows.dischargeHours && customWindows.dischargeHours.length) ? new Set(customWindows.dischargeHours) : null
+    };
+  }
+  if(!strategy || strategy==='renewable'){
+    return {chargeHours:new Set(), dischargeRestrict:null}; // no Grid/OA/GC->BESS charging
+  }
+  const priceAt = h=>{
+    let best = Infinity;
+    if(sources && sources.grid && tariffs.grid) best = Math.min(best, tariffs.grid[h]);
+    if(sources && sources.oa && tariffs.oa) best = Math.min(best, tariffs.oa[h]);
+    if(sources && sources.gc && tariffs.gc) best = Math.min(best, tariffs.gc[h]);
+    return best;
+  };
+  const hours = Array.from({length:24},(_,h)=>({h, price:priceAt(h)}));
+  const valid = hours.filter(x=>isFinite(x.price));
+  if(valid.length===0) return {chargeHours:new Set(), dischargeRestrict:null};
+  const ascending = [...valid].sort((a,b)=>a.price-b.price);
+  const descending = [...valid].sort((a,b)=>b.price-a.price);
+  const hoursToFill = bessMW>0 ? clamp(Math.ceil(bessMWh/bessMW),1,12) : 0;
+  const cheapest = ascending.slice(0,hoursToFill);
+  const priciest = descending.slice(0,hoursToFill);
+  if(cheapest.length===0 || priciest.length===0) return {chargeHours:new Set(), dischargeRestrict:null};
+  const avgCheap = cheapest.reduce((s,x)=>s+x.price,0)/cheapest.length;
+  const avgExpensive = priciest.reduce((s,x)=>s+x.price,0)/priciest.length;
+  const effRte = rte>0 ? rte : 1;
+  // worth charging only if the avoided peak cost clears round-trip losses
+  // with a small margin — otherwise arbitrage would lose money after RTE.
+  const worthwhile = avgExpensive > (avgCheap/effRte)*1.02;
+
+  if(strategy==='mincost'){
+    return {chargeHours: worthwhile ? new Set(cheapest.map(x=>x.h)) : new Set(), dischargeRestrict:null};
+  }
+  if(strategy==='peak'){
+    return {chargeHours:new Set(), dischargeRestrict:new Set(priciest.map(x=>x.h))};
+  }
+  if(strategy==='arbitrage'){
+    return {chargeHours: worthwhile ? new Set(cheapest.map(x=>x.h)) : new Set(), dischargeRestrict:new Set(priciest.map(x=>x.h))};
+  }
+  return {chargeHours:new Set(), dischargeRestrict:null};
+}
+
 /* ================================================================
    CANONICAL 8760 DISPATCH
    Priority order over ['solar','wind','gc','oa','bess'] to meet demand;
@@ -193,8 +272,19 @@ function runDispatch8760(profiles, params, collectHourly){
   const socMax = params.bessMWh*params.socMaxFrac;
   let soc = params.bessMWh*0.5;
 
+  // Economic BESS scheduling (Grid/OA/GC charging + discharge windows).
+  // Fully backward-compatible: if the caller doesn't pass bessChargeSources
+  // (existing callers never do), schedule.chargeHours is empty and
+  // dischargeRestrict is null, so behaviour is IDENTICAL to before.
+  const rte = (params.chargeEff||1)*(params.dischargeEff||1);
+  const schedule = computeBessSchedule(
+    params.bessMW, params.bessMWh, params.tariffs||{}, params.bessStrategy,
+    params.bessChargeSources, params.customWindows, rte
+  );
+
   const monthly = Array.from({length:12},()=>({
-    demand:0, solar:0, wind:0, gc:0, oa:0, bessCharge:0, bessDischarge:0, grid:0, curtail:0, unserved:0
+    demand:0, solar:0, wind:0, gc:0, oa:0, bessCharge:0, bessDischarge:0, grid:0, gridForBess:0, curtail:0, unserved:0,
+    bessChargeRenewable:0, bessChargeGrid:0, bessChargeOA:0, bessChargeGC:0
   }));
   let peakGridMW = 0;
   let peakGridNeedMW = 0;
@@ -214,9 +304,12 @@ function runDispatch8760(profiles, params, collectHourly){
       else if(src==='gc'){ const u=Math.min(gcAv,need); gcUsed+=u; need-=u; gcAv-=u; }
       else if(src==='oa'){ const u=Math.min(oaAv,need); oaUsed+=u; need-=u; oaAv-=u; }
       else if(src==='bess'){
-        const maxDis = Math.max(0, Math.min(params.bessMW, (soc-socMin)*params.dischargeEff));
-        const u = Math.min(maxDis, need);
-        if(u>0){ bessDis+=u; need-=u; soc-=u/params.dischargeEff; }
+        const hourAllowed = !schedule.dischargeRestrict || schedule.dischargeRestrict.has(t.hour);
+        if(hourAllowed){
+          const maxDis = Math.max(0, Math.min(params.bessMW, (soc-socMin)*params.dischargeEff));
+          const u = Math.min(maxDis, need);
+          if(u>0){ bessDis+=u; need-=u; soc-=u/params.dischargeEff; }
+        }
       }
     }
     // grid resolves last, hard-capped — track the UNCAPPED requirement too,
@@ -226,19 +319,57 @@ function runDispatch8760(profiles, params, collectHourly){
     gridUsed = Math.min(params.gridCapMW, Math.max(need,0));
     let unserved = Math.max(need-gridUsed, 0);
 
-    // BESS charging pass: only from leftover OWNED renewable surplus, only if
-    // we did not already discharge this hour (no same-hour charge+discharge).
-    let bessChg=0, curtail=0;
+    // BESS charging pass 1: leftover OWNED renewable surplus (unchanged from
+    // before), only if we did not already discharge this hour (no same-hour
+    // charge+discharge).
+    let bessChgRenewable=0, curtail=0;
     const surplus = solarAvail + windAvail; // whatever remains unused for demand
     if(bessDis<=1e-9 && surplus>1e-9 && soc<socMax){
       const headroomMWh = (socMax-soc)/params.chargeEff;
       const maxChg = Math.min(params.bessMW, surplus, headroomMWh);
-      bessChg = Math.max(0,maxChg);
-      soc += bessChg*params.chargeEff;
+      bessChgRenewable = Math.max(0,maxChg);
+      soc += bessChgRenewable*params.chargeEff;
     }
-    curtail = Math.max(surplus-bessChg,0);
+    curtail = Math.max(surplus-bessChgRenewable,0);
 
-    peakGridMW = Math.max(peakGridMW, gridUsed);
+    // BESS charging pass 2: economic Grid/OA/GC charging, ONLY during the
+    // strategy's chargeHours window (empty by default -> no effect on any
+    // existing caller). Draws from whatever import capacity is left after
+    // demand was served this hour: (gridCapMW - gridUsed) for grid, and the
+    // leftover of the same OA/GC availability profile used for demand.
+    // NOTE: gridUsed above is DEMAND-serving grid only, and stays that way —
+    // it feeds the hourly energy-balance equation (demand = solar+wind+gc+
+    // oa+bessDischarge+grid+unserved). Grid drawn to charge BESS is tracked
+    // separately (gridForBess) and added back only when checking the
+    // sanctioned import cap, never into the demand-balance `grid` field.
+    let bessChgGrid=0, bessChgOA=0, bessChgGC=0, gridForBess=0;
+    if(bessDis<=1e-9 && soc<socMax && schedule.chargeHours.has(t.hour) && params.bessChargeSources){
+      const tariffs = params.tariffs||{};
+      const candidates=[];
+      if(params.bessChargeSources.grid){
+        const gridLeft = Math.max(0, params.gridCapMW-gridUsed);
+        if(gridLeft>1e-9) candidates.push({src:'grid', avail:gridLeft, price:tariffs.grid?tariffs.grid[h]:Infinity});
+      }
+      if(params.bessChargeSources.oa && oaAv>1e-9) candidates.push({src:'oa', avail:oaAv, price:tariffs.oa?tariffs.oa[h]:Infinity});
+      if(params.bessChargeSources.gc && gcAv>1e-9) candidates.push({src:'gc', avail:gcAv, price:tariffs.gc?tariffs.gc[h]:Infinity});
+      candidates.sort((a,b)=>a.price-b.price);
+      const headroomMWh = (socMax-soc)/params.chargeEff;
+      let remaining = Math.max(0, Math.min(params.bessMW-bessChgRenewable, headroomMWh));
+      for(const c of candidates){
+        if(remaining<=1e-9) break;
+        const u = Math.min(c.avail, remaining);
+        if(u<=1e-9) continue;
+        if(c.src==='grid'){ gridForBess+=u; bessChgGrid+=u; }
+        else if(c.src==='oa'){ oaAv-=u; bessChgOA+=u; }
+        else if(c.src==='gc'){ gcAv-=u; bessChgGC+=u; }
+        soc += u*params.chargeEff;
+        remaining -= u;
+      }
+    }
+    const bessChg = bessChgRenewable+bessChgGrid+bessChgOA+bessChgGC;
+    const gridTotalImport = gridUsed+gridForBess; // demand + BESS charging, for cap/peak/cost purposes
+
+    peakGridMW = Math.max(peakGridMW, gridTotalImport);
 
     const m = t.month;
     monthly[m].demand += totalDemandThisHour;
@@ -247,23 +378,31 @@ function runDispatch8760(profiles, params, collectHourly){
     monthly[m].gc += gcUsed;
     monthly[m].oa += oaUsed;
     monthly[m].bessCharge += bessChg;
+    monthly[m].bessChargeRenewable += bessChgRenewable;
+    monthly[m].bessChargeGrid += bessChgGrid;
+    monthly[m].bessChargeOA += bessChgOA;
+    monthly[m].bessChargeGC += bessChgGC;
     monthly[m].bessDischarge += bessDis;
     monthly[m].grid += gridUsed;
+    monthly[m].gridForBess += gridForBess;
     monthly[m].curtail += curtail;
     monthly[m].unserved += unserved;
 
     if(collectHourly){
       hourly.push({idx:h, month:t.month, day:t.day, hour:t.hour,
         demand:totalDemandThisHour, solar:solarUsed, wind:windUsed, gc:gcUsed, oa:oaUsed,
-        bessCharge:bessChg, bessDischarge:bessDis, grid:gridUsed, unserved, curtail, soc, socMin, socMax});
+        bessCharge:bessChg, bessChargeRenewable:bessChgRenewable, bessChargeGrid:bessChgGrid, bessChargeOA:bessChgOA, bessChargeGC:bessChgGC,
+        bessDischarge:bessDis, grid:gridUsed, gridForBess, gridTotal:gridTotalImport, unserved, curtail, soc, socMin, socMax});
     }
   }
 
   const annual = monthly.reduce((s,m)=>({
     demand:s.demand+m.demand, solar:s.solar+m.solar, wind:s.wind+m.wind, gc:s.gc+m.gc, oa:s.oa+m.oa,
     bessCharge:s.bessCharge+m.bessCharge, bessDischarge:s.bessDischarge+m.bessDischarge,
-    grid:s.grid+m.grid, curtail:s.curtail+m.curtail, unserved:s.unserved+m.unserved
-  }), {demand:0,solar:0,wind:0,gc:0,oa:0,bessCharge:0,bessDischarge:0,grid:0,curtail:0,unserved:0});
+    bessChargeRenewable:s.bessChargeRenewable+m.bessChargeRenewable, bessChargeGrid:s.bessChargeGrid+m.bessChargeGrid,
+    bessChargeOA:s.bessChargeOA+m.bessChargeOA, bessChargeGC:s.bessChargeGC+m.bessChargeGC,
+    grid:s.grid+m.grid, gridForBess:s.gridForBess+m.gridForBess, curtail:s.curtail+m.curtail, unserved:s.unserved+m.unserved
+  }), {demand:0,solar:0,wind:0,gc:0,oa:0,bessCharge:0,bessDischarge:0,bessChargeRenewable:0,bessChargeGrid:0,bessChargeOA:0,bessChargeGC:0,grid:0,gridForBess:0,curtail:0,unserved:0});
 
   return {monthly, annual, peakGridMW, peakGridNeedMW, hourly};
 }
@@ -271,5 +410,6 @@ function runDispatch8760(profiles, params, collectHourly){
 module.exports = {
   clamp, generate8760Timeline, TIMELINE_8760, HOURS_PER_YEAR, operatingDayMask, shapeArray,
   generateDemand8760Profile, generateUnitMWShape8760, scaleProfile, addProfiles, constProfile,
-  generateOA8760Profile, generateGC8760Profiles, runDispatch8760, SOLAR_SEASONAL_N, WIND_SEASONAL_N
+  generateOA8760Profile, generateGC8760Profiles, runDispatch8760, SOLAR_SEASONAL_N, WIND_SEASONAL_N,
+  buildHourlyTariff, computeBessSchedule
 };
