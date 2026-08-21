@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ENERGY NEX — Energy Architecture &amp; Charging Economics Engine</title>
+<title>E-DHARA — Energy Architecture &amp; Charging Economics Engine</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -177,7 +177,7 @@ svg text{font-family:'IBM Plex Mono',monospace;}
 <div id="app">
 
   <div id="topbar">
-    <div class="brand">ENERGY NEX <span>//</span>DECISION ENGINE</div>
+    <div class="brand">E‑DHARA <span>//</span> ENGINE</div>
     <div class="ticker" id="ticker"></div>
     <div id="mixbar"></div>
   </div>
@@ -756,200 +756,6 @@ svg text{font-family:'IBM Plex Mono',monospace;}
 </div>
 
 <script src="edhara.js"></script>
-<script>
-/* ================================================================
-   GUIDED-FLOW LAYER — added on top of the existing engine.
-   Does not modify edhara.js: reuses its global renderAll()/getLastState()
-   and its existing '.navitem' click behaviour, and only adds new
-   interface plumbing for the simplified Location -> Demand ->
-   Energy Objective -> Energy Architecture -> Economics -> Run ->
-   Scenarios -> Strategic Decision journey, plus the "Soon" wall
-   around the deeper engineering tabs.
-   ================================================================ */
-(function(){
-  // ---------- "Soon" modal for Advanced Model items ----------
-  const SOON_INFO = {
-    dispatch:  {title:"8,760-Hour Dispatch",   desc:"Hour-by-hour physical dispatch, grid constraints, BESS behaviour, curtailment and unserved energy — the engineering layer behind the investment decision."},
-    bess:      {title:"BESS Value Stack",      desc:"Battery sizing, degradation, replacement and value-versus-cost analysis, including the independent MW × MWh sizing sweep."},
-    break:     {title:"Break-Even Engine",     desc:"Identifies the utilisation, tariff and cost thresholds where the recommendation changes."},
-    risk:      {title:"Risk Register",         desc:"Structured project risks across demand, grid, regulation, financing and execution."},
-    portfolio: {title:"Portfolio & Corridor",  desc:"Compare multiple sites and determine where the next unit of capital should go."},
-    states:    {title:"State Comparison",      desc:"Compare the same site architecture across different state tariff/CUF assumptions."},
-    own:       {title:"Ownership & Capital",   desc:"COCO vs partial-DOCO vs BESS-as-a-Service comparisons for the recommended architecture."},
-  };
-  const overlay = document.getElementById('soonModalOverlay');
-  const mTitle = document.getElementById('soonModalTitle');
-  const mDesc = document.getElementById('soonModalDesc');
-  const mStatus = document.getElementById('soonModalStatus');
-  function openSoonModal(key){
-    const info = SOON_INFO[key] || {title:"Coming Soon", desc:""};
-    mTitle.textContent = info.title;
-    mDesc.textContent = info.desc;
-    mStatus.textContent = "STATUS: ADVANCED MODEL — the current version focuses on the site-level investment decision.";
-    overlay.style.display = 'flex';
-  }
-  document.querySelectorAll('.navitem-soon').forEach(item=>{
-    item.addEventListener('click', ()=> openSoonModal(item.dataset.soon));
-  });
-  document.getElementById('soonModalClose').addEventListener('click', ()=>{ overlay.style.display='none'; });
-  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) overlay.style.display='none'; });
-
-  // ---------- progress stepper ----------
-  const STEPS = [
-    {view:'v-location',  label:'Location',            n:1},
-    {view:'v-demand',    label:'Demand',               n:2},
-    {view:'v-objective', label:'Energy Objective',     n:3},
-    {view:'v-arch',      label:'Energy Architecture',  n:4},
-    {view:'v-econ',      label:'Economics',            n:5},
-    {view:'v-scen',      label:'Scenarios',            n:6},
-    {view:'v-decision',  label:'Strategic Decision',   n:7},
-  ];
-  const bar = document.getElementById('progressBar');
-  bar.innerHTML = STEPS.map((s,i)=>
-    `<div class="pstep" data-view="${s.view}"><span class="num">${s.n}</span><span>${s.label}</span></div>` +
-    (i<STEPS.length-1 ? '<div class="pstep-sep"></div>' : '')
-  ).join('');
-  bar.querySelectorAll('.pstep').forEach(el=>{
-    el.addEventListener('click', ()=>{
-      const nav = document.querySelector('.navitem[data-view="'+el.dataset.view+'"]');
-      if(nav) nav.click();
-    });
-  });
-
-  let hasRun = false;
-  let dirty = false;
-  const dirtyBanner = document.getElementById('dirtyBanner');
-
-  function currentViewId(){
-    const active = document.querySelector('#main > .view.active');
-    return active ? active.id : '';
-  }
-  function updateStepper(){
-    const activeId = currentViewId();
-    const activeIdx = STEPS.findIndex(s=>s.view===activeId);
-    bar.querySelectorAll('.pstep').forEach((el,i)=>{
-      el.classList.toggle('active', el.dataset.view===activeId);
-      el.classList.toggle('done', hasRun && i<=activeIdx);
-    });
-  }
-  function updateDirtyBanner(){
-    const activeId = currentViewId();
-    const onResults = (activeId==='v-scen' || activeId==='v-decision');
-    dirtyBanner.style.display = (hasRun && dirty && onResults) ? 'flex' : 'none';
-  }
-
-  // keep stepper/banner synced with the existing nav click handling in edhara.js
-  document.querySelectorAll('.navitem').forEach(item=>{
-    item.addEventListener('click', ()=>{
-      if(item.classList.contains('disabled')) return;
-      setTimeout(()=>{ updateStepper(); updateDirtyBanner(); }, 0);
-    });
-  });
-  updateStepper();
-
-  document.addEventListener('input', e=>{
-    if(!e.target.matches('input,select')) return;
-    if(e.target.closest('#demandTable')) { if(hasRun){ dirty = true; updateDirtyBanner(); } return; }
-    if(hasRun){ dirty = true; updateDirtyBanner(); }
-  });
-
-  // ---------- validation + Run Site Analysis ----------
-  const REQUIRED = [
-    {id:'e_price', label:'Public charging price (Economics)'},
-    {id:'g_sanc',  label:'Sanctioned grid capacity (Energy Architecture → Grid)'},
-    {id:'in_opdays', label:'Operating days / year (Charging Demand)'},
-  ];
-  function validateInputs(){
-    const missing = [];
-    REQUIRED.forEach(r=>{
-      const el = document.getElementById(r.id);
-      const v = el ? parseFloat(el.value) : NaN;
-      if(!el || el.value===''||isNaN(v)||v<=0) missing.push(r.label);
-    });
-    return missing;
-  }
-  const runValidation = document.getElementById('runValidation');
-  const runStatusNote = document.getElementById('runStatusNote');
-  function runAnalysis(){
-    const missing = validateInputs();
-    if(missing.length){
-      runValidation.style.display = 'block';
-      runValidation.innerHTML = '<b>'+missing.length+' input'+(missing.length>1?'s':'')+' need'+(missing.length>1?'':'s')+' your attention before we can run the analysis:</b><br>'+missing.join(' · ');
-      return;
-    }
-    runValidation.style.display = 'none';
-    if(typeof renderAll==='function') renderAll();
-    hasRun = true;
-    dirty = false;
-    runStatusNote.textContent = 'Analysis complete — see Scenarios and Strategic Decision in the sidebar.';
-    const scenNav = document.querySelector('.navitem[data-view="v-scen"]');
-    if(scenNav) scenNav.click();
-    updateStepper();
-    updateDirtyBanner();
-  }
-  document.getElementById('runAnalysisBtn').addEventListener('click', runAnalysis);
-  document.getElementById('rerunBtn').addEventListener('click', runAnalysis);
-})();
-
-/* ================================================================
-   CASE-STUDY PREFILL — ChargeZone Project E-DHARA, Dahej (Gujarat)
-   Sets ONLY the fields ChargeZone has actually disclosed publicly
-   (state, DISCOM/licensee, archetype, 1 MW solar, 5 MWh BESS, grid-
-   as-backup, and the two vehicle categories the hub actually serves).
-   Everything else is deliberately left untouched at the model's
-   existing generic defaults, which are already labelled assumption/
-   benchmark elsewhere in the UI — this loader never invents a number
-   and presents it as sourced. Sources: ChargeZone's Nov-2025 Project
-   E-DHARA announcement, as reported by Autocar Professional,
-   EVreporter, Telematics Wire and Loktej Business News.
-   ================================================================ */
-(function(){
-  const GENERIC_VEHICLE_ROWS = [
-    {name:"Passenger cars (4W)", vpd:180, spd:1.0, kwh:22},
-    {name:"Electric buses",      vpd:12,  spd:1.0, kwh:140},
-    {name:"E-freight / LCV-MCV", vpd:35,  spd:1.0, kwh:85},
-    {name:"2W / 3W",             vpd:60,  spd:1.0, kwh:2.5},
-  ];
-  const CASE_STUDY_VEHICLE_ROWS = [
-    {name:"Passenger cars (4W)", vpd:180, spd:1.0, kwh:22},
-    {name:"E-freight / LCV-MCV (BillionE Mobility)", vpd:35, spd:1.0, kwh:85},
-  ];
-  function setVal(id, val){ const el = document.getElementById(id); if(el) el.value = val; }
-
-  function loadCaseStudy(){
-    setVal('in_state', 'Gujarat');
-    setVal('in_archetype', 'highway');
-    setVal('in_discom', 'Torrent-Dahej');
-    if(typeof applyDiscom==='function') applyDiscom('Torrent-Dahej'); // correctly leaves tariff fields NOT VERIFIED — Torrent's own Dahej tariff isn't publicly loaded here
-    setVal('in_gridallowed', '1');
-    setVal('s_mw', '1');
-    setVal('b_maxmwh', '5');
-    if(typeof vehicleRows!=='undefined'){
-      vehicleRows.length = 0;
-      CASE_STUDY_VEHICLE_ROWS.forEach(r=>vehicleRows.push({...r}));
-    }
-    if(typeof renderDemandTable==='function') renderDemandTable();
-    if(typeof renderAll==='function') renderAll();
-    const note = document.getElementById('caseStudyNote');
-    if(note) note.textContent = 'Case-study defaults loaded — see the table above for exactly which fields came from ChargeZone\u2019s public announcement.';
-  }
-  function resetGeneric(){
-    if(typeof vehicleRows!=='undefined'){
-      vehicleRows.length = 0;
-      GENERIC_VEHICLE_ROWS.forEach(r=>vehicleRows.push({...r}));
-    }
-    if(typeof renderDemandTable==='function') renderDemandTable();
-    if(typeof renderAll==='function') renderAll();
-    const note = document.getElementById('caseStudyNote');
-    if(note) note.textContent = 'Reset to the generic (non-case-study) model defaults. Click "Reload case-study defaults" above to bring the Dahej figures back.';
-  }
-  document.getElementById('loadCaseStudyBtn')?.addEventListener('click', loadCaseStudy);
-  document.getElementById('resetGenericBtn')?.addEventListener('click', resetGeneric);
-
-  // Auto-load once on page open, after edhara.js's own initial renderAll() has already run,
-  // so the very first thing the user sees is the Dahej case study, not a blank generic site.
-  loadCaseStudy();
-})();
-</script>
+<script src="phase.js"></script>
 </body>
 </html>
