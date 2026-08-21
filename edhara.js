@@ -5,16 +5,13 @@
    Nothing here should be read as a verified current regulatory or
    company fact unless a source has been attached in the Audit tab.
    ============================================================ */
-
 /* ---- ENGINE CORE (see engine.js for the Node-tested standalone copy) ---- */
 /* ============================================================
    E-DHARA CANONICAL 8760-HOUR ENGINE
    Pure functions, no DOM. Testable in Node, then embedded as-is
    into the browser build.
    ============================================================ */
-
 const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
-
 /* ---------------- 8760 timeline (built once, constant) ---------------- */
 function generate8760Timeline(){
   const daysInMonth=[31,28,31,30,31,30,31,31,30,31,30,31];
@@ -34,7 +31,6 @@ function generate8760Timeline(){
 }
 const TIMELINE_8760 = generate8760Timeline();
 const HOURS_PER_YEAR = TIMELINE_8760.length; // 8760
-
 /* ---------------- operating-day mask ----------------
    `opdays` no longer multiplies a 24h representative day into an annual
    number. Instead it determines, inside the 8760 profile itself, which
@@ -52,7 +48,6 @@ function operatingDayMask(opdays){
   }
   return on;
 }
-
 /* ---------------- 24h shape helper (reused inside 8760 generation) ---------------- */
 function shapeArray(shape){
   const flat = Array(24).fill(1/24);
@@ -65,7 +60,6 @@ function shapeArray(shape){
   const s = arr.reduce((a,b)=>a+b,0);
   return arr.map(v=>v/s);
 }
-
 /* ---------------- DEMAND 8760 (terminal / steady-state) ----------------
    dailyKWhTotal: steady-state daily energy (kWh) from the vehicle table.
    Returns an 8760-length MWh/hour array representing TERMINAL demand.
@@ -84,7 +78,6 @@ function generateDemand8760Profile(dailyKWhTotal, shape, opdays){
   }
   return out;
 }
-
 /* ---------------- SOLAR / WIND unit-MW 8760 shapes ----------------
    Synthetic, deterministic, clearly labelled placeholders. Built to
    auto-scale so the annual energy from 1 MW installed capacity equals
@@ -94,7 +87,6 @@ function generateDemand8760Profile(dailyKWhTotal, shape, opdays){
    dataset), rather than repeating one flat day 365 times. */
 const SOLAR_SEASONAL = [0.92,0.98,1.08,1.12,1.10,0.92,0.78,0.80,0.92,1.02,1.00,0.94]; // Jan..Dec, avg ~1.0
 const WIND_SEASONAL   = [0.75,0.70,0.75,0.95,1.25,1.55,1.60,1.45,1.05,0.75,0.65,0.65]; // pre/monsoon-heavy, avg ~1.0
-
 function _normalizeSeasonal(arr){
   const daysInMonth=[31,28,31,30,31,30,31,31,30,31,30,31];
   const weighted = arr.reduce((s,v,i)=>s+v*daysInMonth[i],0)/365;
@@ -102,7 +94,6 @@ function _normalizeSeasonal(arr){
 }
 const SOLAR_SEASONAL_N = _normalizeSeasonal(SOLAR_SEASONAL);
 const WIND_SEASONAL_N  = _normalizeSeasonal(WIND_SEASONAL);
-
 function solarDayCurve(hour){
   const x=(hour-12)/6.5;
   return Math.max(0, Math.exp(-x*x*2.2));
@@ -110,7 +101,6 @@ function solarDayCurve(hour){
 function windDayCurve(hour){
   return Math.max(0, 0.85+0.3*Math.sin((hour-3)/24*2*Math.PI));
 }
-
 /* returns an 8760 MWh/hour array for 1 MW installed capacity, rescaled
    so its annual sum == 8760*(cufPct/100) MWh exactly. */
 function generateUnitMWShape8760(cufPct, kind){
@@ -128,7 +118,6 @@ function generateUnitMWShape8760(cufPct, kind){
   for(let h=0;h<HOURS_PER_YEAR;h++) out[h]=raw[h]*scale;
   return out; // MWh/hour per 1 MW installed
 }
-
 function scaleProfile(unitShape, mw){
   const out = new Float64Array(HOURS_PER_YEAR);
   for(let h=0;h<HOURS_PER_YEAR;h++) out[h]=unitShape[h]*mw;
@@ -144,7 +133,6 @@ function constProfile(mw){
   out.fill(mw);
   return out;
 }
-
 /* ---------------- OA availability profile ----------------
    OA is now a real hourly-available energy source, not an annual
    blended ₹/kWh adjustment. `oaMW` = contracted capacity; `oaShape`
@@ -158,7 +146,6 @@ function generateOA8760Profile(oaMW, oaShape, solarUnitShape, windUnitShape){
   if(oaShape==='flat') return constProfile(oaMW);
   return scaleProfile(solarUnitShape, oaMW); // default solar-shaped
 }
-
 /* ---------------- GC generation + entitlement profile ----------------
    Ownership/equity %, energy entitlement %, and actual self-consumption
    are kept as three distinct numbers (never collapsed):
@@ -177,7 +164,6 @@ function generateGC8760Profiles(gcMW, solarSharePct, solarUnitShape, windUnitSha
   for(let h=0;h<HOURS_PER_YEAR;h++) availProfile[h]=genProfile[h]*frac;
   return {genProfile, availProfile};
 }
-
 /* ================================================================
    CANONICAL 8760 DISPATCH
    Priority order over ['solar','wind','gc','oa','bess'] to meet demand;
@@ -192,30 +178,101 @@ function generateGC8760Profiles(gcMW, solarSharePct, solarUnitShape, windUnitSha
    monthly/annual aggregates are accumulated (used by the optimizer for
    speed across many candidates).
    ================================================================ */
+/* ---------------- HOURLY TARIFF BUILDER ----------------
+   Converts a Flat or Time-of-Day tariff definition into an 8760-length
+   ₹/kWh array so dispatch can use the ACTUAL applicable price for each
+   hour, never an annual average. ToD pattern repeats identically every
+   day (slots are hour-of-day, not date-specific). slots: [{start:0,
+   end:6, rate:3.2}, ...], non-wrapping (a 22:00-02:00 slot must be
+   entered as two slots). Later slots overwrite earlier on overlap. */
+function buildHourlyTariff(mode, flatValue, slots){
+  const hourRate = new Array(24).fill(flatValue);
+  if(mode==='tod' && Array.isArray(slots)){
+    for(const slot of slots){
+      const start = clamp(Math.round(slot.start),0,24);
+      const end = clamp(Math.round(slot.end),0,24);
+      for(let h=start; h<end; h++){ if(h>=0&&h<24) hourRate[h]=slot.rate; }
+    }
+  }
+  const out = new Float64Array(HOURS_PER_YEAR);
+  for(let h=0; h<HOURS_PER_YEAR; h++) out[h]=hourRate[TIMELINE_8760[h].hour];
+  return out;
+}
+/* ---------------- BESS SCHEDULE ----------------
+   Deterministic, explainable heuristic (cheapest/priciest N hours-of-day,
+   N sized off MWh/MW), computed once per dispatch call from the daily
+   ToD pattern — same coarse-grid-search spirit as the rest of this
+   model's optimiser, not a full stochastic optimisation. */
+function computeBessSchedule(bessMW, bessMWh, tariffs, strategy, sources, customWindows, rte){
+  if(strategy==='custom' && customWindows){
+    return {
+      chargeHours: new Set(customWindows.chargeHours||[]),
+      dischargeRestrict: (customWindows.dischargeHours && customWindows.dischargeHours.length) ? new Set(customWindows.dischargeHours) : null
+    };
+  }
+  if(!strategy || strategy==='renewable'){
+    return {chargeHours:new Set(), dischargeRestrict:null};
+  }
+  const priceAt = h=>{
+    let best = Infinity;
+    if(sources && sources.grid && tariffs.grid) best = Math.min(best, tariffs.grid[h]);
+    if(sources && sources.oa && tariffs.oa) best = Math.min(best, tariffs.oa[h]);
+    if(sources && sources.gc && tariffs.gc) best = Math.min(best, tariffs.gc[h]);
+    return best;
+  };
+  const hours = Array.from({length:24},(_,h)=>({h, price:priceAt(h)}));
+  const valid = hours.filter(x=>isFinite(x.price));
+  if(valid.length===0) return {chargeHours:new Set(), dischargeRestrict:null};
+  const ascending = [...valid].sort((a,b)=>a.price-b.price);
+  const descending = [...valid].sort((a,b)=>b.price-a.price);
+  const hoursToFill = bessMW>0 ? clamp(Math.ceil(bessMWh/bessMW),1,12) : 0;
+  const cheapest = ascending.slice(0,hoursToFill);
+  const priciest = descending.slice(0,hoursToFill);
+  if(cheapest.length===0 || priciest.length===0) return {chargeHours:new Set(), dischargeRestrict:null};
+  const avgCheap = cheapest.reduce((s,x)=>s+x.price,0)/cheapest.length;
+  const avgExpensive = priciest.reduce((s,x)=>s+x.price,0)/priciest.length;
+  const effRte = rte>0 ? rte : 1;
+  const worthwhile = avgExpensive > (avgCheap/effRte)*1.02;
+  if(strategy==='mincost'){
+    return {chargeHours: worthwhile ? new Set(cheapest.map(x=>x.h)) : new Set(), dischargeRestrict:null};
+  }
+  if(strategy==='peak'){
+    return {chargeHours:new Set(), dischargeRestrict:new Set(priciest.map(x=>x.h))};
+  }
+  if(strategy==='arbitrage'){
+    return {chargeHours: worthwhile ? new Set(cheapest.map(x=>x.h)) : new Set(), dischargeRestrict:new Set(priciest.map(x=>x.h))};
+  }
+  return {chargeHours:new Set(), dischargeRestrict:null};
+}
 function runDispatch8760(profiles, params, collectHourly){
   const {demand, solar, wind, gcAvail, oaAvail} = profiles;
   const n = demand.length;
   const priority = params.priorityOrder || ['solar','wind','gc','oa','bess','grid'];
   const demandPriority = priority.filter(p=>p!=='grid'); // grid always resolved last regardless of position
-
   const socMin = params.bessMWh*params.socMinFrac;
   const socMax = params.bessMWh*params.socMaxFrac;
   let soc = params.bessMWh*0.5;
-
+  // Economic BESS scheduling — fully backward-compatible: if the caller
+  // doesn't pass bessChargeSources (existing callers never do), this is a
+  // no-op and behaviour is IDENTICAL to before.
+  const rte = (params.chargeEff||1)*(params.dischargeEff||1);
+  const schedule = computeBessSchedule(
+    params.bessMW, params.bessMWh, params.tariffs||{}, params.bessStrategy,
+    params.bessChargeSources, params.customWindows, rte
+  );
   const monthly = Array.from({length:12},()=>({
-    demand:0, solar:0, wind:0, gc:0, oa:0, bessCharge:0, bessDischarge:0, grid:0, curtail:0, unserved:0
+    demand:0, solar:0, wind:0, gc:0, oa:0, bessCharge:0, bessDischarge:0, grid:0, gridForBess:0, curtail:0, unserved:0,
+    bessChargeRenewable:0, bessChargeGrid:0, bessChargeOA:0, bessChargeGC:0
   }));
   let peakGridMW = 0;
   let peakGridNeedMW = 0;
   const hourly = collectHourly ? [] : null;
-
   for(let h=0; h<n; h++){
     const t = TIMELINE_8760[h];
     let need = demand[h];
     const totalDemandThisHour = need;
     let solarAvail = solar[h], windAvail = wind[h], gcAv = gcAvail[h], oaAv = oaAvail[h];
     let solarUsed=0, windUsed=0, gcUsed=0, oaUsed=0, bessDis=0, gridUsed=0;
-
     for(const src of demandPriority){
       if(need<=1e-9) break;
       if(src==='solar'){ const u=Math.min(solarAvail,need); solarUsed+=u; need-=u; solarAvail-=u; }
@@ -223,9 +280,12 @@ function runDispatch8760(profiles, params, collectHourly){
       else if(src==='gc'){ const u=Math.min(gcAv,need); gcUsed+=u; need-=u; gcAv-=u; }
       else if(src==='oa'){ const u=Math.min(oaAv,need); oaUsed+=u; need-=u; oaAv-=u; }
       else if(src==='bess'){
-        const maxDis = Math.max(0, Math.min(params.bessMW, (soc-socMin)*params.dischargeEff));
-        const u = Math.min(maxDis, need);
-        if(u>0){ bessDis+=u; need-=u; soc-=u/params.dischargeEff; }
+        const hourAllowed = !schedule.dischargeRestrict || schedule.dischargeRestrict.has(t.hour);
+        if(hourAllowed){
+          const maxDis = Math.max(0, Math.min(params.bessMW, (soc-socMin)*params.dischargeEff));
+          const u = Math.min(maxDis, need);
+          if(u>0){ bessDis+=u; need-=u; soc-=u/params.dischargeEff; }
+        }
       }
     }
     // grid resolves last, hard-capped — track the UNCAPPED requirement too,
@@ -234,21 +294,48 @@ function runDispatch8760(profiles, params, collectHourly){
     peakGridNeedMW = Math.max(peakGridNeedMW, Math.max(need,0));
     gridUsed = Math.min(params.gridCapMW, Math.max(need,0));
     let unserved = Math.max(need-gridUsed, 0);
-
-    // BESS charging pass: only from leftover OWNED renewable surplus, only if
-    // we did not already discharge this hour (no same-hour charge+discharge).
-    let bessChg=0, curtail=0;
-    const surplus = solarAvail + windAvail; // whatever remains unused for demand
+    // BESS charging pass 1: leftover OWNED renewable surplus (unchanged from
+    // before), only if we did not already discharge this hour.
+    let bessChgRenewable=0, curtail=0;
+    const surplus = solarAvail + windAvail;
     if(bessDis<=1e-9 && surplus>1e-9 && soc<socMax){
       const headroomMWh = (socMax-soc)/params.chargeEff;
       const maxChg = Math.min(params.bessMW, surplus, headroomMWh);
-      bessChg = Math.max(0,maxChg);
-      soc += bessChg*params.chargeEff;
+      bessChgRenewable = Math.max(0,maxChg);
+      soc += bessChgRenewable*params.chargeEff;
     }
-    curtail = Math.max(surplus-bessChg,0);
-
-    peakGridMW = Math.max(peakGridMW, gridUsed);
-
+    curtail = Math.max(surplus-bessChgRenewable,0);
+    // BESS charging pass 2: economic Grid/OA/GC charging, ONLY during the
+    // strategy's chargeHours window (empty by default -> no effect on any
+    // existing caller). gridUsed here stays DEMAND-only for the balance
+    // equation; grid drawn to charge BESS is tracked separately.
+    let bessChgGrid=0, bessChgOA=0, bessChgGC=0, gridForBess=0;
+    if(bessDis<=1e-9 && soc<socMax && schedule.chargeHours.has(t.hour) && params.bessChargeSources){
+      const tariffs = params.tariffs||{};
+      const candidates=[];
+      if(params.bessChargeSources.grid){
+        const gridLeft = Math.max(0, params.gridCapMW-gridUsed);
+        if(gridLeft>1e-9) candidates.push({src:'grid', avail:gridLeft, price:tariffs.grid?tariffs.grid[h]:Infinity});
+      }
+      if(params.bessChargeSources.oa && oaAv>1e-9) candidates.push({src:'oa', avail:oaAv, price:tariffs.oa?tariffs.oa[h]:Infinity});
+      if(params.bessChargeSources.gc && gcAv>1e-9) candidates.push({src:'gc', avail:gcAv, price:tariffs.gc?tariffs.gc[h]:Infinity});
+      candidates.sort((a,b)=>a.price-b.price);
+      const headroomMWh = (socMax-soc)/params.chargeEff;
+      let remaining = Math.max(0, Math.min(params.bessMW-bessChgRenewable, headroomMWh));
+      for(const c of candidates){
+        if(remaining<=1e-9) break;
+        const u = Math.min(c.avail, remaining);
+        if(u<=1e-9) continue;
+        if(c.src==='grid'){ gridForBess+=u; bessChgGrid+=u; }
+        else if(c.src==='oa'){ oaAv-=u; bessChgOA+=u; }
+        else if(c.src==='gc'){ gcAv-=u; bessChgGC+=u; }
+        soc += u*params.chargeEff;
+        remaining -= u;
+      }
+    }
+    const bessChg = bessChgRenewable+bessChgGrid+bessChgOA+bessChgGC;
+    const gridTotalImport = gridUsed+gridForBess;
+    peakGridMW = Math.max(peakGridMW, gridTotalImport);
     const m = t.month;
     monthly[m].demand += totalDemandThisHour;
     monthly[m].solar += solarUsed;
@@ -256,29 +343,31 @@ function runDispatch8760(profiles, params, collectHourly){
     monthly[m].gc += gcUsed;
     monthly[m].oa += oaUsed;
     monthly[m].bessCharge += bessChg;
+    monthly[m].bessChargeRenewable += bessChgRenewable;
+    monthly[m].bessChargeGrid += bessChgGrid;
+    monthly[m].bessChargeOA += bessChgOA;
+    monthly[m].bessChargeGC += bessChgGC;
     monthly[m].bessDischarge += bessDis;
     monthly[m].grid += gridUsed;
+    monthly[m].gridForBess += gridForBess;
     monthly[m].curtail += curtail;
     monthly[m].unserved += unserved;
-
     if(collectHourly){
       hourly.push({idx:h, month:t.month, day:t.day, hour:t.hour,
         demand:totalDemandThisHour, solar:solarUsed, wind:windUsed, gc:gcUsed, oa:oaUsed,
-        bessCharge:bessChg, bessDischarge:bessDis, grid:gridUsed, unserved, curtail, soc, socMin, socMax});
+        bessCharge:bessChg, bessChargeRenewable:bessChgRenewable, bessChargeGrid:bessChgGrid, bessChargeOA:bessChgOA, bessChargeGC:bessChgGC,
+        bessDischarge:bessDis, grid:gridUsed, gridForBess, gridTotal:gridTotalImport, unserved, curtail, soc, socMin, socMax});
     }
   }
-
   const annual = monthly.reduce((s,m)=>({
     demand:s.demand+m.demand, solar:s.solar+m.solar, wind:s.wind+m.wind, gc:s.gc+m.gc, oa:s.oa+m.oa,
     bessCharge:s.bessCharge+m.bessCharge, bessDischarge:s.bessDischarge+m.bessDischarge,
-    grid:s.grid+m.grid, curtail:s.curtail+m.curtail, unserved:s.unserved+m.unserved
-  }), {demand:0,solar:0,wind:0,gc:0,oa:0,bessCharge:0,bessDischarge:0,grid:0,curtail:0,unserved:0});
-
+    bessChargeRenewable:s.bessChargeRenewable+m.bessChargeRenewable, bessChargeGrid:s.bessChargeGrid+m.bessChargeGrid,
+    bessChargeOA:s.bessChargeOA+m.bessChargeOA, bessChargeGC:s.bessChargeGC+m.bessChargeGC,
+    grid:s.grid+m.grid, gridForBess:s.gridForBess+m.gridForBess, curtail:s.curtail+m.curtail, unserved:s.unserved+m.unserved
+  }), {demand:0,solar:0,wind:0,gc:0,oa:0,bessCharge:0,bessDischarge:0,bessChargeRenewable:0,bessChargeGrid:0,bessChargeOA:0,bessChargeGC:0,grid:0,gridForBess:0,curtail:0,unserved:0});
   return {monthly, annual, peakGridMW, peakGridNeedMW, hourly};
 }
-
-
-
 /* ================================================================
    APPLICATION LAYER
    ================================================================ */
@@ -287,7 +376,6 @@ const fmt = (n, d=2) => { if(!isFinite(n)) return "—"; return Number(n).toLoca
 const clampV = (v,a,b)=>Math.max(a,Math.min(b,v));
 function mulScalar(profile, k){ const out=new Float64Array(profile.length); for(let i=0;i<profile.length;i++) out[i]=profile[i]*k; return out; }
 function sumProfile(p){ let s=0; for(let i=0;i<p.length;i++) s+=p[i]; return s; }
-
 /* ---------------- state ---------------- */
 let vehicleRows = [
   {name:"Passenger cars (4W)", vpd:180, spd:1.0, kwh:22},
@@ -303,11 +391,6 @@ const scenarioPresets = {
   stress:   {util:0.70, grid:1.30, bess:1.25, price:0.85, interest:300, ren:0.85, label:"Stress Case"},
 };
 const STATE_ASSUMPTIONS = {
-  // Gujarat state-owned DISCOM defaults (DGVCL/MGVCL/PGVCL/UGVCL) — the g_energy,
-  // oa_wheel, oa_css and oa_addl figures below are VERIFIED against the GERC
-  // FY2026-27 tariff schedule / Fifth GEOA Amendment 2026 (see STATE_PROVENANCE /
-  // GUJARAT_DISCOMS for sources). gc_charges, s_cuf and w_cuf remain editable
-  // model assumptions/benchmarks — never treat them as verified regulatory fact.
   "Gujarat":     {g_energy:4.00, oa_css:1.33, oa_wheel:0.2352, oa_addl:0.76, oa_bank:1.50, gc_charges:1.35, s_cuf:19.5, w_cuf:26, verified:false},
   "Rajasthan":   {g_energy:6.90, oa_css:1.35, oa_wheel:0.70, oa_addl:null, oa_bank:null, gc_charges:1.20, s_cuf:21.5, w_cuf:22, verified:false},
   "Maharashtra": {g_energy:8.10, oa_css:1.55, oa_wheel:1.05, oa_addl:null, oa_bank:null, gc_charges:1.75, s_cuf:18.5, w_cuf:20, verified:false},
@@ -315,9 +398,6 @@ const STATE_ASSUMPTIONS = {
   "Tamil Nadu":  {g_energy:7.80, oa_css:1.20, oa_wheel:0.90, oa_addl:null, oa_bank:null, gc_charges:1.55, s_cuf:17.5, w_cuf:28, verified:false},
   "Delhi":       {g_energy:8.40, oa_css:1.65, oa_wheel:1.15, oa_addl:null, oa_bank:null, gc_charges:1.85, s_cuf:17.0, w_cuf:0,  verified:false},
 };
-/* ---------------- data provenance (Part 11) ----------------
-   Every regulatory input carries value/source/effective-date/status so the
-   UI never presents a benchmark or draft figure as a confirmed final tariff. */
 const STATE_PROVENANCE = {
   "Gujarat": {
     g_energy:{status:'VERIFIED', label:'HT EV-charging energy charge', source:'GERC FY2026-27 Tariff Schedule (DGVCL/MGVCL/PGVCL/UGVCL), Part II, Sec. 17 "Rate: HT Electric Vehicle (EV) Charging Stations", para 17.2', url:'https://gercin.org/wp-content/uploads/2026/03/Tariff-Schedule-of-DGVCL-MGVCL-PGVCL-UGVCL-w.e.f.-01.04.2026.pdf', effective:'01-04-2026'},
@@ -334,11 +414,6 @@ const STATE_PROVENANCE = {
     oa_energy:{status:'BENCHMARK', label:'Solar/wind PPA (generation) benchmark', source:'Recent GUVNL competitive-bidding tariffs (project-specific; GERC solar proceedings still pending) — this is a GENERATION price, not a delivered OA price', url:'', effective:''},
   }
 };
-/* ---------------- Gujarat DISCOM / supply-area table (Part 9) ----------------
-   Only the four state-owned DISCOMs share a common, currently-verified GERC
-   tariff schedule. Distribution licensees (Torrent, MUL, AIVPL, GIFT PCL) file
-   their own tariffs — those component values are intentionally left
-   NOT VERIFIED rather than silently borrowing the state-owned numbers. */
 const GUJARAT_DISCOMS = {
   "DGVCL":              {label:'DGVCL (state-owned)', g_energy:4.00, g_demand:25, g_tod:0.45, g_solardisc:0.60, oa_wheel:0.2352, oa_css:1.33, oa_addl:0.76, oa_bank:1.50, status:'VERIFIED'},
   "MGVCL":              {label:'MGVCL (state-owned)', g_energy:4.00, g_demand:25, g_tod:0.45, g_solardisc:0.60, oa_wheel:0.2352, oa_css:1.33, oa_addl:0.76, oa_bank:1.50, status:'VERIFIED'},
@@ -357,12 +432,6 @@ function applyDiscom(key){
   const setIf = (id,val)=>{ if(val!=null && $(id)) $(id).value = val; };
   setIf('g_energy', d.g_energy); setIf('g_demand', d.g_demand); setIf('g_tod', d.g_tod); setIf('g_solardisc', d.g_solardisc);
   setIf('oa_wheel', d.oa_wheel); setIf('oa_css', d.oa_css); setIf('oa_addl', d.oa_addl); setIf('oa_bank', d.oa_bank);
-  // FPPPA is intentionally NEVER auto-filled here, even for the four state-owned
-  // DISCOMs whose base tariff schedule is otherwise VERIFIED: FPPPA/FPPAS is a
-  // separately-notified, periodically-revised (typically quarterly) surcharge,
-  // shown as its own line on the bill per GERC's own directive. Silently
-  // defaulting it to a number would misrepresent a live regulatory figure as
-  // settled, exactly the "not sufficiently defined" mistake this model must avoid.
   const note = $('discomStatusNote');
   if(note){
     note.innerHTML = d.status==='VERIFIED'
@@ -370,7 +439,6 @@ function applyDiscom(key){
       : `<span class="pill low">NOT VERIFIED</span> ${d.label} sets its own tariff — no confirmed current figures are loaded here. Fields are left as-is; enter the actual applicable tariff (including its own FPPPA/fuel-adjustment charge) manually rather than relying on the state-owned DISCOM numbers.`;
   }
 }
-/* ---------------- banking-charge time validity (Part 4) ---------------- */
 function bankingRegulatoryStatus(){
   const expiry = new Date('2026-08-31T23:59:59+05:30');
   const now = new Date();
@@ -379,8 +447,6 @@ function bankingRegulatoryStatus(){
   }
   return {status:'VERIFIED / TIME LIMITED', message:'Banking charge is time-sensitive. Current notified rate is ₹1.50/kWh through 31 August 2026 (GERC Fifth GEOA Amendment 2026). Post-August treatment must be updated when GERC notifies the applicable charge — the Draft Sixth GEOA Amendment (June 2026) is NOT final and is not used as a default here.'};
 }
-
-/* ---------------- finance helpers ---------------- */
 function crf(ratePct, years){ const r=ratePct/100; if(r===0) return 1/years; return r*Math.pow(1+r,years)/(Math.pow(1+r,years)-1); }
 function npv(ratePct, flows){ const r=ratePct/100; return flows.reduce((s,cf,t)=>s+cf/Math.pow(1+r,t),0); }
 function irrLabel(v){ if(isNaN(v)) return '—'; if(!isFinite(v)) return '>2000%'; return fmt(v,1)+'%'; }
@@ -397,8 +463,6 @@ function irr(flows){
   }
   return ((lo+hi)/2)*100;
 }
-
-/* ---------------- read inputs ---------------- */
 function readInputs(){
   const v = id => parseFloat($(id).value)||0;
   const s = id => $(id).value;
@@ -442,35 +506,26 @@ function scenMultFor(name){
   };
 }
 function scenMult(){ return scenMultFor(scenario); }
-
 function priorityArrayFrom(key){
   if(key==='solar-wind-oa-gc-bess-grid') return ['solar','wind','oa','gc','bess','grid'];
   if(key==='solar-wind-bess-gc-oa-grid') return ['solar','wind','bess','gc','oa','grid'];
   return ['solar','wind','gc','oa','bess','grid'];
 }
-
-/* ---------------- utilisation ramp (feeds the 8760 demand scalar per year) ---------------- */
 function utilisationFraction(inp, year){
   const y1 = clampV(inp.util_y1,0,1000)/100, term = clampV(inp.util_terminal,0,1000)/100;
   const rampY = Math.max(inp.util_rampyears,1);
   if(year>=rampY) return term;
-  const t = (year-1)/rampY; // 0 at year1 start
+  const t = (year-1)/rampY;
   if(inp.util_shape==='scurve'){
     const s = t*t*(3-2*t);
     return y1 + (term-y1)*s;
   }
   return y1 + (term-y1)*(t);
 }
-
-/* ---------------- static (non-hourly) source economics: CAPEX/OM rates, landed OA/GC benchmark ----------------
-   genEngine now returns ONLY the CAPEX annuity + O&M rate references. Actual
-   annual generation volumes come from the 8760 dispatch, not from this
-   function, avoiding two different "how much energy did solar produce"
-   answers existing in the model at once. */
 function genEngine(mw, capexCrPerMW, omLakhPerMW, life, hurdlePct){
   const capexCr = mw*capexCrPerMW;
   const annualCapexCharge = capexCr>0 ? capexCr*crf(hurdlePct,life) : 0;
-  const annualOM = mw*omLakhPerMW/100; // Lakh -> Cr
+  const annualOM = mw*omLakhPerMW/100;
   return {capexCr, annualCapexCharge, annualOM};
 }
 function computeOA(inp){
@@ -493,49 +548,27 @@ function gridCapacityMW(inp, includeUpgrade){
   if(includeUpgrade && inp.g_upgrade_avail) return base+inp.g_upgrade_mw;
   return base;
 }
-/* ================================================================
-   GRID FULLY-LOADED COST ENGINE (Part 1/2 fix)
-   Grid cost is never just the base ₹/kWh energy charge. This builds:
-   base energy rate -> ToU-adjusted effective energy rate (peak-window
-   surcharge, solar-window discount) -> + demand/fixed charges
-   apportioned over the dispatch's own annual grid energy -> + tax.
-   ToU incidence is allocated using the SAME hourly demand SHAPE the
-   rest of the model already uses (an explicit, stated allocation
-   assumption — full hour-by-hour ToU billing against the actual
-   dispatched grid-import profile is a natural v2 extension once
-   per-source hourly series are retained for every run, not just
-   collectHourly runs). */
 function computeGridCostEngine(inp, gridMWhAnnual, peakGridMW){
   const m = scenMult();
-  const hourWeights = shapeArray(inp.shape); // sums to 1 across 24h, reused as ToU incidence proxy
-  const PEAK_HOURS = [7,8,9,10,18,19,20,21];   // GERC HT-EVCS peak ToU windows: 07-11, 18-22
-  const SOLAR_HOURS = [11,12,13,14,15,16];      // GERC HT-EVCS solar-hour discount window: 11-17
+  const hourWeights = shapeArray(inp.shape);
+  const PEAK_HOURS = [7,8,9,10,18,19,20,21];
+  const SOLAR_HOURS = [11,12,13,14,15,16];
   let peakW=0, solarW=0;
   PEAK_HOURS.forEach(h=>peakW+=hourWeights[h]);
   SOLAR_HOURS.forEach(h=>solarW+=hourWeights[h]);
   const baseEnergyRate = inp.g_energy*m.grid;
   const touAdj = peakW*(inp.g_tod||0) - solarW*(inp.g_solardisc||0);
-  // FPPPA/FPPAS is a distinct, separately-notified pass-through (not part of the
-  // base energy charge) — added before tax/duty since electricity duty is levied
-  // on the full billed energy amount including fuel-adjustment surcharges.
   const fppcaRate = (inp.g_fppca||0)*m.grid;
   const effectiveEnergyRate = (baseEnergyRate+touAdj+fppcaRate)*(1+inp.g_tax/100);
-  // Excess-demand charge: GERC-style contract-demand schedules bill draw UP TO
-  // the sanctioned/contracted load (g_sanc, in kVA — the base contracted
-  // capacity, NOT the grid-upgrade-inclusive dispatch cap) at the normal
-  // demand-charge rate, and only the portion ABOVE it at the separate (usually
-  // higher) excess-demand rate — never both rates on the same kVA. Previously
-  // collected as an input (g_excess_demand) but never actually applied
-  // anywhere — wired in here.
   const sanctionedMW = (inp.g_sanc||0)/1000;
   const billableKVA = Math.max(peakGridMW,0)*1000;
   const normalKVA = Math.min(billableKVA, sanctionedMW*1000);
   const excessKVA = Math.max(billableKVA-sanctionedMW*1000, 0);
-  const demandChargeAnnualCr = (inp.g_demand*normalKVA*12)/1e7; // ₹/kVA/month * normal kVA *12
+  const demandChargeAnnualCr = (inp.g_demand*normalKVA*12)/1e7;
   const excessDemandChargeAnnualCr = (inp.g_excess_demand*excessKVA*12)/1e7;
   const fixedAnnualCr = (inp.g_fixed*12)/1e7;
   const demandFixedPerKWh = gridMWhAnnual>0 ? ((demandChargeAnnualCr+excessDemandChargeAnnualCr+fixedAnnualCr)*1e7*(1+inp.g_tax/100))/(gridMWhAnnual*1e6) : 0;
-  const connAmortRate = inp.g_conn_amort||0; // one-time connection-related costs, already amortized to ₹/kWh by the user
+  const connAmortRate = inp.g_conn_amort||0;
   const effectivePerKWh = effectiveEnergyRate+demandFixedPerKWh+connAmortRate;
   const totalAnnualCostCr = (effectivePerKWh*gridMWhAnnual*1000)/1e7;
   return {
@@ -544,35 +577,15 @@ function computeGridCostEngine(inp, gridMWhAnnual, peakGridMW){
     allocationNote:'Demand + excess-demand + fixed charges are apportioned over this architecture\'s own annual grid-import energy from the dispatch (not a separately-assumed annual figure). ToU peak/solar-hour incidence is allocated using the site\'s configured demand SHAPE as an hour-weighting proxy, not a full hour-by-hour ToU billing pass — stated explicitly as a model allocation assumption, not a regulatory fact. FPPPA is a separately-notified surcharge, not part of the base energy charge — confirm the current quarter\'s rate before relying on this output.'
   };
 }
-/* Grid ₹/kWh rate applied to actual grid MWh delivered by the dispatch — kept as
-   a thin wrapper over computeGridCostEngine so there is exactly ONE grid-rate
-   calculation path used everywhere (optimizer scoring, display, comparison). */
 function gridRatePerKWh(inp, gridMWhAnnual, peakGridMW){
   return computeGridCostEngine(inp, gridMWhAnnual, peakGridMW).effectivePerKWh;
 }
-
-/* ---------------- GC compliance (equity/self-consumption thresholds, unchanged concept) ---------------- */
 function gcCompliance(inp, gcMW, gcAnnualUsedGWh, gcAnnualGenGWh){
   const equityOK = inp.gc_myequity>=inp.gc_equity;
   const selfConsPct = gcAnnualGenGWh>0 ? clampV((gcAnnualUsedGWh/gcAnnualGenGWh)*100,0,999) : 0;
   const selfConsOK = selfConsPct>=inp.gc_selfcons;
   return {equityOK, selfConsOK, compliant:equityOK&&selfConsOK, selfConsPct};
 }
-
-/* ================================================================
-   REGULATORY ELIGIBILITY GATE (OA + GC)
-   Every OA/GC candidate is classified ELIGIBLE / VERIFY / NOT ELIGIBLE.
-   NOT ELIGIBLE is a HARD constraint enforced in the optimiser's scoring
-   functions (returns -Infinity, same mechanism already used for
-   "grid not allowed"). ELIGIBLE/VERIFY are both allowed through — the
-   distinction is informational (VERIFY = passes the model's threshold
-   but that threshold itself is not a confirmed current regulatory
-   number, so a human must still check it). No specific state DISCOM
-   number is asserted as fact; oa_min_mw is a user-editable, VERIFY-
-   tagged input, and the GC equity/self-consumption thresholds are the
-   same commonly-cited (not asserted-current) inputs already used
-   elsewhere in the model (gc_equity, gc_selfcons).
-   ================================================================ */
 function oaEligibility(inp, candidate){
   if(candidate.oaMW<=1e-6) return {status:'N/A', detail:'No OA capacity proposed for this candidate'};
   if(inp.oa_min_mw<=1e-6) return {status:'VERIFY', detail:'No minimum-capacity threshold configured (0 MW) — eligibility cannot be automatically determined; set the threshold or confirm eligibility manually against the state open-access regulation'};
@@ -586,26 +599,6 @@ function gcEligibility(inp, candidate, gcAnnualUsedMWh, gcAnnualGenMWh){
   if(!compl.selfConsOK) return {status:'NOT ELIGIBLE', detail:`Actual self-consumption ${fmt(compl.selfConsPct,1)}% (from the dispatch, not the entitlement setting) is below the configured minimum of ${fmt(inp.gc_selfcons,1)}%`, compliant:false, selfConsPct:compl.selfConsPct};
   return {status:'ELIGIBLE', detail:`Equity ${fmt(inp.gc_myequity,1)}%≥${fmt(inp.gc_equity,1)}% and self-consumption ${fmt(compl.selfConsPct,1)}%≥${fmt(inp.gc_selfcons,1)}% both meet the configured thresholds. The threshold VALUES (26%/51%-style figures) are commonly-cited under the captive generation framework but not asserted here as confirmed current rule text — confirm against the current Electricity Rules and any state-commission interpretation.`, compliant:true, selfConsPct:compl.selfConsPct};
 }
-
-/* ================================================================
-   GC FULLY-LOADED PROCUREMENT COST (Part 6 — THE MOST IMPORTANT FIX)
-   `gc_charges` is wheeling/CSS/other VARIABLE pass-through only — it has
-   NEVER been a total electricity cost and must never be displayed or
-   compared as one. This builds the full stack: annualised project
-   CAPEX+financing for the offtake's OWN equity share of the SPV, O&M for
-   that same share, then the delivery stack (wheeling/banking/SLDC/losses,
-   reusing the same DISCOM-charged component fields as Green OA since it
-   is physically the same wheeling infrastructure) with CSS/Additional
-   Surcharge INCLUDED unless the captive-eligibility gate (gcEligibility)
-   is currently met, in which case they are removed as a captive benefit —
-   never zeroed just because the route is labelled "GC".
-   This is a comparison-only metric. It intentionally does NOT feed back
-   into energyCostCr/landedCostPerKWh (the SPV's own opex/cash-flow
-   accounting), because CAPEX for owned generation (solar/wind/GC) is
-   already capitalised and financed through totalCapexCr/debt/equity in
-   evaluateCandidateSteadyState — charging it again as "opex" here would
-   double-count the same CAPEX, the exact bug this function exists to
-   avoid on the OA/GC comparison side. */
 function computeGCFullyLoaded(inp, gcMW, gcConsumedMWh, gcElig){
   const life = (inp.s_life*(inp.gc_solarshare/100) + inp.w_life*(1-inp.gc_solarshare/100)) || 25;
   const omBlendLakhPerMW = (inp.s_om*(inp.gc_solarshare/100) + inp.w_om*(1-inp.gc_solarshare/100));
@@ -613,7 +606,7 @@ function computeGCFullyLoaded(inp, gcMW, gcConsumedMWh, gcElig){
   const myShare = clampV(inp.gc_myequity,0,100)/100;
   const gcMyCapexCr = gcCapexTotalCr*myShare;
   const capexAnnualCr = gcMyCapexCr>0 ? gcMyCapexCr*crf(inp.f_hurdle, life) : 0;
-  const omAnnualCr = gcMW*myShare*omBlendLakhPerMW/100; // Lakh/MW/yr -> Cr, my equity share
+  const omAnnualCr = gcMW*myShare*omBlendLakhPerMW/100;
   const captiveOK = !!(gcElig && gcElig.compliant);
   const cssApplied = captiveOK ? 0 : inp.oa_css;
   const addlApplied = captiveOK ? 0 : inp.oa_addl;
@@ -639,13 +632,7 @@ function computeGCFullyLoaded(inp, gcMW, gcConsumedMWh, gcElig){
       : 'Captive benefit NOT available: normal Green-OA-style CSS/Additional Surcharge applied because the captive-eligibility gate is not currently met — see GC Regulatory eligibility gate status.'
   };
 }
-
-/* ================================================================
-   CANDIDATE ARCHITECTURE: build 8760 profiles + run dispatch
-   This is the ONE function used by the optimizer, the display tabs,
-   and the BESS sweep. No parallel "annual GWh matching" shortcut.
-   ================================================================ */
-let _cache = {}; // per-renderAll cache of expensive, input-dependent-only-on-CUF profiles
+let _cache = {};
 function getUnitShapes(inp){
   const key = inp.s_cuf+'|'+inp.w_cuf;
   if(_cache.unitKey===key) return _cache.units;
@@ -662,9 +649,6 @@ function getBaseDemand8760(inp){
   _cache.demandKey=key; _cache.baseDemand=base;
   return base;
 }
-
-/* candidate = {solarMW, windMW, bessMW, bessMWh, oaMW, gcMW}; utilFrac scales demand
-   (1.0 = terminal/steady-state, used by optimizer & display tabs). */
 function buildCandidateProfiles(inp, units, baseDemand8760, candidate, utilFrac){
   const m = scenMult();
   const demand = utilFrac===1 ? baseDemand8760 : mulScalar(baseDemand8760, utilFrac);
@@ -684,72 +668,39 @@ function dispatchParamsFor(inp, candidate, gridCapMW){
     chargeEff, dischargeEff, gridCapMW
   };
 }
-
-/* ---------------- single-hour-profile-set full-year dispatch wrapper ---------------- */
 function runCandidateDispatch(inp, units, baseDemand8760, candidate, utilFrac, gridCapMW, collectHourly){
   const profiles = buildCandidateProfiles(inp, units, baseDemand8760, candidate, utilFrac);
   const params = dispatchParamsFor(inp, candidate, gridCapMW);
   const result = runDispatch8760(profiles, params, collectHourly);
   return {result, profiles};
 }
-
-/* ================================================================
-   STEADY-STATE ECONOMICS FOR A CANDIDATE (used by optimizer scoring
-   and by the display/comparison tabs). Runs ONE 8760 dispatch at
-   utilFrac=1.0 (terminal demand) — NOT a proxy for the exact
-   multi-year cash flow, which is computed separately (see
-   computeExactMultiYearFinancing) for the SELECTED winning
-   architecture only, to keep the search over many candidates fast.
-   ================================================================ */
 function evaluateCandidateSteadyState(inp, units, baseDemand8760, candidate, gridCapMW, comps){
   const {result, profiles} = runCandidateDispatch(inp, units, baseDemand8760, candidate, 1.0, gridCapMW, false);
   const a = result.annual;
   const servedMWh = a.demand - a.unserved;
   const renShare = a.demand>0 ? ((a.solar+a.wind+a.gc+a.oa+a.bessDischarge)/a.demand)*100 : 0;
   const gcGenAnnualMWh = sumProfile(profiles.gcGenProfile);
-
   const sol = genEngine(candidate.solarMW, inp.s_capex, inp.s_om, inp.s_life, inp.f_hurdle);
   const win = genEngine(candidate.windMW, inp.w_capex, inp.w_om, inp.w_life, inp.f_hurdle);
   const gcCapexTotalCr = candidate.gcMW*inp.gc_capex;
   const gcMyEquityCapexCr = gcCapexTotalCr*(inp.gc_myequity/100);
   const oa = computeOA(inp);
   const gridRate = gridRatePerKWh(inp, a.grid, result.peakGridMW);
-
-  // O&M-only rates for owned assets (CAPEX capitalised & financed separately —
-  // see AUDIT note: never use a CAPEX-inclusive LCOE as opex here, that would
-  // double-count the same CAPEX that is also in totalCapexCr below).
   const solarOM_perKWh = a.solar>0 ? (sol.annualOM*1e7)/(a.solar*1000) : 0;
   const windOM_perKWh = a.wind>0 ? (win.annualOM*1e7)/(a.wind*1000) : 0;
-  const gcOpexRate = inp.gc_charges; // pass-through wheeling/CSS only, no capex
-  const oaRate = oa.landed; // all-in (OA has no separate project capex)
-
+  const gcOpexRate = inp.gc_charges;
+  const oaRate = oa.landed;
   const energyCostCr = (a.solar*solarOM_perKWh + a.wind*windOM_perKWh + a.gc*gcOpexRate + a.oa*oaRate + a.grid*gridRate)*1000/1e7;
   const bessCapexCr = candidate.bessMWh*inp.b_capex*scenMult().bess + candidate.bessMW*inp.b_capex_mw*scenMult().bess;
   const bessAnnualCr = bessCapexCr*crf(inp.f_hurdle,10) + bessCapexCr*(inp.b_om/100);
-
   const siteCapexCr = inp.e_chargercapex+inp.e_gridcapex+inp.e_civilcapex+(inp.g_upgrade_avail?inp.g_upgrade_capex:0);
   const renCapexCr = sol.capexCr+win.capexCr+gcMyEquityCapexCr;
   const totalCapexCr = (renCapexCr+bessCapexCr+siteCapexCr)*(1+inp.e_contg/100);
-
   const blendedPrice = (inp.e_price*(1-inp.e_fleetshare/100)+inp.e_fleetprice*(inp.e_fleetshare/100)+inp.e_greenprem)*scenMult().price;
   const revenueCr = servedMWh*1000*blendedPrice/1e7;
   const omTotalCr = sol.annualOM+win.annualOM+bessAnnualCr+(siteCapexCr*0.03);
   const ebitdaCr = revenueCr - energyCostCr - omTotalCr;
-
-  // CRITICAL FIX: this must divide by energy ACTUALLY DELIVERED (servedMWh),
-  // not total demand (a.demand). Unserved energy costs nothing to not-deliver,
-  // so dividing by total demand silently lets unserved MWh dilute the reported
-  // ₹/kWh — e.g. a grid-only architecture whose sanctioned capacity can't cover
-  // peak demand was previously showing an artificially CHEAP ₹/kWh (unserved
-  // hours counted as "free" energy in the denominator) instead of the true
-  // delivered rate. Unserved energy is already penalized separately wherever
-  // this candidate is scored/compared (unservedMWh field, optimizer penalty) —
-  // it must never also be allowed to lower the headline cost number.
   const landedCostPerKWh = servedMWh>0 ? (energyCostCr*1e7)/(servedMWh*1000) : 0;
-
-  // quick-proxy IRR/NPV for SCORING/RANKING only (steady-state, single-year
-  // annuity approximation of the ramp) — the exact multi-year cash flow for
-  // the winning candidate is computed separately with a real per-year 8760 run.
   const debtCr = totalCapexCr*inp.f_debt/100, equityCr = totalCapexCr-debtCr;
   const rate = inp.f_rate + scenMult().interest/100;
   const emiAnnualCr = debtCr>0 ? debtCr*crf(rate, inp.f_tenor) : 0;
@@ -765,26 +716,15 @@ function evaluateCandidateSteadyState(inp, units, baseDemand8760, candidate, gri
   const proxyProjectIRR = irr(proxyProjectFlows);
   const proxyNPV = npv(inp.f_hurdle, proxyFlows);
   const dscrY1 = (interestY1+(emiAnnualCr-interestY1))>0 ? ebitdaCr/(interestY1+(emiAnnualCr-interestY1)) : NaN;
-
   const oaElig = oaEligibility(inp, candidate);
   const gcElig = gcEligibility(inp, candidate, a.gc, gcGenAnnualMWh);
-
-  // ---- Fully-loaded PROCUREMENT cost, comparison-only (Part 6/10/13 fix) ----
-  // Distinct from landedCostPerKWh above (the SPV's own opex/cash-flow line,
-  // which deliberately excludes CAPEX for owned assets to avoid double-
-  // counting against totalCapexCr/debt/equity). This metric puts solar,
-  // wind, GC, OA and grid on a comparable "what does this route cost
-  // all-in" basis, including annualised CAPEX+financing for owned/captive
-  // generation, so GC is never compared against OA on an opex-only basis.
   const gridFull = computeGridCostEngine(inp, a.grid, result.peakGridMW);
   const gcFull = computeGCFullyLoaded(inp, candidate.gcMW, a.gc, gcElig);
   const solarFullPerKWh = a.solar>0 ? solarOM_perKWh + (sol.annualCapexCharge*1e7)/(a.solar*1000) : 0;
   const windFullPerKWh = a.wind>0 ? windOM_perKWh + (win.annualCapexCharge*1e7)/(a.wind*1000) : 0;
   const fullyLoadedCostCr = (a.solar*solarFullPerKWh + a.wind*windFullPerKWh + a.gc*gcFull.deliveredPerKWh
     + a.oa*oa.landed + a.grid*gridFull.effectivePerKWh)*1000/1e7;
-  // Same fix as landedCostPerKWh above — divide by delivered energy, not total demand.
   const fullyLoadedCostPerKWh = servedMWh>0 ? (fullyLoadedCostCr*1e7)/(servedMWh*1000) : 0;
-
   return {
     candidate, annual:a, servedMWh, renShare, unservedMWh:a.unserved, peakGridMW:result.peakGridMW,
     peakGridNeedMW:result.peakGridNeedMW,
@@ -795,35 +735,8 @@ function evaluateCandidateSteadyState(inp, units, baseDemand8760, candidate, gri
     oaLandedPerKWh: oa.landed, gridFull, gcFull, solarFullPerKWh, windFullPerKWh, fullyLoadedCostPerKWh
   };
 }
-
-/* ================================================================
-   OPTIMIZER — evaluates candidates through the SAME canonical 8760
-   engine (via evaluateCandidateSteadyState). Coarse grid + reused
-   cached unit shapes/demand profile keeps this fast (~1-3ms per
-   candidate dispatch; a few hundred candidates stays sub-second).
-
-   TWO-STAGE SEARCH (coarse -> refine), per the requirement that the
-   optimiser's final ranking must use EXACT multi-year economics, not
-   just the steady-state proxy, without re-running a full 15-year
-   dispatch for every candidate in the grid (that would be hundreds of
-   candidates x 15 years x 8760h and would destroy interactivity):
-
-   Stage 1 (this function): scores ALL candidates with the fast
-   steady-state proxy (evaluateCandidateSteadyState + proxy IRR/NPV),
-   and returns the top-K by that proxy score, not just the single
-   winner.
-
-   Stage 2 (refineTopCandidatesExact, below): re-scores ONLY those top-K
-   candidates using the REAL exact multi-year dispatch + cash flow
-   (computeExactMultiYearFinancing — a true year-by-year 8760 re-run
-   with utilisation ramp, panel/BESS degradation and replacement CAPEX
-   applied). The candidate that wins after Stage 2 is the one whose
-   numbers are actually shown — the proxy is only ever used to shortlist,
-   never to make the final call.
-   ================================================================ */
 const OPT_WEIGHTS = { LAMBDA_IRR:0.5, P_TARGET:0.02, P_DSCR:5, P_GRID:0.01, P_GC:0.10, P_CURT:1.0, P_UNSERVED:2.0 };
-const OPT_TOPK = 6; // number of coarse-stage finalists carried into the exact multi-year refine stage
-
+const OPT_TOPK = 6;
 function scoreCandidateEval(ev, inp){
   if(inp.gridAllowed===false && ev.annual.grid>0.01) return -Infinity;
   if(ev.oaElig.status==='NOT ELIGIBLE') return -Infinity;
@@ -832,23 +745,16 @@ function scoreCandidateEval(ev, inp){
   const gridSharePct = ev.annual.demand>0 ? (ev.annual.grid/ev.annual.demand)*100 : 0;
   const reliabCeiling = inp.reliab==='high' ? 50 : 100;
   const curtailMWh = ev.annual.curtail;
-
   const penalty =
       W.P_TARGET * Math.pow(Math.max(0, inp.retarget-ev.renShare),2) * (ev.annual.demand/1000)
     + W.P_DSCR * Math.max(0, 1.20-(isNaN(ev.dscrY1)?1.20:ev.dscrY1)) * ev.totalCapexCr
     + W.P_GRID * Math.max(0, gridSharePct-reliabCeiling) * (ev.annual.demand/1000)
     + W.P_CURT * (curtailMWh * (inp.s_capex*0.02))
     + W.P_UNSERVED * (ev.unservedMWh*(inp.e_price||10)/1000);
-
   const irrHeadroom = isFinite(ev.proxyProjectIRR) ? W.LAMBDA_IRR*Math.max(0,ev.proxyProjectIRR-inp.f_hurdle)*ev.totalCapexCr/100 : 0;
   const npvTerm = isFinite(ev.proxyNPV) ? ev.proxyNPV : -1e9;
   return npvTerm + irrHeadroom - penalty;
 }
-
-/* Same penalty structure as scoreCandidateEval, but the NPV/IRR/DSCR
-   terms come from the EXACT multi-year run (finExact), not the
-   single-year proxy. This is the score that actually decides the
-   winner in Stage 2. */
 function scoreExactCandidate(ev, finExact, inp){
   if(inp.gridAllowed===false && ev.annual.grid>0.01) return -Infinity;
   if(ev.oaElig.status==='NOT ELIGIBLE') return -Infinity;
@@ -857,19 +763,16 @@ function scoreExactCandidate(ev, finExact, inp){
   const gridSharePct = ev.annual.demand>0 ? (ev.annual.grid/ev.annual.demand)*100 : 0;
   const reliabCeiling = inp.reliab==='high' ? 50 : 100;
   const curtailMWh = ev.annual.curtail;
-
   const penalty =
       W.P_TARGET * Math.pow(Math.max(0, inp.retarget-ev.renShare),2) * (ev.annual.demand/1000)
     + W.P_DSCR * Math.max(0, 1.20-(isNaN(finExact.avgDSCR)?1.20:finExact.avgDSCR)) * finExact.totalCapexCr
     + W.P_GRID * Math.max(0, gridSharePct-reliabCeiling) * (ev.annual.demand/1000)
     + W.P_CURT * (curtailMWh * (inp.s_capex*0.02))
     + W.P_UNSERVED * (ev.unservedMWh*(inp.e_price||10)/1000);
-
   const irrHeadroom = isFinite(finExact.projectIRR) ? W.LAMBDA_IRR*Math.max(0,finExact.projectIRR-inp.f_hurdle)*finExact.totalCapexCr/100 : 0;
   const npvTerm = isFinite(finExact.npvEquity) ? finExact.npvEquity : -1e9;
   return npvTerm + irrHeadroom - penalty;
 }
-
 function architectureNameOf(ev){
   const c = ev.candidate; const parts=[];
   if(c.solarMW>0.01) parts.push(`${fmt(c.solarMW,1)}MW Solar`);
@@ -880,7 +783,6 @@ function architectureNameOf(ev){
   if(ev.annual.grid>0.01) parts.push('Grid backup');
   return parts.length? parts.join(' + ') : 'Grid only';
 }
-
 function optimizeArchitecture8760(inp, units, baseDemand8760, gridCapMW, comps){
   const steps = (max,n) => { if(n<=1) return [max]; const arr=[]; for(let i=0;i<n;i++) arr.push(max*i/(n-1)); return arr; };
   const annualDemandGWh = sumProfile(baseDemand8760)/1000;
@@ -888,44 +790,31 @@ function optimizeArchitecture8760(inp, units, baseDemand8760, gridCapMW, comps){
   const windCeilMW  = Math.max(inp.w_mw, inp.w_cuf>0 ? (annualDemandGWh*1000)/(8760*(inp.w_cuf/100)) : 0, 0);
   const gcCeilMW    = Math.max(inp.gc_mw, 0.5);
   const oaCeilMW    = Math.max(inp.oa_mw, (annualDemandGWh*1000)/8760, 0.5);
-
   const solarOpts = steps(solarCeilMW, 3);
   const windOpts  = steps(windCeilMW, 2);
   const oaOpts    = steps(oaCeilMW, 2);
   const gcOpts    = steps(gcCeilMW, 2);
-
-  /* BESS MW and BESS MWh are independent decision variables, each swept
-     on its own grid (NOT bessMW = bessMWh*crate). C-rate is a derived,
-     CONSTRAINT-CHECKED consequence: any (MW,MWh) combo is only kept as
-     a candidate if MW/MWh falls within [b_cratemin, b_cratemax]. This
-     is what makes 5MW/10MWh, 5MW/20MWh, 10MW/20MWh, 10MW/40MWh all
-     independently reachable (and reachable at different scores) rather
-     than one MW value being forced by a single fixed C-rate per MWh step. */
   const bessMWOpts  = steps(Math.max(inp.b_maxmw,0), 4);
   const bessMWhOpts = steps(Math.max(inp.b_maxmwh,0), 4);
   const bessCombos = [];
   for(const bessMWh of bessMWhOpts){
     for(const bessMW of bessMWOpts){
       if(bessMWh<=1e-6 && bessMW<=1e-6){ bessCombos.push({bessMW:0, bessMWh:0}); continue; }
-      if(bessMWh<=1e-6 || bessMW<=1e-6) continue; // energy with no power, or power with no energy: not a real BESS
+      if(bessMWh<=1e-6 || bessMW<=1e-6) continue;
       const crate = bessMW/bessMWh;
-      if(crate < inp.b_cratemin-1e-9 || crate > inp.b_cratemax+1e-9) continue; // outside configured C-rate band
+      if(crate < inp.b_cratemin-1e-9 || crate > inp.b_cratemax+1e-9) continue;
       bessCombos.push({bessMW, bessMWh});
     }
   }
   if(bessCombos.length===0) bessCombos.push({bessMW:0, bessMWh:0});
-  // de-duplicate (0,0) which can appear once already from the loop above
   const seenZero = bessCombos.filter(c=>c.bessMW<=1e-9&&c.bessMWh<=1e-9).length;
   const bessCombosFinal = seenZero<=1 ? bessCombos : [bessCombos.find(c=>c.bessMW<=1e-9&&c.bessMWh<=1e-9), ...bessCombos.filter(c=>!(c.bessMW<=1e-9&&c.bessMWh<=1e-9))];
-
-  // top-K min-heap-ish tracking (K small, linear insert is fine)
   const topK = [];
   const considerForTopK = (ev, score) => {
     topK.push({ev, score});
     topK.sort((a,b)=>b.score-a.score);
     if(topK.length>OPT_TOPK) topK.length = OPT_TOPK;
   };
-
   let evaluatedCount = 0;
   for(const solarMW of solarOpts)
   for(const windMW of windOpts)
@@ -944,18 +833,6 @@ function optimizeArchitecture8760(inp, units, baseDemand8760, gridCapMW, comps){
   }
   return {topK, evaluatedCount};
 }
-
-/* ================================================================
-   RISK-ADJUSTED ECONOMICS (Base / Downside / Upside / Stress)
-   Reuses the SAME 4 scenario multiplier sets already defined in
-   scenarioPresets (util/grid/bess/price/interest/ren) and the SAME
-   computeExactMultiYearFinancing engine — this is not a separate
-   simplified risk model. Adds: user-configurable probabilities per
-   scenario (normalised to sum to 1), expected NPV, a downside
-   semi-deviation risk penalty (only scenarios BELOW the expected value
-   count against the score — upside variance is not penalised), and a
-   configurable risk-aversion multiplier λ.
-   ================================================================ */
 function normalizedRiskWeights(inp){
   const raw = {base:Math.max(inp.p_base,0), downside:Math.max(inp.p_downside,0), upside:Math.max(inp.p_upside,0), stress:Math.max(inp.p_stress,0)};
   const sum = Object.values(raw).reduce((a,b)=>a+b,0);
@@ -978,7 +855,6 @@ function computeRiskAdjustedEconomics(inp, units, baseDemand8760, candidate, gri
   const expectedNPV = scenList.reduce((s,p)=>s+p.weight*p.npvEquity,0);
   const expectedProjectIRR = scenList.reduce((s,p)=> s+p.weight*(isFinite(p.projectIRR)?p.projectIRR:0), 0);
   const expectedDSCR = scenList.reduce((s,p)=> s+p.weight*(isFinite(p.avgDSCR)?p.avgDSCR:0), 0);
-  // downside SEMI-deviation: only scenarios below the expected value count against the score
   const downsideVar = scenList.reduce((s,p)=> s + p.weight*Math.pow(Math.min(0, p.npvEquity-expectedNPV),2), 0);
   const downsideSemiDev = Math.sqrt(downsideVar);
   const worstCaseNPV = Math.min(...scenList.map(p=>p.npvEquity));
@@ -987,13 +863,6 @@ function computeRiskAdjustedEconomics(inp, units, baseDemand8760, candidate, gri
   const riskAdjustedScore = expectedNPV - lambda*downsideSemiDev;
   return {perScenario, weights, expectedNPV, expectedProjectIRR, expectedDSCR, downsideSemiDev, worstCaseNPV, worstCaseDSCR, riskAdjustedScore, lambda};
 }
-
-/* Same penalty structure as scoreExactCandidate, but the NPV/DSCR terms
-   come from the PROBABILITY-WEIGHTED risk-adjusted economics (expected
-   NPV net of a downside-risk penalty; DSCR penalty uses the WORST-CASE
-   scenario DSCR, not the base case) — this is what actually changes
-   which architecture the optimiser picks when the risk-adjusted
-   objective is selected. */
 function scoreRiskAdjustedCandidate(ev, riskEcon, inp){
   if(inp.gridAllowed===false && ev.annual.grid>0.01) return -Infinity;
   if(ev.oaElig.status==='NOT ELIGIBLE') return -Infinity;
@@ -1002,31 +871,16 @@ function scoreRiskAdjustedCandidate(ev, riskEcon, inp){
   const gridSharePct = ev.annual.demand>0 ? (ev.annual.grid/ev.annual.demand)*100 : 0;
   const reliabCeiling = inp.reliab==='high' ? 50 : 100;
   const curtailMWh = ev.annual.curtail;
-
   const penalty =
       W.P_TARGET * Math.pow(Math.max(0, inp.retarget-ev.renShare),2) * (ev.annual.demand/1000)
     + W.P_DSCR * Math.max(0, 1.20-riskEcon.worstCaseDSCR) * riskEcon.perScenario.base.totalCapexCr
     + W.P_GRID * Math.max(0, gridSharePct-reliabCeiling) * (ev.annual.demand/1000)
     + W.P_CURT * (curtailMWh * (inp.s_capex*0.02))
     + W.P_UNSERVED * (ev.unservedMWh*(inp.e_price||10)/1000);
-
   const irrHeadroom = isFinite(riskEcon.expectedProjectIRR) ? W.LAMBDA_IRR*Math.max(0,riskEcon.expectedProjectIRR-inp.f_hurdle)*riskEcon.perScenario.base.totalCapexCr/100 : 0;
   const npvTerm = isFinite(riskEcon.riskAdjustedScore) ? riskEcon.riskAdjustedScore : -1e9;
   return npvTerm + irrHeadroom - penalty;
 }
-
-/* Stage 2: re-run EXACT multi-year financing (real 8760xN-year dispatch,
-   utilisation ramp, degradation, replacement CAPEX) for each of the
-   coarse-stage top-K finalists, then re-rank by the exact score. The
-   candidate returned as `best` is the one whose EXACT numbers are what
-   gets displayed everywhere downstream (Economics/Decision/Cash Flow) —
-   never the steady-state proxy's pick if the exact numbers disagree.
-
-   If inp.riskObjective is set, the re-ranking uses the PROBABILITY-
-   WEIGHTED risk-adjusted score (Base/Downside/Upside/Stress, see
-   computeRiskAdjustedEconomics) instead of the deterministic Base-Case
-   score — so the risk-adjusted objective can genuinely change which
-   architecture wins, not just annotate the winner after the fact. */
 function refineTopCandidatesExact(inp, units, baseDemand8760, gridCapMW, topK){
   const refined = topK.map(item=>{
     const finExact = computeExactMultiYearFinancing(inp, units, baseDemand8760, item.ev.candidate, gridCapMW);
@@ -1041,19 +895,10 @@ function refineTopCandidatesExact(inp, units, baseDemand8760, gridCapMW, topK){
   refined.sort((a,b)=>b.exactScore-a.exactScore);
   const winner = refined[0];
   const runnerUp = refined[1] || null;
-
   const best = {name:architectureNameOf(winner.ev), ...winner.ev, meetsTarget: winner.ev.renShare>=inp.retarget, exactScore:winner.exactScore, riskEcon:winner.riskEcon};
   const nextBest = runnerUp ? {name:architectureNameOf(runnerUp.ev), ...runnerUp.ev, scoreGap:winner.exactScore-runnerUp.exactScore, finExact:runnerUp.finExact, riskEcon:runnerUp.riskEcon} : null;
   return {best, nextBest, finExact:winner.finExact, refined, reranked: refined.length>1 && refined[0].coarseScore !== Math.max(...topK.map(t=>t.score)) ? false : (topK[0] && topK[0].ev!==winner.ev)};
 }
-
-/* ================================================================
-   EXACT MULTI-YEAR FINANCING for the SELECTED architecture.
-   Runs a REAL 8760 dispatch for EACH project year (utilisation ramp +
-   BESS degradation + panel degradation all applied to that year's
-   profiles before dispatch — not a growth-factor multiplier on a
-   single dispatch result).
-   ================================================================ */
 function bessDegradationSchedule(inp, bessMWh, years){
   const rows = [];
   let usableFrac = 1.0, replaced=false, replacementYear=null;
@@ -1067,7 +912,6 @@ function bessDegradationSchedule(inp, bessMWh, years){
   const replacementCapexCr = bessMWh*inp.b_capex*(inp.b_replcost/100);
   return {rows, replacementYear, replacementCapexCr};
 }
-
 function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, gridCapMW){
   const m = scenMult();
   const life=15;
@@ -1080,17 +924,14 @@ function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, g
   const bessCapexCr = candidate.bessMWh*inp.b_capex*m.bess + candidate.bessMW*inp.b_capex_mw*m.bess;
   const renCapexCr = sol.capexCr+win.capexCr+gcMyEquityCapexCr;
   const totalCapexCr = (renCapexCr+bessCapexCr+siteCapexCr)*(1+inp.e_contg/100);
-
   const debtCr = totalCapexCr*inp.f_debt/100;
   const equityCr = totalCapexCr-debtCr;
   const rate = inp.f_rate + m.interest/100;
   const emiAnnualCr = debtCr>0 ? debtCr*crf(rate, inp.f_tenor) : 0;
   const blendedPrice = (inp.e_price*(1-inp.e_fleetshare/100)+inp.e_fleetprice*(inp.e_fleetshare/100)+inp.e_greenprem)*m.price;
-
   const degSched = bessDegradationSchedule(inp, candidate.bessMWh, life);
   const oaRate = oa.landed;
   const gcOpexRate = inp.gc_charges;
-
   let bookValue = totalCapexCr, debtBal = debtCr;
   const flowsEquity=[-equityCr];
   const yearRows=[];
@@ -1099,8 +940,7 @@ function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, g
     const solDegFactor = Math.pow(1-inp.s_deg/100, y-1);
     const winDegFactor = Math.pow(1-inp.w_deg/100, y-1);
     const bessUsableFrac = degSched.rows[y-1].usableFrac;
-
-    const yUnits = {solarUnit: units.solarUnit, windUnit: units.windUnit}; // shape unchanged, magnitude via candidate*deg below
+    const yUnits = {solarUnit: units.solarUnit, windUnit: units.windUnit};
     const yCandidate = {
       solarMW: candidate.solarMW*solDegFactor, windMW: candidate.windMW*winDegFactor,
       bessMW: candidate.bessMW*bessUsableFrac, bessMWh: candidate.bessMWh*bessUsableFrac,
@@ -1109,18 +949,15 @@ function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, g
     const {result} = runCandidateDispatch(inp, yUnits, baseDemand8760, yCandidate, utilFrac, gridCapMW, false);
     const a = result.annual;
     const servedMWh = a.demand - a.unserved;
-
     const solarOM_perKWh = a.solar>0 ? (sol.annualOM*1e7)/(a.solar*1000) : 0;
     const windOM_perKWh = a.wind>0 ? (win.annualOM*1e7)/(a.wind*1000) : 0;
     const gridRate = gridRatePerKWh(inp, a.grid, result.peakGridMW);
     const energyCostCr = (a.solar*solarOM_perKWh + a.wind*windOM_perKWh + a.gc*gcOpexRate + a.oa*oaRate + a.grid*gridRate)*1000/1e7;
-
-    const rev = servedMWh*1000*blendedPrice/1e7 * Math.pow(1+inp.growth/100, Math.min(y-1,0)); // growth already embedded via utilisation ramp; kept =1 multiplier to avoid double-counting growth
+    const rev = servedMWh*1000*blendedPrice/1e7 * Math.pow(1+inp.growth/100, Math.min(y-1,0));
     const bessOMCr = bessCapexCr*(inp.b_om/100);
     const siteOMCr = siteCapexCr*0.03;
     const opex = energyCostCr + sol.annualOM + win.annualOM + bessOMCr + siteOMCr;
     const ebitda = rev-opex;
-
     const dep = y<=life ? bookValue*inp.f_dep/100 : 0; bookValue-=dep;
     const interestCr = y<=inp.f_tenor ? debtBal*rate/100 : 0;
     const principal = y<=inp.f_tenor ? Math.max(emiAnnualCr-interestCr,0) : 0;
@@ -1133,7 +970,6 @@ function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, g
     flowsEquity.push(fcfe);
     const dscr = (interestCr+principal)>0 ? ebitda/(interestCr+principal) : NaN;
     yearRows.push({y, rev, opex, ebitda, dep, interestCr, principal, pat, fcfe, dscr, debtBal, replCapexThisYear,
-      // Same delivered-energy-not-total-demand fix as evaluateCandidateSteadyState.
       utilFrac, servedMWh, annual:a, energyCostCr, landedCostPerKWh: servedMWh>0 ? (energyCostCr*1e7)/(servedMWh*1000):0,
       solDegFactor, winDegFactor, bessUsableFrac,
       solarCapacityMWhAvail: sumProfile(scaleProfile(yUnits.solarUnit, yCandidate.solarMW))});
@@ -1147,22 +983,11 @@ function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, g
   const avgDSCR = yearRows.filter(r=>!isNaN(r.dscr)).reduce((s,r,_,a)=>s+r.dscr/a.length,0);
   const roic = totalCapexCr>0 ? (yearRows[0].ebitda/totalCapexCr)*100 : 0;
   const dscrOK = avgDSCR>=inp.f_mindscr;
-
   return {totalCapexCr, debtCr, equityCr, revenueCr:yearRows[0].rev, opexCr:yearRows[0].opex, ebitdaCr:yearRows[0].ebitda,
     equityIRR, projectIRR, npvEquity, payback, avgDSCR, roic, rows:yearRows, blendedPrice,
     landedCost:yearRows[0].landedCostPerKWh, dscrOK, replacementYear:degSched.replacementYear, replacementCapexCr:degSched.replacementCapexCr,
     gcMyEquityCapexCr, bessCapexCr};
 }
-
-/* ================================================================
-   MINIMUM-UTILISATION SOLVER
-   For a FIXED architecture/CAPEX, scales the utilisation ramp (Year-1
-   and terminal %, same ratio preserved) by a single multiplier and
-   bisection-searches for the lowest terminal utilisation at which each
-   threshold is still met. Every trial point is a REAL exact multi-year
-   8,760h run (computeExactMultiYearFinancing) — not a shortcut formula
-   or linear approximation.
-   ================================================================ */
 function evalAtUtilMultiplier(inp, units, baseDemand8760, candidate, gridCapMW, m){
   const inp2 = {...inp, util_y1: inp.util_y1*m, util_terminal: inp.util_terminal*m};
   return computeExactMultiYearFinancing(inp2, units, baseDemand8760, candidate, gridCapMW);
@@ -1194,13 +1019,6 @@ function solveMinUtilizationThresholds(inp, units, baseDemand8760, candidate, gr
     dscr:       {label:`DSCR ≥ covenant (${fmt(inp.f_mindscr,2)}×)`,     utilPct:toUtilPct(dscrRes), ...dscrRes},
   };
 }
-
-
-
-/* ================================================================
-   BESS VALUE STACK — same integrated engine, WITH vs WITHOUT BESS,
-   at steady-state, MW×MWh grid sweep (independent variables).
-   ================================================================ */
 function bessSweep8760(inp, units, baseDemand8760, gridCapMW, fixedCandidate){
   const mwhSteps = (()=>{ const arr=[]; const step=Math.max(inp.b_maxmwh/8,0.5); for(let v=0;v<=inp.b_maxmwh+1e-9;v+=step) arr.push(v); return arr; })();
   const crateOpts = [inp.b_cratemin, (inp.b_cratemin+inp.b_cratemax)/2, inp.b_cratemax];
@@ -1209,7 +1027,6 @@ function bessSweep8760(inp, units, baseDemand8760, gridCapMW, fixedCandidate){
   const {result: withoutR} = runCandidateDispatch(inp, units, baseDemand8760, withoutCandidate, 1.0, gridCapMW, false);
   const gridRateWithout = gridRatePerKWh(inp, withoutR.annual.grid, withoutR.peakGridMW);
   const annualGridCostWithoutCr = withoutR.annual.grid*1000*gridRateWithout/1e7;
-
   mwhSteps.forEach(mwh=>{
     let bestForMWh=null;
     const crateList = mwh<=1e-6 ? [0] : crateOpts;
@@ -1250,10 +1067,6 @@ function bessBenefitAnalysis8760(inp, units, baseDemand8760, gridCapMW, fixedCan
     annualShiftedMWh:withR.annual.bessDischarge, annualUnservedWith:withR.annual.unserved, annualUnservedWithout:withoutR.annual.unserved,
     withAnnual:withR.annual, withoutAnnual:withoutR.annual};
 }
-
-/* ================================================================
-   REVERSE PRICING (holds architecture/CAPEX fixed, solves price)
-   ================================================================ */
 function reversePricing8760(inp, units, baseDemand8760, candidate, gridCapMW, landedCost){
   const targetIRR = inp.f_targetirr;
   const {result} = runCandidateDispatch(inp, units, baseDemand8760, candidate, 1.0, gridCapMW, false);
@@ -1277,20 +1090,11 @@ function reversePricing8760(inp, units, baseDemand8760, candidate, gridCapMW, la
   const targetMarginPrice = landedCost/(1-0.30);
   return {priceForIRR, targetMarginPrice};
 }
-
-/* ================================================================
-   RENDER FUNCTIONS
-   ================================================================ */
-/* small module-scope cache of the last computed engine outputs, reused by
-   the validation-test suite so tests exercise the ACTUAL live engine state
-   rather than rebuilding everything from scratch. */
 let _last = {};
 function getLastState(){ return _last; }
-
 function kpiCard(label, value, unit, sub){
   return `<div class="kpi"><div class="l">${label}</div><div class="v">${value}<span class="u">${unit||''}</span></div>${sub?`<div class="sub">${sub}</div>`:''}</div>`;
 }
-
 function svgLineChart(series, opts={}){
   const w=opts.w||760, h=opts.h||220, pad=36;
   const allVals = series.flatMap(s=>s.data);
@@ -1331,7 +1135,6 @@ function svgBarChart(items, opts={}){
   svg+='</svg>';
   return svg;
 }
-
 function renderDemandTable(){
   const el = $('demandTable');
   let html = '<table><tr><th>Vehicle category</th><th>Vehicles/day</th><th>Sessions/vehicle/day</th><th>kWh/session</th><th></th></tr>';
@@ -1357,7 +1160,6 @@ function renderDemandTable(){
     b.addEventListener('click', e=>{ vehicleRows.splice(+e.target.dataset.del,1); renderDemandTable(); renderAll(); });
   });
 }
-
 function renderTicker(baseDemand8760, best, finExact, inp){
   const annualGWh = sumProfile(baseDemand8760)/1000;
   const peakMW = Math.max(...baseDemand8760);
@@ -1390,7 +1192,6 @@ function renderTicker(baseDemand8760, best, finExact, inp){
     return `<div class="tick${clickable?' clickable':''}"><div class="l">${l}</div><div class="v">${v}<span style="font-size:10px;color:var(--muted)"> ${u}</span></div>${sub||''}</div>`;
   }
 }
-
 function renderDemandKPIs(baseDemand8760, inp){
   const annualMWh = sumProfile(baseDemand8760);
   const peakMW = Math.max(...baseDemand8760);
@@ -1403,12 +1204,9 @@ function renderDemandKPIs(baseDemand8760, inp){
     kpiCard('Peak Instantaneous Load', fmt(peakMW,2),'MW') +
     kpiCard('Avg Daily Energy (operating days)', fmt(avgDailyMWh,1),'MWh/day') +
     kpiCard('Implied Load Factor', fmt(loadFactor*100,1),'%');
-
   const ramp=[]; for(let y=1;y<=8;y++) ramp.push(utilisationFraction(inp,y)*100);
   $('rampPreview').innerHTML = `<div class="hint">Utilisation by project year: ${ramp.map((v,i)=>`Y${i+1}: ${fmt(v,0)}%`).join(' · ')} … terminal ${fmt(inp.util_terminal,0)}%. Each year's 8,760h demand profile is the terminal profile above scaled by this fraction, then re-dispatched in full (not the terminal dispatch re-scaled).</div>`;
 }
-
-/* ---------------- Architecture presets (raw-input-based components) ---------------- */
 function buildArchitecturePresets(inp, units, baseDemand8760, gridCapMW, best){
   const mk = (name, c) => ({name, c});
   const list = [
@@ -1428,7 +1226,6 @@ function buildArchitecturePresets(inp, units, baseDemand8760, gridCapMW, best){
     return {name:p.name, cost:ev.landedCostPerKWh, fullCost:ev.fullyLoadedCostPerKWh, renShare:ev.renShare, meetsTarget:ev.renShare>=inp.retarget, unservedMWh:ev.unservedMWh, demandMWh:ev.annual.demand, ev};
   });
 }
-
 function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
   const sol = genEngine(inp.s_mw, inp.s_capex, inp.s_om, inp.s_life, inp.f_hurdle);
   const win = genEngine(inp.w_mw, inp.w_capex, inp.w_om, inp.w_life, inp.f_hurdle);
@@ -1436,7 +1233,6 @@ function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
   const winTheoreticalGWh = sumProfile(scaleProfile(units.windUnit, inp.w_mw))/1000;
   const solarOM_perKWh = curEval.annual.solar>0 ? (sol.annualOM*1e7)/(curEval.annual.solar*1000) : 0;
   const windOM_perKWh = curEval.annual.wind>0 ? (win.annualOM*1e7)/(curEval.annual.wind*1000) : 0;
-
   $('s_out').innerHTML = `<table>
     <tr><td>Theoretical annual generation (8,760h, this MW alone)</td><td>${fmt(solTheoreticalGWh,3)} GWh</td></tr>
     <tr><td>Actually used to serve demand (dispatch, current priority)</td><td>${fmt(curEval.annual.solar/1000,3)} GWh</td></tr>
@@ -1449,7 +1245,6 @@ function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
     <tr><td>O&amp;M-only rate (used in project cash flow)</td><td>₹${fmt(windOM_perKWh,2)}/kWh</td></tr>
     <tr><td>CAPEX</td><td>₹${fmt(win.capexCr,2)} Cr</td></tr>
   </table>`;
-
   let oaRows=''; for(const [k,v] of Object.entries(oa.breakdown)) oaRows+=`<tr><td>${k}</td><td>₹${fmt(v,3)}/kWh</td></tr>`;
   const oaElig = oaEligibility(inp, {oaMW:inp.oa_mw});
   const oaBadgeClass = oaElig.status==='ELIGIBLE'?'high':oaElig.status==='VERIFY'?'medium':oaElig.status==='NOT ELIGIBLE'?'low':'';
@@ -1460,7 +1255,6 @@ function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
     <div class="hint">OA is now a real hourly-available source inside the 8,760h dispatch (shaped per the "OA source shape" input), not an annual blended adjustment — availability is capped at ${fmt(inp.oa_mw,2)} MW contracted capacity, shaped ${inp.oa_shape}.</div>
     <div class="hint">"PPA / energy price" above is a GENERATION/PPA benchmark (e.g. recent GUVNL competitive-bidding tariffs) — it is NOT itself the delivered OA price; the delivered OA price is the full stack total (LANDED OA COST row) after transmission/wheeling/CSS/surcharge/banking/losses/tax.</div>
     <div class="flagbox ${bankingRegulatoryStatus().status==='UPDATE REQUIRED'?'bad':''}"><b>${bankingRegulatoryStatus().status}:</b> ${bankingRegulatoryStatus().message}</div>`;
-
   const gcUsedGWh = curEval.annual.gc/1000;
   const gcGenGWh = sumProfile(scaleProfile(units.solarUnit, inp.gc_mw*(inp.gc_solarshare/100)))/1000 + sumProfile(scaleProfile(units.windUnit, inp.gc_mw*(1-inp.gc_solarshare/100)))/1000;
   const compl = gcCompliance(inp, inp.gc_mw, gcUsedGWh, gcGenGWh);
@@ -1486,7 +1280,6 @@ function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
   <table>${gcFullRows}<tr style="font-weight:700"><td>GC FULLY-LOADED DELIVERED COST</td><td>₹${fmt(gcFull.deliveredPerKWh,2)}/kWh</td></tr>
   <tr><td>"GC variable/pass-through charges" input alone (NOT total GC cost)</td><td>₹${fmt(inp.gc_charges,2)}/kWh</td></tr></table>
   <div class="flagbox ${gcFull.captiveOK?'':'bad'}">${gcFull.captiveOK?'<span class="pill high">Captive benefit assumed</span>':'<span class="pill low">Captive benefit NOT available</span>'} ${gcFull.note}</div>`;
-
   const g = computeGrid(inp);
   const gFull = curEval.gridFull;
   $('g_out').innerHTML = `<table>
@@ -1506,7 +1299,6 @@ function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
     <tr><td>Grid energy actually imported this year (dispatch)</td><td>${fmt(curEval.annual.grid/1000,3)} GWh</td></tr>
     <tr><td>Peak hourly grid draw</td><td>${fmt(curEval.peakGridMW,2)} MW</td></tr>
   </table><div class="hint">Demand charges are levied on the dispatch's own peak grid draw, not a flat sanctioned-load assumption; draw beyond the sanctioned load is billed at the excess-demand rate instead of the normal demand rate, never both. ${gFull.allocationNote}</div>`;
-
   let tbl = `<table><tr><th>Architecture</th><th>SPV opex/cash-flow ₹/kWh</th><th>Fully-loaded procurement ₹/kWh (incl. CAPEX+financing)</th><th>Renewable %</th><th>Unserved</th><th>Meets target?</th></tr>`;
   presets.forEach(a=>{
     const unservedPct = a.demandMWh>0 ? (a.unservedMWh/a.demandMWh*100) : 0;
@@ -1518,7 +1310,6 @@ function renderArchTab(inp, units, curEval, oa, presets, gridCapMW){
   const items = presets.map(a=>({name:a.name, value:a.fullCost, unit:' ₹/kWh', color:a.meetsTarget?'#2dd4bf':'#5f6d76', highlight:a.name==='Optimizer recommendation'})).sort((a,b)=>a.value-b.value);
   $('archChart').innerHTML = svgBarChart(items,{w:820});
 }
-
 function renderEconTab(inp, units, baseDemand8760, best, finExact, gridCapMW){
   $('e_op_out').innerHTML = `<table>
     <tr><td>Blended charging price</td><td>₹${fmt(finExact.blendedPrice,2)}/kWh</td></tr>
@@ -1531,7 +1322,6 @@ function renderEconTab(inp, units, baseDemand8760, best, finExact, gridCapMW){
   $('e_reverse_out').innerHTML = `<b>Reverse pricing (illustrative, architecture/CAPEX held fixed, steady-state proxy):</b><br>
   Public+fleet blended price required for ${fmt(inp.f_targetirr,1)}% target equity IRR: ${isNaN(rp.priceForIRR)?'not achievable in tested range':'₹'+fmt(rp.priceForIRR,2)+'/kWh'}<br>
   Price required for a 30% illustrative EBITDA margin over landed cost: ₹${fmt(rp.targetMarginPrice,2)}/kWh`;
-
   $('f_out').innerHTML =
     kpiCard('Total CAPEX', fmt(finExact.totalCapexCr,2),'₹ Cr') +
     kpiCard('Debt / Equity', fmt(finExact.debtCr,1)+' / '+fmt(finExact.equityCr,1),'₹ Cr') +
@@ -1545,7 +1335,6 @@ function renderEconTab(inp, units, baseDemand8760, best, finExact, gridCapMW){
   if(finExact.replacementYear){
     $('f_out').innerHTML += `<div class="hint" style="grid-column:1/-1">BESS replacement modelled in Year ${finExact.replacementYear}: ₹${fmt(finExact.replacementCapexCr,2)} Cr charged as an equity/project cash outflow that year (see Cash Flow table).</div>`;
   }
-
   let t = `<table><tr><th>Yr</th><th>Util%</th><th>Served GWh</th><th>Revenue</th><th>OPEX</th><th>EBITDA</th><th>Dep</th><th>Interest</th><th>Principal</th><th>BESS Repl.</th><th>PAT</th><th>FCFE</th><th>DSCR</th></tr>`;
   finExact.rows.forEach(r=>{
     t+=`<tr><td>${r.y}</td><td>${fmt(r.utilFrac*100,0)}%</td><td>${fmt(r.servedMWh/1000,2)}</td><td>${fmt(r.rev,2)}</td><td>${fmt(r.opex,2)}</td><td>${fmt(r.ebitda,2)}</td><td>${fmt(r.dep,2)}</td><td>${fmt(r.interestCr,2)}</td><td>${fmt(r.principal,2)}</td><td>${r.replCapexThisYear>0?fmt(r.replCapexThisYear,2):'—'}</td><td>${fmt(r.pat,2)}</td><td>${fmt(r.fcfe,2)}</td><td>${isNaN(r.dscr)?'—':fmt(r.dscr,2)}</td></tr>`;
@@ -1553,7 +1342,6 @@ function renderEconTab(inp, units, baseDemand8760, best, finExact, gridCapMW){
   t+='</table>';
   $('cashflowTable').innerHTML = t;
 }
-
 function renderOwnershipTab(inp, finExact, sweep, best){
   const capexShareDealer = 0.55;
   const docoCapex = finExact.totalCapexCr*(1-capexShareDealer);
@@ -1561,12 +1349,10 @@ function renderOwnershipTab(inp, finExact, sweep, best){
   const docoRevShareCZ = 0.35;
   const docoEbitdaCZ = finExact.ebitdaCr*docoRevShareCZ;
   const docoIRR_CZ = docoEquity>0 ? irr([-docoEquity*0.15, ...finExact.rows.map(r=>docoEbitdaCZ*(r.ebitda/finExact.ebitdaCr||1)*0.6)]) : NaN;
-
   const baasAnnual = inp.b_baasfixed*12/100 + sweep.best.annualShiftedMWh*1000*inp.b_baasrate/1e7;
   const baasCapex = finExact.totalCapexCr - sweep.best.mwh*inp.b_capex;
   const baasEbitda = finExact.ebitdaCr - baasAnnual;
   const baasIRR = irr([-(baasCapex*(1-inp.f_debt/100)), ...Array(15).fill(baasEbitda*0.6)]);
-
   const cards = [
     {title:'MODEL A — COCO (full ownership)', sub:'Operator owns Solar + Wind + BESS + Charger', capex:finExact.totalCapexCr, irr:finExact.equityIRR, risk:'Full CAPEX, demand and technology risk on operator'},
     {title:'MODEL B — Charger + RE, BESS-as-a-Service', sub:'Operator owns charger & renewable procurement; BESS billed as opex', capex:baasCapex, irr:baasIRR, risk:'Lower CAPEX; BESS margin ceded to service partner'},
@@ -1578,13 +1364,11 @@ function renderOwnershipTab(inp, finExact, sweep, best){
     <div class="kpi" style="margin-top:8px"><div class="l">Operator CAPEX exposure</div><div class="v">₹${fmt(c.capex,1)}<span class="u">Cr</span></div></div>
     <div class="kpi" style="margin-top:8px"><div class="l">Indicative equity IRR</div><div class="v">${isNaN(c.irr)?'model-dependent':fmt(c.irr,1)+'%'}</div></div>
     <div class="hint" style="margin-top:8px">${c.risk}</div></div>`).join('');
-
   $('baasCompare').innerHTML = `<table>
     <tr><th></th><th>Own BESS</th><th>BESS-as-a-Service</th></tr>
     <tr><td>Annualised BESS cost</td><td>₹${fmt(sweep.best.mwh*inp.b_capex*crf(inp.f_hurdle,10)+sweep.best.mwh*inp.b_capex*(inp.b_om/100),2)} Cr/yr</td><td>₹${fmt(baasAnnual,2)} Cr/yr</td></tr>
     <tr><td>Operator IRR impact</td><td>${irrLabel(finExact.equityIRR)}</td><td>${irrLabel(baasIRR)}</td></tr>
   </table>`;
-
   const assets = [
     {a:'Land', options:['Dealer','Operator','Highway partner']},
     {a:'Chargers', options:['Operator','Dealer']},
@@ -1598,22 +1382,19 @@ function renderOwnershipTab(inp, finExact, sweep, best){
   t+='</table>';
   $('partialDocoTable').innerHTML = t;
 }
-
 function renderScenarioTab(inp, units, baseDemand8760, gridCapMW, best){
   const btns = Object.keys(scenarioPresets).map(k=>`<div class="scenbtn ${scenario===k?'active':''}" data-scen="${k}">${scenarioPresets[k].label}</div>`).join('');
   $('scenBtns').innerHTML = btns;
   $('scenBtns').querySelectorAll('[data-scen]').forEach(b=>b.addEventListener('click',e=>{ scenario=e.target.dataset.scen; renderAll(); }));
-
   $('scenKPIs').innerHTML =
     kpiCard('Landed Cost', fmt(best.landedCostPerKWh,2),'₹/kWh') +
     kpiCard('Project IRR (proxy)', irrLabel(best.proxyProjectIRR),'') +
     kpiCard('Equity IRR (proxy)', irrLabel(best.proxyEquityIRR),'') +
     kpiCard('Renewable Share', fmt(best.renShare,1),'%');
-
   let t = `<table><tr><th>Scenario</th><th>NPV Equity (₹Cr)</th><th>Project IRR</th><th>Equity IRR</th><th>Avg DSCR</th></tr>`;
   const savedScenario = scenario;
   ['base','downside','upside','stress'].forEach(k=>{
-    scenario = k; // scenMult() reads the module-level `scenario`
+    scenario = k;
     const fin2 = computeExactMultiYearFinancing(inp, units, baseDemand8760, best.candidate, gridCapMW);
     t+=`<tr><td>${scenarioPresets[k].label}</td><td>${fmt(fin2.npvEquity,2)}</td><td>${irrLabel(fin2.projectIRR)}</td><td>${irrLabel(fin2.equityIRR)}</td><td>${fmt(fin2.avgDSCR,2)}</td></tr>`;
   });
@@ -1621,10 +1402,6 @@ function renderScenarioTab(inp, units, baseDemand8760, gridCapMW, best){
   t+='</table><div class="hint">Each row re-runs the full multi-year 8,760h engine under that scenario\'s multipliers (independent of which scenario button is currently selected above).</div>';
   $('scenCompareTable').innerHTML = t;
 }
-
-/* Breaks scoreExactCandidate's penalty formula into its named components,
-   purely for "why did/didn't this win" display — same numbers the score
-   actually uses, not a re-derived approximation. */
 function decomposePenalty(ev, finExact, inp){
   const W = OPT_WEIGHTS;
   const gridSharePct = ev.annual.demand>0 ? (ev.annual.grid/ev.annual.demand)*100 : 0;
@@ -1638,25 +1415,11 @@ function decomposePenalty(ev, finExact, inp){
     gridSharePct
   };
 }
-
-/* ================================================================
-   RETURN DIAGNOSTICS — explains WHY IRR/NPV look weak (or don't),
-   in terms of the specific mechanism, not just the headline numbers.
-   Reads only off the already-computed best/finExact result — adds no
-   new calculation, so it can never disagree with the numbers shown
-   elsewhere on this tab. Uses peakGridNeedMW (the uncapped hourly
-   requirement) rather than peakGridMW (the capped delivery) when
-   describing the grid-capacity constraint, since peakGridMW is by
-   construction always <= sanctionedMW and can never "exceed" it —
-   peakGridNeedMW is what actually explains any unserved energy.
-   ================================================================ */
 function computeReturnDiagnostics(inp, best, finExact){
   const findings = [];
   const rows = finExact.rows || [];
   const y1 = rows[0];
   const terminal = rows.slice().reverse().find(r=>r.utilFrac>=0.999) || rows[rows.length-1];
-
-  // 1. Chronic, steady-state capacity-constrained unserved energy (recurs every year, not a ramp issue)
   if(terminal){
     const unservedPct = terminal.annual.demand>0 ? (terminal.annual.unserved/terminal.annual.demand*100) : 0;
     if(unservedPct > 3){
@@ -1666,24 +1429,18 @@ function computeReturnDiagnostics(inp, best, finExact){
         detail:`${fmt(terminal.annual.unserved,0)} MWh/yr of the ${fmt(terminal.annual.demand,0)} MWh/yr terminal demand is modelled as UNSERVED — this recurs every year at steady state, it is not a ramp-up artefact. In this architecture's peak hour the site needed ${fmt(best.peakGridNeedMW,2)} MW from the grid after solar/wind/OA/GC/BESS were exhausted, against ${fmt(best.sanctionedMW,2)} MW sanctioned/upgraded capacity (the grid itself always delivers ≤ its cap by construction — it is the ${fmt(Math.max(best.peakGridNeedMW-best.sanctionedMW,0),2)} MW shortfall in those hours that goes unserved). Estimated lost revenue: ~₹${fmt(lostRevenueCr,2)} Cr/yr at the current blended price of ₹${fmt(best.blendedPrice,2)}/kWh. Raising sanctioned grid capacity and/or the BESS/solar sizing ceilings the optimiser is allowed to search would let it close some or all of this gap.`});
     }
   }
-
-  // 2. Front-loaded CAPEX vs a slow utilisation ramp -> negative early free cash flow to equity
   if(y1 && y1.fcfe < 0){
     let negYears = 0;
     for(const r of rows){ if(r.fcfe<0) negYears++; else break; }
     findings.push({sev:'', title:`CAPEX is spent upfront (₹${fmt(finExact.totalCapexCr,1)} Cr) while Year 1 utilisation is only ${fmt(y1.utilFrac*100,0)}% — free cash flow to equity is negative for the first ${negYears} year${negYears>1?'s':''}.`,
       detail:`Year 1 FCFE is ₹${fmt(y1.fcfe,2)} Cr (revenue ₹${fmt(y1.rev,2)} Cr against ₹${fmt(y1.opex+y1.interestCr+y1.principal,2)} Cr of opex+debt service). At a ${fmt(inp.f_hurdle,1)}% discount rate, weak or negative early-year cash flows are penalised disproportionately in the NPV calculation, even when steady-state economics (see below) are healthy. A slower/steeper ramp shape, a longer debt tenor, or a moratorium period would each reduce this front-loading effect — worth testing on the Charging Demand and Economics tabs.`});
   }
-
-  // 3. DSCR covenant breach during the ramp (before steady state)
   const breachYears = rows.filter(r=>r.dscr!=null && isFinite(r.dscr) && r.dscr < inp.f_mindscr).map(r=>r.y);
   if(breachYears.length>0){
     const early = breachYears.filter(y=>y<=3);
     findings.push({sev: early.length>0 ? 'bad':'', title:`DSCR falls below the ${fmt(inp.f_mindscr,2)}× covenant in ${breachYears.length} of ${rows.length} years${early.length>0?' — including the ramp-up period':''}.`,
       detail:`Years ${breachYears.join(', ')} show DSCR below covenant. ${early.length>0?'Breaching the covenant during ramp-up (Years '+early.join(', ')+') is the higher-risk case — a lender would likely require a DSRA, a moratorium, or a lower initial debt fraction to get comfortable with this profile.':'These breaches occur after steady state, which is unusual — check for a BESS/asset replacement year landing here (replCapexThisYear) before assuming it is a ramp effect.'}`});
   }
-
-  // 4. Margin-healthy-but-timing-poor mismatch: steady-state EBITDA margin is strong, yet equity IRR still misses hurdle
   if(terminal && isFinite(finExact.equityIRR)){
     const marginPct = terminal.rev>0 ? (terminal.ebitda/terminal.rev*100) : 0;
     if(finExact.equityIRR < inp.f_hurdle && marginPct > 50){
@@ -1691,8 +1448,6 @@ function computeReturnDiagnostics(inp, best, finExact){
         detail:`By Year ${terminal.y}, EBITDA margin is ${fmt(marginPct,0)}% (₹${fmt(terminal.ebitda,2)} Cr EBITDA on ₹${fmt(terminal.rev,2)} Cr revenue) and DSCR is ${terminal.dscr!=null?fmt(terminal.dscr,2)+'×':'n/a (debt repaid)'}. The IRR shortfall is being driven by the early-year cash-flow weakness (see above) and/or the discount rate, not by the underlying unit economics of energy cost vs charging price.`});
     }
   }
-
-  // 5. Clean bill of health
   if(findings.length===0){
     findings.push({sev:'good', title:'No major structural return issues detected.', detail:`Steady-state unserved energy, early free-cash-flow-to-equity, and DSCR-covenant checks all came back clean against current assumptions.`});
   }
@@ -1704,7 +1459,6 @@ function renderReturnDiagnostics(inp, best, finExact){
     `<div class="flagbox ${f.sev}"><div class="diagtitle" style="font-weight:700;color:#fff;margin-bottom:3px;">${f.title}</div><div>${f.detail}</div></div>`
   ).join('');
 }
-
 function renderDecisionTab(inp, best, nextBest, finExact, presets){
   const renGapPts = inp.retarget - best.renShare;
   const gridSharePctOfDemand = best.annual.demand>0 ? (best.annual.grid/best.annual.demand*100) : 0;
@@ -1730,7 +1484,6 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
     ${renGapBox}
     ${best.unservedMWh>0.01 ? `<div class="flagbox bad" style="margin-top:14px"><b>Grid connection capacity is the binding constraint.</b> In this architecture's peak hour, the site needed <b>${fmt(best.peakGridNeedMW,2)} MW</b> from the grid after solar/wind/OA/GC/BESS were exhausted — but the sanctioned/upgraded connection only allows <b>${fmt(best.sanctionedMW,2)} MW</b>. The grid delivered its full ${fmt(best.sanctionedMW,2)} MW ceiling in those hours (so "peak grid draw" itself always shows ≤ the cap — it can never exceed it, since it's hard-capped in the dispatch); the ${fmt(Math.max(best.peakGridNeedMW-best.sanctionedMW,0),2)} MW shortfall in those hours is what's left unserved, totalling ${fmt(best.unservedMWh,1)} MWh/yr across the 8,760h year — not silently imported. Enable/expand the grid upgrade on the Grid Supply tab, or add BESS/renewables sized to cover peak hours, to close the gap.</div>` : ''}`;
   renderReturnDiagnostics(inp, best, finExact);
-
   const gridOnly = presets.find(p=>p.name==='Grid only');
   const reasons = [
     `Selected by risk-adjusted 8,760h optimisation (NPV + IRR headroom, net of renewable-target, DSCR, grid-capacity/unserved-energy and curtailment penalties) — not simply the cheapest landed ₹/kWh. Landed cost of this architecture is ₹${fmt(best.landedCostPerKWh,2)}/kWh.`,
@@ -1742,10 +1495,7 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
     `Grid was retained for residual demand ${best.annual.grid>0.01?`(${fmt(best.annual.grid/1000,2)} GWh/yr, ${fmt(best.annual.grid/best.annual.demand*100,0)}% of demand)`:'not at all'} because, at this sizing, its marginal ₹/kWh was below the annualised cost of adding further BESS/renewable capacity to displace it further.`,
   ];
   $('whyList').innerHTML = reasons.map((r,i)=>`<div class="reason"><div class="n">${String(i+1).padStart(2,'0')}</div><div>${r}</div></div>`).join('');
-
   const oaP = presets.find(p=>p.name==='Green OA + Grid'), gcP = presets.find(p=>p.name==='Group Captive + Grid');
-  // Fully-loaded (CAPEX+financing-inclusive) comparison — NEVER compare OA's
-  // landed cost against GC's pass-through opex rate alone (Part 6/10 fix).
   const oaVsGc = oaP.fullCost < gcP.fullCost;
   const sens = [
     `If demand growth pushes annual demand materially higher, Group Captive's per-kWh CAPEX charge falls with volume and its relative position vs OA can flip — see Break-Even Engine.`,
@@ -1756,7 +1506,6 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
     `If sanctioned grid capacity is raised (grid upgrade input), the optimiser can lean more heavily on grid backup instead of BESS/renewables sized to avoid unserved energy.`,
   ];
   $('sensList').innerHTML = sens.map((s,i)=>`<div class="reason"><div class="n">${String(i+1).padStart(2,'0')}</div><div>${s}</div></div>`).join('');
-
   if(nextBest){
     const pWin = decomposePenalty(best, finExact, inp);
     const pNext = decomposePenalty(nextBest, nextBest.finExact, inp);
@@ -1798,7 +1547,6 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
   } else {
     $('nextBestBox').innerHTML = `<div class="hint">Only one feasible candidate was found under current constraints — widen the search inputs (Solar/Wind/OA/GC/BESS ceilings, grid upgrade) to generate alternatives.</div>`;
   }
-
   $('riskShort').innerHTML = `<div class="hint">Top risks (see full Risk Register tab):</div><ul style="color:var(--muted);font-size:12.5px;line-height:1.9;padding-left:18px;">
     <li>Utilisation risk — demand forecast is a model assumption, not contracted volume unless fleet-backed.</li>
     <li>Regulatory risk — GC/OA charge structures can change by tariff order.</li>
@@ -1809,10 +1557,8 @@ function renderDecisionTab(inp, best, nextBest, finExact, presets){
   $('confSummary').innerHTML = `<div class="hint">Every regulatory and cost input in this model is currently tagged as a <b>model assumption pending verification</b> (see Audit tab) unless you have attached a source. Treat outputs as directionally useful, not investment-grade, until sourced.</div>
   <div style="margin-top:8px"><span class="pill verify">Overall confidence: REQUIRES VERIFICATION</span></div>`;
 }
-
 function renderDispatchTab(inp, dispatchFull, gridCapMW){
-  // representative day = a mid-year weekday slice of the ACTUAL 8760 result (same-shape zoom, not a separate calc)
-  const repDay = dispatchFull.hourly.filter(h=>h.month===5 && h.day===15); // mid-June, 24 hours
+  const repDay = dispatchFull.hourly.filter(h=>h.month===5 && h.day===15);
   const labels = repDay.map(h=>h.hour+':00');
   $('dispatchChart').innerHTML = svgLineChart([
     {data:repDay.map(h=>h.demand), color:'#e7ecef'},
@@ -1832,7 +1578,6 @@ function renderDispatchTab(inp, dispatchFull, gridCapMW){
     <span><i style="background:var(--gc)"></i>BESS SOC (MWh)</span>
     <span><i style="background:#ef5350"></i>Unserved (MW)</span></div>
     <div class="hint">This is hours ${repDay.length?repDay[0].idx:'—'}–${repDay.length?repDay[repDay.length-1].idx:'—'} of the actual 8,760-hour array (15 June), shown for readability — it is not recomputed separately from the annual run.</div>`;
-
   const a = dispatchFull.annual;
   const totalIn = a.solar+a.wind+a.gc+a.oa+a.bessDischarge+a.grid+a.unserved;
   const balanced = Math.abs(totalIn-a.demand) < 0.01*Math.max(a.demand,1);
@@ -1843,14 +1588,12 @@ function renderDispatchTab(inp, dispatchFull, gridCapMW){
     <tr><td>Unserved energy (grid capacity exceeded)</td><td>${fmt(a.unserved,1)} MWh/yr</td></tr>
     <tr><td>Energy balance</td><td>${balanced?'<span class="pill high">BALANCED</span>':'<span class="pill low">IMBALANCE DETECTED — check inputs</span>'}</td></tr>
   </table>`;
-
   let rt = `<table><tr><th>Source</th><th>Annual (GWh)</th><th>Share of demand</th></tr>`;
   [['Solar',a.solar],['Wind',a.wind],['Group Captive',a.gc],['Green OA',a.oa],['BESS discharge',a.bessDischarge],['Grid',a.grid],['Unserved',a.unserved]].forEach(([n,v])=>{
     rt+=`<tr><td>${n}</td><td>${fmt(v/1000,3)}</td><td>${fmt(a.demand>0?v/a.demand*100:0,1)}%</td></tr>`;
   });
   rt+=`<tr style="font-weight:700"><td>Total demand</td><td>${fmt(a.demand/1000,3)}</td><td>100%</td></tr></table>`;
   $('annualReconTable').innerHTML = rt;
-
   const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   const items = dispatchFull.monthly.map((m,i)=>({name:monthNames[i], value:m.demand/1000, unit:' GWh', color:'#5cc8ff'}));
   $('monthlyChart').innerHTML = svgBarChart(items,{w:820, labelW:60});
@@ -1862,7 +1605,6 @@ function renderDispatchTab(inp, dispatchFull, gridCapMW){
   mt+=`<tr style="font-weight:700"><td>TOTAL (=annual)</td><td>${fmt(sumM.demand/1000,2)}</td><td>${fmt(sumM.solar/1000,2)}</td><td>${fmt(sumM.wind/1000,2)}</td><td>${fmt(sumM.gc/1000,2)}</td><td>${fmt(sumM.oa/1000,2)}</td><td>${fmt(sumM.bessDischarge/1000,2)}</td><td>${fmt(sumM.grid/1000,2)}</td><td>${fmt(sumM.curtail/1000,2)}</td><td>${fmt(sumM.unserved/1000,2)}</td></tr></table>`;
   $('monthlyTable').innerHTML = mt;
 }
-
 function renderBessTab(inp, sweep, best, benefit){
   const necessity = best.candidate.bessMWh>0.1 && benefit.netBenefitCr>0;
   $('bessWhy').innerHTML = `
@@ -1881,13 +1623,11 @@ function renderBessTab(inp, sweep, best, benefit){
   `;
   const items = sweep.results.map(r=>({name:fmt(r.mwh,1)+'MWh/'+fmt(r.bessMW,1)+'MW', value:r.netValueCr, unit:' ₹Cr/yr', color: Math.abs(r.mwh-sweep.best.mwh)<1e-6?'#8b7cf6':'#3a3550', highlight: Math.abs(r.mwh-sweep.best.mwh)<1e-6}));
   $('bessSweepChart').innerHTML = svgBarChart(items, {w:840, labelW:110});
-
   const deg = bessDegradationSchedule(inp, best.candidate.bessMWh, 15);
   let dt = `<table><tr><th>Year</th><th>Usable fraction</th><th>Usable MWh</th><th>Event</th></tr>`;
   deg.rows.forEach(r=>{ dt+=`<tr><td>${r.y}</td><td>${fmt(r.usableFrac*100,1)}%</td><td>${fmt(r.usableMWh,2)}</td><td>${r.replacedThisYear?`<span class="pill medium">REPLACEMENT — ₹${fmt(deg.replacementCapexCr,2)} Cr</span>`:''}</td></tr>`; });
   dt+='</table>';
   $('bessDegTable').innerHTML = dt + `<div class="hint">Simplified annual fade at ${fmt(inp.b_deg,1)}%/yr; forced replacement at the earlier of ${fmt(inp.b_life,0)} years or usable capacity falling below ${fmt(inp.b_minusable,0)}% — the degraded usable MWh/MW actually feeds each year's 8,760h dispatch in the Economics cash flow (not just this table), and replacement CAPEX is charged to equity cash flow in that year.</div>`;
-
   const ownedCapex = best.candidate.bessMWh*inp.b_capex + best.candidate.bessMW*inp.b_capex_mw;
   const ownedAnnual = ownedCapex*crf(inp.f_hurdle,10) + ownedCapex*(inp.b_om/100);
   const annualThroughputMWh = benefit.annualShiftedMWh;
@@ -1901,21 +1641,13 @@ function renderBessTab(inp, sweep, best, benefit){
   </table>`;
   $('baasCompare2').innerHTML = t2;
 }
-
 function renderBreakEvenTab(inp, units, baseDemand8760, gridCapMW, sweep, finExact, best, presets){
-  /* GC MW-for-volume conversion now comes from the SAME canonical unit-MW
-     shapes (calibrated to the site's actual s_cuf/w_cuf) and the SAME
-     gc_solarshare mix used everywhere else in the model — not a separate
-     flat "22% blended CUF" placeholder. */
-  const solarAnnualPerMW = sumProfile(units.solarUnit); // MWh/yr per 1 MW, from the canonical 8760 unit shape
+  const solarAnnualPerMW = sumProfile(units.solarUnit);
   const windAnnualPerMW = sumProfile(units.windUnit);
   const gcBlendedMWhPerMW = (inp.gc_solarshare/100)*solarAnnualPerMW + (1-inp.gc_solarshare/100)*windAnnualPerMW;
   const vols=[]; for(let g=0.5; g<=40; g+=4) vols.push(g);
-  // Fully-loaded GC cost (CAPEX+financing+O&M+delivery stack, Part 6/15 fix) —
-  // NOT the opex-only landedCostPerKWh, which would make this break-even
-  // meaningless (comparing OA's full cost against GC's opex alone).
   const gcCost = vols.map(v=>{
-    const gcMWForVol = gcBlendedMWhPerMW>0 ? (v*1000)/gcBlendedMWhPerMW : 0; // v (GWh) -> MW at this site's actual GC solar/wind mix & CUF
+    const gcMWForVol = gcBlendedMWhPerMW>0 ? (v*1000)/gcBlendedMWhPerMW : 0;
     const cand = {solarMW:0,windMW:0,oaMW:0,gcMW:gcMWForVol,bessMW:0,bessMWh:0};
     const ev = evaluateCandidateSteadyState(inp, units, baseDemand8760, cand, gridCapMW, null);
     return ev.fullyLoadedCostPerKWh;
@@ -1928,16 +1660,13 @@ function renderBreakEvenTab(inp, units, baseDemand8760, gridCapMW, sweep, finExa
   ], {w:520, h:220, xlabels:vols.map((v,i)=>i%2===0?v:'')});
   $('breakGCOA').innerHTML += `<div class="legend"><span><i style="background:var(--gc)"></i>Group Captive (fully-loaded)</span><span><i style="background:var(--oa)"></i>Green OA (fully-loaded)</span><span><i style="background:var(--grid)"></i>Grid (fully-loaded)</span></div>
   <div class="hint">X-axis: annual GC scale (GWh, illustrative). All three lines are FULLY-LOADED ₹/kWh (incl. CAPEX+financing for GC, full OA stack, full grid stack — never opex-only) — where the pink line crosses below the purple line is the GC-over-OA break-even, computed through the same 8,760h engine. Note: at a flat ₹/MW CAPEX rate with no modelled scale economies, GC's fully-loaded ₹/kWh is roughly constant across scale here — a genuine scale effect would require entering a lower gc_capex ₹/MW for larger plant sizes.</div>`;
-
   $('breakBESS').innerHTML = svgLineChart([{data:sweep.results.map(r=>r.netValueCr), color:'var(--bess)'}], {w:520,h:220, xlabels:sweep.results.map((r,ix)=>ix%2===0?fmt(r.mwh,0):'')});
   $('breakBESS').innerHTML += `<div class="hint">Net annual value (₹ Cr/yr) by BESS MWh (best C-rate at each size), from the with/without dispatch difference. Currently optimal ≈ ${fmt(sweep.best.mwh,1)} MWh / ${fmt(sweep.best.bessMW,1)} MW.</div>`;
-
   const ownedCapex = sweep.best.mwh*inp.b_capex + sweep.best.bessMW*inp.b_capex_mw;
   const ownedAnnual = ownedCapex*crf(inp.f_hurdle,10) + ownedCapex*(inp.b_om/100);
   const baasAnnual = inp.b_baasfixed*12/100 + sweep.best.annualShiftedMWh*1000*inp.b_baasrate/1e7;
   $('breakBaaS').innerHTML = `<div class="kpi"><div class="l">Break-even BESS CAPEX (₹Cr/MWh) where own = BaaS</div><div class="v">₹${fmt((baasAnnual-ownedCapex*(inp.b_om/100))/(sweep.best.mwh*crf(inp.f_hurdle,10)||1),2)}</div></div>
   <div class="hint">Above this implied CAPEX threshold, BESS-as-a-Service is the cheaper structure at the current optimal size and O&amp;M/duty-cycle assumptions.</div>`;
-
   const utilLevels=[50,60,70,80,90,100,110];
   let cocoRow='', docoRow='';
   utilLevels.forEach(u=>{
@@ -1948,7 +1677,6 @@ function renderBreakEvenTab(inp, units, baseDemand8760, gridCapMW, sweep, finExa
   $('breakCOCO').innerHTML = `<table><tr><th>Utilisation</th>${utilLevels.map(u=>`<th>${u}%</th>`).join('')}</tr>
     <tr><td>COCO — illustrative equity return</td>${cocoRow}</tr>
     <tr><td>DOCO (operator opfee) — illustrative equity return</td>${docoRow}</tr></table>`;
-
   const capMWnoUpg = gridCapacityMW(inp, false);
   const {result: noUpgResult} = runCandidateDispatch(inp, units, baseDemand8760, best.candidate, 1.0, capMWnoUpg, false);
   const unservedNoUpg = noUpgResult.annual.unserved;
@@ -1961,7 +1689,6 @@ function renderBreakEvenTab(inp, units, baseDemand8760, gridCapMW, sweep, finExa
     <tr style="font-weight:700"><td>Upgrade justified if</td><td>annualised upgrade CAPEX (₹${fmt(inp.g_upgrade_capex*crf(inp.f_hurdle,15),3)} Cr/yr) &lt; avoided lost revenue + reliability value</td></tr>
   </table><div class="hint">Toggle "Grid upgrade available?" on the Grid Supply tab to include/exclude this capacity in the dispatch/optimiser constraint.</div>`;
 }
-
 function renderRiskTab(best){
   const risks = [
     ['Utilisation risk','Forecast demand does not materialise','Medium','High','Fleet take-or-pay contracts; phased CAPEX'],
@@ -1984,8 +1711,6 @@ function renderRiskTab(best){
   t+='</table>';
   $('riskTable').innerHTML = t;
 }
-
-/* ---------------- Slot 2 (5%): lightweight state comparison ---------------- */
 function stateDataConfidence(name){
   const prov = STATE_PROVENANCE[name];
   if(!prov) return 'NOT VERIFIED';
@@ -2005,7 +1730,6 @@ function renderStateComparisonTab(inp, units, baseDemand8760, gridCapMW, best){
   const bankStatus = bankingRegulatoryStatus();
   t += `<div class="flagbox ${bankStatus.status==='UPDATE REQUIRED'?'bad':''}"><b>${bankStatus.status}:</b> ${bankStatus.message}</div>`;
   $('stateAssumpTable').innerHTML = t;
-
   const candidate = best.candidate;
   let ct = `<table><tr><th>State</th><th>DISCOM basis</th><th>Grid fully-loaded ₹/kWh</th><th>Green OA fully-landed ₹/kWh</th><th>Group Captive fully-loaded ₹/kWh</th><th>Grid vs OA</th><th>OA vs GC</th><th>Grid vs GC</th><th>Renewable requirement</th><th>Recommended route</th><th>Data confidence</th></tr>`;
   Object.entries(STATE_ASSUMPTIONS).forEach(([name,s])=>{
@@ -2019,10 +1743,6 @@ function renderStateComparisonTab(inp, units, baseDemand8760, gridCapMW, best){
     const oaEv = evaluateCandidateSteadyState(inp2, units2, baseDemand8760, oaCand, gridCapMW, null);
     const gcEv = evaluateCandidateSteadyState(inp2, units2, baseDemand8760, gcCand, gridCapMW, null);
     const gridEv = evaluateCandidateSteadyState(inp2, units2, baseDemand8760, gridCand, gridCapMW, null);
-    // FULLY-LOADED comparison — OA's full stack vs GC's full stack (CAPEX+
-    // financing+O&M+delivery), never OA's landed cost vs GC's pass-through
-    // opex rate alone (Part 10 fix, root cause of the "GC cheaper by
-    // ₹5.22/kWh" false statement).
     const gridC = gridEv.fullyLoadedCostPerKWh, oaC = oaEv.oaLandedPerKWh, gcC = gcEv.gcFull.deliveredPerKWh;
     const cmp = (a,b,labelA,labelB)=> Math.abs(a-b)<0.15 ? `~ within ₹0.15/kWh` : (a<b?`${labelA} cheaper by ₹${fmt(b-a,2)}`:`${labelB} cheaper by ₹${fmt(a-b,2)}`);
     const cheapest = [{n:'Grid',v:gridC},{n:'Green OA',v:oaC},{n:'Group Captive',v:gcC}].sort((a,b)=>a.v-b.v)[0];
@@ -2036,16 +1756,6 @@ function renderStateComparisonTab(inp, units, baseDemand8760, gridCapMW, best){
   ct += `</table><div class="hint">Grid/OA/GC columns are all FULLY-LOADED ₹/kWh on a comparable basis: Grid includes energy+ToU+demand/fixed charges (computeGridCostEngine); Green OA is the full component stack (PPA+transmission+wheeling+CSS+additional surcharge+banking+SLDC+losses+tax, computeOA); Group Captive includes annualised CAPEX+financing for your equity share, O&amp;M, and the delivery stack, with CSS/Additional-Surcharge waived only if the captive-eligibility gate is currently met (computeGCFullyLoaded) — GC is never represented by the pass-through/opex rate alone. Same demand profile, sized per-route at ${fmt(inp.oa_mw||1,1)} MW OA / ${fmt(candidate.gcMW||inp.gc_mw||3,1)} MW GC, re-run through the identical 8,760h engine with each state's assumption set swapped in.</div>`;
   $('stateCompareTable').innerHTML = ct;
 }
-
-/* ---------------- Full per-state re-optimisation (on-demand, cached) ----------------
-   Runs the SAME two-stage optimiser (coarse search + exact multi-year
-   refine) independently for each state's assumption set, so the
-   recommended architecture — not just the delivered ₹/kWh — can differ
-   by state. This is 6x the cost of a single optimiser run, so it is
-   button-triggered rather than wired into the debounced renderAll path
-   (per the "do not destroy performance on every keystroke" requirement),
-   and the result is cached until an architecture/demand-relevant input
-   changes. */
 let _stateOptCache = null;
 function stateOptCacheKey(inp){
   const dailyKWhTotal = vehicleRows.reduce((s,r)=>s+r.vpd*r.spd*r.kwh,0);
@@ -2103,8 +1813,6 @@ document.getElementById('runStateOptBtn')?.addEventListener('click', ()=>{
     finally{ btn.textContent = prevLabel; btn.disabled = false; }
   }, 10);
 });
-
-/* ---------------- Minimum-utilisation solver UI wiring ---------------- */
 function renderMinUtilTable(inp, units, baseDemand8760, candidate, gridCapMW){
   const th = solveMinUtilizationThresholds(inp, units, baseDemand8760, candidate, gridCapMW);
   const rowFor = (key, r) => {
@@ -2130,8 +1838,6 @@ document.getElementById('runMinUtilBtn')?.addEventListener('click', ()=>{
     finally{ btn.textContent = prevLabel; btn.disabled = false; }
   }, 10);
 });
-
-/* ---------------- Risk-adjusted analysis UI wiring ---------------- */
 function renderRiskAdjTable(inp, units, baseDemand8760, best, gridCapMW, opt){
   const riskEcon = best.riskEcon && inp.riskObjective ? best.riskEcon : computeRiskAdjustedEconomics(inp, units, baseDemand8760, best.candidate, gridCapMW);
   const scenRows = Object.values(riskEcon.perScenario).map(p=>
@@ -2139,7 +1845,6 @@ function renderRiskAdjTable(inp, units, baseDemand8760, best, gridCapMW, opt){
   ).join('');
   let compareLine = '';
   if(!inp.riskObjective){
-    // show what WOULD change if the risk-adjusted objective were switched on, using the same topK the deterministic search already found
     const refinedRisk = opt && opt.topK ? opt.topK.map(item=>{
       const riskE = computeRiskAdjustedEconomics(inp, units, baseDemand8760, item.ev.candidate, gridCapMW);
       return {ev:item.ev, score:scoreRiskAdjustedCandidate(item.ev, riskE, inp)};
@@ -2174,7 +1879,6 @@ document.getElementById('runRiskAdjBtn')?.addEventListener('click', ()=>{
     finally{ btn.textContent = prevLabel; btn.disabled = false; }
   }, 10);
 });
-
 function renderAuditTab(inp){
   const prov = STATE_PROVENANCE['Gujarat'];
   const provRows = Object.values(prov).map(p=>[p.label, '', p.source+(p.expiry?` — expires ${p.expiry}`:''), p.status, p.url, p.effective]);
@@ -2215,7 +1919,6 @@ function renderAuditTab(inp){
   t+='</table>';
   $('auditTable').innerHTML = t;
 }
-
 function renderAboutTab(){
   $('aboutMainText').innerHTML = `This build runs a canonical 8,760-hour dispatch engine (<code>runDispatch8760</code>) as the single source of energy-flow truth. For every hour of a synthetic year, charging demand is met in priority order by direct solar, direct wind, Group Captive entitlement, contracted Green Open Access, BESS discharge, and finally grid import (hard-capped at sanctioned+upgrade MW; anything above that is recorded as unserved energy). Results are aggregated hour→month→year, and the ANNUAL totals from that aggregation — not a 24-hour representative day multiplied by operating days — are what feed energy cost, revenue, OPEX, EBITDA, CAPEX, financing, cash flow, NPV, IRR and DSCR. The optimiser scores candidate architectures (solar MW, wind MW, OA MW, GC MW, BESS MW, BESS MWh — all independent decision variables) through this same engine at steady-state, then the winning architecture receives an exact year-by-year re-dispatch across the full project life (utilisation ramp, BESS degradation and panel degradation all applied before each year's dispatch, not approximated afterwards) to produce the cash flow and IRR figures actually shown.`;
   const limits = [
@@ -2229,10 +1932,6 @@ function renderAboutTab(){
   ];
   $('aboutLimitsList').innerHTML = limits.map(l=>`<li>${l}</li>`).join('');
 }
-
-/* ================================================================
-   MAIN ORCHESTRATOR
-   ================================================================ */
 let _renderInProgress = false;
 function renderAll(){
   if(_renderInProgress) return;
@@ -2243,26 +1942,16 @@ function renderAll(){
     const baseDemand8760 = getBaseDemand8760(inp);
     const gridCapMW = gridCapacityMW(inp, true);
     const oa = computeOA(inp);
-
-    /* Stage 1: coarse steady-state search returns the top-K finalists
-       (BESS MW and MWh swept as independent grids, filtered only by the
-       C-rate band — see optimizeArchitecture8760).
-       Stage 2: those K finalists are re-run through the EXACT multi-year
-       dispatch+cash-flow model and re-ranked on THOSE numbers — the
-       proxy never gets the final say. */
     const opt = optimizeArchitecture8760(inp, units, baseDemand8760, gridCapMW);
     const refined = refineTopCandidatesExact(inp, units, baseDemand8760, gridCapMW, opt.topK);
     const best = refined.best;
     const finExact = refined.finExact;
     const {result: dispatchFull} = runCandidateDispatch(inp, units, baseDemand8760, best.candidate, 1.0, gridCapMW, true);
-
     const fixedForBess = {solarMW:best.candidate.solarMW, windMW:best.candidate.windMW, oaMW:best.candidate.oaMW, gcMW:best.candidate.gcMW};
     const sweep = bessSweep8760(inp, units, baseDemand8760, gridCapMW, fixedForBess);
     const benefit = bessBenefitAnalysis8760(inp, units, baseDemand8760, gridCapMW, fixedForBess, best.candidate.bessMW, best.candidate.bessMWh);
-
     const presets = buildArchitecturePresets(inp, units, baseDemand8760, gridCapMW, best);
     const curEval = evaluateCandidateSteadyState(inp, units, baseDemand8760, {solarMW:inp.s_mw, windMW:inp.w_mw, oaMW:inp.oa_mw, gcMW:inp.gc_mw, bessMW:0, bessMWh:0}, gridCapMW, null);
-
     renderTicker(baseDemand8760, best, finExact, inp);
     renderDemandKPIs(baseDemand8760, inp);
     renderArchTab(inp, units, curEval, oa, presets, gridCapMW);
@@ -2277,22 +1966,16 @@ function renderAll(){
     renderAuditTab(inp);
     renderStateComparisonTab(inp, units, baseDemand8760, gridCapMW, best);
     renderAboutTab();
-
     _last = {inp, units, baseDemand8760, gridCapMW, best, finExact, dispatchFull, sweep, benefit, presets, opt, refined};
   } finally {
     _renderInProgress = false;
   }
 }
-
-/* ================================================================
-   AUTOMATED VALIDATION TESTS (browser-executable, use the live engine)
-   ================================================================ */
 function runValidationTests(){
   const results = [];
   const pass=(name,ok,detail)=>results.push({name,ok,detail});
   if(!_last.inp){ renderAll(); }
   const {inp, units, baseDemand8760, gridCapMW, best, finExact, dispatchFull, opt} = _last;
-
   pass('1. 8,760 periods exist', TIMELINE_8760.length===8760, TIMELINE_8760.length);
   pass('2. Every period has a valid timestamp', TIMELINE_8760.every(t=>t.month>=0&&t.month<12&&t.hour>=0&&t.hour<24), '');
   const monthlySum = dispatchFull.monthly.reduce((s,m)=>s+m.demand,0);
@@ -2310,7 +1993,7 @@ function runValidationTests(){
     const c2={solarMW:1,windMW:0,oaMW:0,gcMW:0,bessMW:4,bessMWh:8};
     const ev1 = evaluateCandidateSteadyState(inp, units, baseDemand8760, c1, gridCapMW, null);
     const ev2 = evaluateCandidateSteadyState(inp, units, baseDemand8760, c2, gridCapMW, null);
-    return ev1.annual.bessDischarge !== ev2.annual.bessDischarge || true; // same MWh, different MW is a valid independent combo by construction
+    return ev1.annual.bessDischarge !== ev2.annual.bessDischarge || true;
   })(), 'same MWh, different MW both run without MW being derived from MWh*fixed C-rate');
   function feasibleCrate(mw,mwh,min,max){ if(mwh<=0) return mw<=1e-9; const c=mw/mwh; return c>=min-1e-9 && c<=max+1e-9; }
   pass('10. C-rate constraint works (rejects out-of-band combos)', !feasibleCrate(10,5,inp.b_cratemin,inp.b_cratemax) || inp.b_cratemax>=2, `min=${inp.b_cratemin} max=${inp.b_cratemax}`);
@@ -2351,7 +2034,6 @@ function runValidationTests(){
   const {result:hiRenResult} = runCandidateDispatch(inp, units, baseDemand8760, hiRenCandidate, 1.0, gridCapMW, true);
   const hiRenBalOK = hiRenResult.hourly.every(h=>Math.abs((h.solar+h.wind+h.gc+h.oa+h.bessDischarge+h.grid+h.unserved)-h.demand)<1e-6);
   pass('25. High-renewable case does not create energy that does not exist', hiRenBalOK, '');
-
   const optForBess = _last.opt;
   pass('26. Optimiser searches BESS MW and MWh as independent grids (not MW = MWh × fixed C-rate)', (()=>{
     if(!optForBess || !optForBess.topK) return false;
@@ -2364,9 +2046,6 @@ function runValidationTests(){
       if(mwhToMW[key]!==undefined && Math.abs(mwhToMW[key]-c.bessMW)>1e-6) sawVariation = true;
       mwhToMW[key] = c.bessMW;
     });
-    // even if the small top-K sample doesn't itself show two MW values at
-    // the same MWh, every candidate in it must still satisfy the C-rate
-    // band as an independent (MW,MWh) pair rather than a fixed formula:
     const allWithinCrateBand = optForBess.topK.every(item=>{
       const c = item.ev.candidate;
       if(c.bessMWh<=1e-6) return c.bessMW<=1e-6;
@@ -2375,61 +2054,51 @@ function runValidationTests(){
     });
     return allWithinCrateBand;
   })(), optForBess ? `topK candidates: ${optForBess.topK.map(t=>`${fmt(t.ev.candidate.bessMW,1)}MW/${fmt(t.ev.candidate.bessMWh,1)}MWh`).join(', ')}` : 'optimiser result unavailable');
-
   pass('27. Optimiser final ranking uses EXACT multi-year economics, not the steady-state proxy alone', (()=>{
     const refinedRes = _last.refined;
     return !!(refinedRes && refinedRes.finExact && isFinite(refinedRes.finExact.equityIRR) !== undefined && refinedRes.finExact.rows && refinedRes.finExact.rows.length===15);
   })(), _last.refined ? `winner exact equityIRR=${irrLabel(_last.refined.finExact.equityIRR)}, projectIRR=${irrLabel(_last.refined.finExact.projectIRR)}` : '');
-
   pass('28. Regulatory eligibility gate is enforced as a hard constraint (NOT ELIGIBLE candidates score -Infinity and cannot win)', (()=>{
-    const infeasibleOA = {solarMW:1,windMW:0,bessMW:0,bessMWh:0,oaMW:0.001,gcMW:0}; // below any sane oa_min_mw>0.001
-    const inpStrict = {...inp, oa_min_mw:5}; // force any small OA candidate ineligible
+    const infeasibleOA = {solarMW:1,windMW:0,bessMW:0,bessMWh:0,oaMW:0.001,gcMW:0};
+    const inpStrict = {...inp, oa_min_mw:5};
     const ev = evaluateCandidateSteadyState(inpStrict, units, baseDemand8760, infeasibleOA, gridCapMW, null);
     const elig = ev.oaElig;
     const score = scoreCandidateEval(ev, inpStrict);
     return elig.status==='NOT ELIGIBLE' && score===-Infinity;
   })(), '0.001 MW OA candidate against a 5 MW eligibility threshold correctly flagged NOT ELIGIBLE and hard-excluded from scoring');
-
   pass('29. Minimum-utilisation solver runs and returns coherent thresholds (each an exact multi-year bisection, not a formula)', (()=>{
     const th = solveMinUtilizationThresholds(inp, units, baseDemand8760, best.candidate, gridCapMW);
     const okShape = th.npv && th.projectIRR && th.equityIRR && th.dscr;
     if(!okShape) return false;
-    // any achievable result must correspond to a positive multiplier and a re-verified passing exact run at that multiplier
     const checks = ['npv','projectIRR','equityIRR','dscr'].map(k=>{
       const r = th[k];
-      if(!r.achievable) return true; // "not achievable" is itself a valid, checked outcome
+      if(!r.achievable) return true;
       return r.multiplier>0 && r.utilPct!==null;
     });
     return checks.every(Boolean);
   })(), '');
-
   pass('30. Risk-adjusted probabilities normalise to 100% regardless of raw input values', (()=>{
     const w1 = normalizedRiskWeights({p_base:50,p_downside:25,p_upside:15,p_stress:10});
-    const w2 = normalizedRiskWeights({p_base:5,p_downside:2.5,p_upside:1.5,p_stress:1}); // same ratios, different scale
+    const w2 = normalizedRiskWeights({p_base:5,p_downside:2.5,p_upside:1.5,p_stress:1});
     const sum1 = Object.values(w1).reduce((a,b)=>a+b,0);
     const sum2 = Object.values(w2).reduce((a,b)=>a+b,0);
     return Math.abs(sum1-1)<1e-6 && Math.abs(sum2-1)<1e-6 && Math.abs(w1.base-w2.base)<1e-6;
   })(), '');
-
   pass('31. Risk-adjusted score applies a real downside penalty (score < expected NPV whenever downside variance > 0)', (()=>{
     const riskEcon = computeRiskAdjustedEconomics(inp, units, baseDemand8760, best.candidate, gridCapMW);
-    if(riskEcon.downsideSemiDev<=1e-6) return true; // no downside spread in this configuration — penalty correctly zero
+    if(riskEcon.downsideSemiDev<=1e-6) return true;
     return riskEcon.riskAdjustedScore < riskEcon.expectedNPV - 1e-6;
   })(), (()=>{ const r=computeRiskAdjustedEconomics(inp, units, baseDemand8760, best.candidate, gridCapMW); return `E[NPV]=${fmt(r.expectedNPV,2)} riskScore=${fmt(r.riskAdjustedScore,2)} semiDev=${fmt(r.downsideSemiDev,2)}`; })());
-
   pass('32. Stress-case NPV is never better than Base-case NPV for the same architecture (scenario multipliers are uniformly adverse in Stress)', (()=>{
     const riskEcon = computeRiskAdjustedEconomics(inp, units, baseDemand8760, best.candidate, gridCapMW);
     return riskEcon.perScenario.stress.npvEquity <= riskEcon.perScenario.base.npvEquity + 1e-6;
   })(), (()=>{ const r=computeRiskAdjustedEconomics(inp, units, baseDemand8760, best.candidate, gridCapMW); return `base=${fmt(r.perScenario.base.npvEquity,2)} stress=${fmt(r.perScenario.stress.npvEquity,2)}`; })());
-
   pass('33. Switching the optimiser objective to probability-weighted actually changes the scoring function used (not cosmetic)', (()=>{
     const inpRisk = {...inp, riskObjective:true};
     const refinedDet = refineTopCandidatesExact(inp, units, baseDemand8760, gridCapMW, opt.topK);
     const refinedRisk = refineTopCandidatesExact(inpRisk, units, baseDemand8760, gridCapMW, opt.topK);
-    // scores are on different bases (deterministic vs expected-value-minus-penalty) so they should differ in value even for the SAME candidate
     return refinedDet.best.exactScore !== refinedRisk.best.exactScore || refinedDet.refined.length<=1;
   })(), '');
-
   return results;
 }
 function renderTestResults(){
@@ -2440,11 +2109,9 @@ function renderTestResults(){
   html+='</table>';
   $('testResults').innerHTML = html;
 }
-
-/* ---------------- nav & tabs wiring ---------------- */
 document.querySelectorAll('.navitem').forEach(item=>{
   item.addEventListener('click', ()=>{
-    if(item.classList.contains('disabled')) return; // not-yet-built tab — no view to switch to
+    if(item.classList.contains('disabled')) return;
     const target = $(item.dataset.view);
     if(!target){ console.warn('Nav target missing for', item.dataset.view, '— tab not switched.'); return; }
     document.querySelectorAll('.navitem').forEach(i=>i.classList.remove('active'));
@@ -2467,7 +2134,6 @@ $('addVehType').addEventListener('click', ()=>{
 });
 $('runTestsBtn').addEventListener('click', renderTestResults);
 $('applyArchetype')?.addEventListener('click', ()=>{ renderAll(); });
-
 function scheduleRender(){
   clearTimeout(_renderDebounceTimer);
   _renderDebounceTimer = setTimeout(()=>renderAll(), 400);
@@ -2477,9 +2143,6 @@ document.addEventListener('input', e=>{
   if(e.target.closest('#demandTable')) return;
   if(e.target.matches('input,select')) scheduleRender();
 });
-
-
-/* ---------------- init ---------------- */
 renderDemandTable();
 renderAll();
 renderTestResults();
