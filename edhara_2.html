@@ -1627,7 +1627,7 @@ function rerenderCurrent(){
 function renderHeader(){
   const ev = STATE._cache ? STATE._cache.ev : null;
   document.getElementById('appHeader').innerHTML = `
-    <div class="brand">
+    <div class="brand" ${STATE.phase===2?'data-action="leavePhase2ToPhase1" style="cursor:pointer" title="Back to Phase 1 (will offer to save first)"':''}>
       <span class="brand-mark">${brandMark()}</span>
       ENERGYNEX <span class="brand-sub">Charging Infrastructure Energy &amp; Investment Planner</span>
     </div>
@@ -1669,7 +1669,7 @@ const PHASE2_TABS = [
 function renderPhase2Nav(){
   document.getElementById('phase2Nav').innerHTML = PHASE2_TABS.map(t=>`
     <div class="wsTab ${t.k===STATE.tab2?'active':''}" data-action="gotoTab2:${t.k}">${t.label}</div>`).join('')
-    + `<div class="wsTab" style="margin-left:auto;color:var(--text-faint)" data-action="gotoStep:decision">← Back to Phase 1</div>`;
+    + `<div class="wsTab" style="margin-left:auto;color:var(--text-faint)" data-action="leavePhase2ToPhase1">← Back to Phase 1</div>`;
   document.getElementById('phase2Nav').classList.remove('hidden');
   document.getElementById('phase1Nav').classList.add('hidden');
   document.getElementById('archSummary').classList.remove('hidden');
@@ -1716,7 +1716,18 @@ function render(){
 }
 
 /* ---------- nav actions ---------- */
-function gotoStep(step){ STATE.step = step; window.scrollTo(0,0); render(); }
+function gotoStep(step){ STATE.phase=1; STATE.step = step; window.scrollTo(0,0); render(); }
+function leavePhase2ToPhase1(){
+  if(STATE.phase===2){
+    const wantSave = confirm('Save this architecture as a scenario before returning to Phase 1?\n\nOK — save it, then go back\nCancel — go back without saving');
+    if(wantSave){
+      const {ev} = STATE._cache || computeAll();
+      const name = prompt('Scenario name', architectureNameOf(ev)+' — '+scenarioPresets[STATE.inp.scenario].label);
+      if(name) STATE.scenarios.push({ id:Date.now(), name, inp:JSON.parse(JSON.stringify(STATE.inp)), candidate:JSON.parse(JSON.stringify(STATE.candidate)), ts:new Date().toLocaleString('en-IN') });
+    }
+  }
+  gotoStep('decision');
+}
 function gotoTab2(tab){ STATE.tab2 = tab; window.scrollTo(0,0); render(); }
 function resetApp(){ if(!confirm('Reset all inputs and start over?')) return; Object.assign(STATE, {inp:defaultInputs(), candidate:defaultCandidate(), phase:1, step:'site', tab2:'architecture', decisionResults:null}); render(); }
 function enterPhase2(fromCandidate){
