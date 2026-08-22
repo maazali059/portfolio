@@ -96,6 +96,7 @@ function computeOA(inp){
   }};
 }
 function gridCapacityMW(inp, includeUpgrade){
+  if(inp.gridAllowed===false) return 0; // hard constraint: no grid import permitted at all
   const base = inp.g_sanc/1000;
   if(includeUpgrade && inp.g_upgrade_avail) return base+inp.g_upgrade_mw;
   return base;
@@ -185,11 +186,20 @@ function computeGCFullyLoaded(inp, gcMW, gcConsumedMWh, gcElig){
   };
 }
 
-/* ---------------- hourly tariff build (for BESS scheduling + ToD display) ---------------- */
+/* ---------------- hourly tariff build (for BESS scheduling AND actual hourly billing) ----------------
+   Baselines here represent the full per-kWh ENERGY rate actually metered each
+   hour (capacity/demand charges stay separate — they're billed on sanctioned
+   kVA, not per-kWh, so they remain an annual allocation, not an hourly one). */
 function computeFlatBaseline(inp, key){
-  if(key==='grid') return inp.g_energy*scenMult(inp).grid;
+  const m = scenMult(inp);
+  if(key==='grid') return (inp.g_energy*m.grid + (inp.g_fppca||0)*m.grid)*(1+inp.g_tax/100);
   if(key==='oa')   return computeOA(inp).landed;
-  if(key==='gc')   return inp.gc_charges;
+  // GC: variable/pass-through rate only (capex+O&M annuity is settled separately,
+  // post-dispatch, since it depends on annual consumed MWh). Assumes captive
+  // eligibility (CSS/Additional Surcharge waived) for this per-hour baseline —
+  // the eligibility gate itself is still checked and shown against actual
+  // dispatch in the Architecture/Economics tabs.
+  if(key==='gc')   return inp.oa_wheel+inp.oa_bank+inp.oa_sldc+inp.gc_charges;
   return 0;
 }
 function buildAllTariffs(inp){
@@ -201,6 +211,39 @@ function buildAllTariffs(inp){
     tariffs[key] = buildHourlyTariff(cfg.mode, baseline, slots);
   });
   return tariffs;
+}
+/* Actual metered cost, derived from the dispatch's hour-by-hour tariff × energy
+   accumulation — this is what Finance/Economics use, replacing the old
+   annual-blended-rate proxy so a ToD structure actually changes the ₹ figure. */
+function computeGridActualCost(inp, a, peakGridMW){
+  const sanctionedMW = (inp.g_sanc||0)/1000;
+  const billableKVA = Math.max(peakGridMW,0)*1000;
+  const normalKVA = Math.min(billableKVA, sanctionedMW*1000);
+  const excessKVA = Math.max(billableKVA-sanctionedMW*1000, 0);
+  const demandChargeAnnualCr = (inp.g_demand*normalKVA*12)/1e7;
+  const excessDemandChargeAnnualCr = (inp.g_excess_demand*excessKVA*12)/1e7;
+  const fixedAnnualCr = (inp.g_fixed*12)/1e7;
+  const capacityChargesCr = (demandChargeAnnualCr+excessDemandChargeAnnualCr+fixedAnnualCr)*(1+inp.g_tax/100);
+  const gridMWh = (a.grid||0) + (a.bessChargeGrid||0);
+  const connAmortCr = gridMWh>0 ? (inp.g_conn_amort*gridMWh*1000)/1e7 : 0;
+  const extra = customChargeSum(inp.procState.grid.customCharges);
+  const customCr = gridMWh>0 ? (extra*gridMWh*1000)/1e7 : 0;
+  const energyCostCr = ((a.gridEnergyCostRs||0)+(a.bessGridCostRs||0))/1e7;
+  const totalCr = energyCostCr+capacityChargesCr+connAmortCr+customCr;
+  const effectivePerKWh = gridMWh>0 ? (totalCr*1e7)/(gridMWh*1000) : 0;
+  return {energyCostCr, capacityChargesCr, connAmortCr, customCr, totalCr, effectivePerKWh, gridMWh, excessKVA, demandChargeAnnualCr, excessDemandChargeAnnualCr, fixedAnnualCr};
+}
+function computeOAActualCost(inp, a){
+  const oaMWh = (a.oa||0)+(a.bessChargeOA||0);
+  const totalCr = ((a.oaEnergyCostRs||0)+(a.bessOACostRs||0))/1e7;
+  const effectivePerKWh = oaMWh>0 ? (totalCr*1e7)/(oaMWh*1000) : 0;
+  return {totalCr, effectivePerKWh, oaMWh};
+}
+function computeGCVariableActualCost(inp, a){
+  const gcMWh = (a.gc||0)+(a.bessChargeGC||0);
+  const totalCr = ((a.gcEnergyCostRs||0)+(a.bessGCCostRs||0))/1e7;
+  const effectivePerKWh = gcMWh>0 ? (totalCr*1e7)/(gcMWh*1000) : 0;
+  return {totalCr, effectivePerKWh, gcMWh};
 }
 
 /* ---------------- demand / RE unit shapes ---------------- */
@@ -257,12 +300,13 @@ function evaluateCandidateSteadyState(inp, units, baseDemand8760, candidate, gri
   const gcCapexTotalCr = candidate.gcMW*inp.gc_capex;
   const gcMyEquityCapexCr = gcCapexTotalCr*(inp.gc_myequity/100);
   const oa = computeOA(inp);
-  const gridRate = gridRatePerKWh(inp, a.grid, result.peakGridMW);
+  const gridActual = computeGridActualCost(inp, a, result.peakGridMW);
+  const oaActual = computeOAActualCost(inp, a);
+  const gcVarActual = computeGCVariableActualCost(inp, a);
   const solarOM_perKWh = a.solar>0 ? (sol.annualOM*1e7)/(a.solar*1000) : 0;
   const windOM_perKWh = a.wind>0 ? (win.annualOM*1e7)/(a.wind*1000) : 0;
-  const gcOpexRate = inp.gc_charges;
-  const oaRate = oa.landed;
-  const energyCostCr = (a.solar*solarOM_perKWh + a.wind*windOM_perKWh + a.gc*gcOpexRate + a.oa*oaRate + a.grid*gridRate)*1000/1e7;
+  // Actual metered hourly-billed cost (grid/OA/GC-variable) + flat O&M for owned generation.
+  const energyCostCr = (a.solar*solarOM_perKWh + a.wind*windOM_perKWh)*1000/1e7 + gridActual.totalCr + oaActual.totalCr + gcVarActual.totalCr;
   const m = scenMult(inp);
   const bessCapexCr = candidate.bessMWh*inp.b_capex*m.bess + candidate.bessMW*inp.b_capex_mw*m.bess;
   const bessAnnualCr = bessCapexCr*crf(inp.f_hurdle,10) + bessCapexCr*(inp.b_om/100);
@@ -290,18 +334,22 @@ function evaluateCandidateSteadyState(inp, units, baseDemand8760, candidate, gri
   const dscrY1 = (interestY1+(emiAnnualCr-interestY1))>0 ? ebitdaCr/(interestY1+(emiAnnualCr-interestY1)) : NaN;
   const oaElig = oaEligibility(inp, candidate);
   const gcElig = gcEligibility(inp, candidate, a.gc, gcGenAnnualMWh);
-  const gridFull = computeGridCostEngine(inp, a.grid, result.peakGridMW);
+  const gridFull = computeGridCostEngine(inp, a.grid, result.peakGridMW); // informational blended-rate breakdown (Economics tab display)
   const gcFull = computeGCFullyLoaded(inp, candidate.gcMW, a.gc, gcElig);
   const solarFullPerKWh = a.solar>0 ? solarOM_perKWh + (sol.annualCapexCharge*1e7)/(a.solar*1000) : 0;
   const windFullPerKWh = a.wind>0 ? windOM_perKWh + (win.annualCapexCharge*1e7)/(a.wind*1000) : 0;
-  const fullyLoadedCostCr = (a.solar*solarFullPerKWh + a.wind*windFullPerKWh + a.gc*gcFull.deliveredPerKWh + a.oa*oa.landed + a.grid*gridFull.effectivePerKWh)*1000/1e7;
+  // Fully-loaded cost uses the ACTUAL metered Grid/OA/GC-variable rates (not the
+  // blended proxy) plus GC's capex+O&M annuity, so this figure is consistent
+  // with energyCostCr/ebitdaCr above rather than a separate estimate.
+  const fullyLoadedCostCr = (a.solar*solarFullPerKWh + a.wind*windFullPerKWh)*1000/1e7 + gcFull.capexAnnualCr + gcFull.omAnnualCr + gcVarActual.totalCr + oaActual.totalCr + gridActual.totalCr;
   const fullyLoadedCostPerKWh = servedMWh>0 ? (fullyLoadedCostCr*1e7)/(servedMWh*1000) : 0;
   return {
     candidate, annual:a, servedMWh, renShare, unservedMWh:a.unserved, peakGridMW:result.peakGridMW, peakGridNeedMW:result.peakGridNeedMW,
     sanctionedMW:gridCapMW, totalCapexCr, equityCr, debtCr, revenueCr, energyCostCr, omTotalCr, ebitdaCr,
     landedCostPerKWh, proxyEquityIRR, proxyProjectIRR, proxyNPV, dscrY1,
     gcMyEquityCapexCr, gcCapexTotalCr, bessCapexCr, blendedPrice, gcGenAnnualMWh, oaElig, gcElig,
-    oaLandedPerKWh: oa.landed, gridFull, gcFull, solarFullPerKWh, windFullPerKWh, fullyLoadedCostPerKWh
+    oaLandedPerKWh: oa.landed, gridFull, gcFull, solarFullPerKWh, windFullPerKWh, fullyLoadedCostPerKWh,
+    gridActual, oaActual, gcVarActual
   };
 }
 function architectureNameOf(ev){
@@ -363,8 +411,10 @@ function computeExactMultiYearFinancing(inp, units, baseDemand8760, candidate, g
     const servedMWh = a.demand - a.unserved;
     const solarOM_perKWh = a.solar>0 ? (sol.annualOM*1e7)/(a.solar*1000) : 0;
     const windOM_perKWh = a.wind>0 ? (win.annualOM*1e7)/(a.wind*1000) : 0;
-    const gridRate = gridRatePerKWh(inp, a.grid, result.peakGridMW);
-    const energyCostCr = (a.solar*solarOM_perKWh + a.wind*windOM_perKWh + a.gc*gcOpexRate + a.oa*oaRate + a.grid*gridRate)*1000/1e7;
+    const gridActualY = computeGridActualCost(inp, a, result.peakGridMW);
+    const oaActualY = computeOAActualCost(inp, a);
+    const gcVarActualY = computeGCVariableActualCost(inp, a);
+    const energyCostCr = (a.solar*solarOM_perKWh + a.wind*windOM_perKWh)*1000/1e7 + gridActualY.totalCr + oaActualY.totalCr + gcVarActualY.totalCr;
     const rev = servedMWh*1000*blendedPrice/1e7 * Math.pow(1+inp.growth/100, Math.min(y-1,0));
     const bessOMCr = bessCapexCr*(inp.b_om/100);
     const siteOMCr = siteCapexCr*0.03;
